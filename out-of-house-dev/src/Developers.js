@@ -1,12 +1,18 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Header from './Header';
+import HorizontalSteps from './HorizontalSteps';
 import './App.css';
 
 const Developers = () => {
+  // Cross-page nav from the marketing header. The Home root owns the
+  // scrolled-to sections, so we stash the target and redirect to `/`.
+  // The home page picks it up on mount via sessionStorage and scrolls
+  // smoothly.
   const handleNavClick = (e, sectionId) => {
     e.preventDefault();
-    window.location.href = `/${sectionId}`;
+    try { sessionStorage.setItem('scrollToSection', sectionId); } catch {}
+    window.location.href = window.location.origin + '/#/';
   };
 
   useEffect(() => {
@@ -23,11 +29,31 @@ const Developers = () => {
     return () => sections.forEach(section => observer.unobserve(section));
   }, []);
 
-  const steps = [
-    { num: '01', title: 'Apply', body: 'Send us your GitHub, a short note on what you build, and the stack you\'re strongest in. No CV theatre.' },
-    { num: '02', title: 'Paid Trial Task', body: 'A small, scoped, real-world task — paid. We assess code quality, communication, and how you work with AI tooling.' },
-    { num: '03', title: 'Join the Bench', body: 'Pass the trial and you\'re on our roster. We route paid work to you as it comes in, matched to your skills.' },
-    { num: '04', title: 'Grow', body: 'Mentorship from senior engineers, exposure to real clients, and a steady pipeline of work to build your portfolio.' },
+  const devSteps = [
+    {
+      num: '01',
+      accent: 'Step 1',
+      title: 'Apply',
+      body: "Send us your GitHub, a short note on what you build, and the stack you're strongest in. No CV theatre — we read code.",
+    },
+    {
+      num: '02',
+      accent: 'Paid',
+      title: 'Paid Trial Task',
+      body: 'A small, scoped, real-world task — paid. We assess code quality, communication, and how you work with AI tooling.',
+    },
+    {
+      num: '03',
+      accent: 'On the bench',
+      title: 'Join the Bench',
+      body: "Pass the trial and you're on our roster. We route paid work to you as it comes in, matched to your skills and capacity.",
+    },
+    {
+      num: '04',
+      accent: 'Ongoing',
+      title: 'Grow',
+      body: 'Mentorship from senior engineers, exposure to real clients, and a steady pipeline of work to build your portfolio.',
+    },
   ];
 
   return (
@@ -58,7 +84,7 @@ const Developers = () => {
         <div className="dev-pillar">
           <h3>For Developers</h3>
           <ul>
-            <li>Paid trial task — no unpaid take-homes</li>
+            <li>Paid trial task &mdash; no unpaid take-homes</li>
             <li>Real client work routed to you once you pass</li>
             <li>Mentorship from senior engineers</li>
             <li>Work alongside modern AI tooling that makes you faster</li>
@@ -71,25 +97,20 @@ const Developers = () => {
             <li>Access vetted, trial-tested engineers on demand</li>
             <li>Every project led by a senior, code reviewed before ship</li>
             <li>Scale capacity up or down without a hiring cycle</li>
-            <li>One point of contact — we handle the team</li>
+            <li>One point of contact &mdash; we handle the team</li>
             <li>Same AI-augmented delivery speed across the bench</li>
           </ul>
         </div>
       </section>
 
-      <section className="workflow-section fade-in">
-        <div className="eyebrow">How the programme works</div>
-        <h2 className="section-title">From application to <span className="accent">paid work</span>, in four steps.</h2>
-        <div className="workflow-steps">
-          {steps.map(s => (
-            <div key={s.num} className="workflow-step">
-              <div className="workflow-step-num">{s.num}</div>
-              <h4>{s.title}</h4>
-              <p>{s.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      <HorizontalSteps
+        id="dev-programme"
+        steps={devSteps}
+        header={{
+          eyebrow: 'How the programme works',
+          title: (<>From application to <span className="accent">paid work</span>, in four steps.</>),
+        }}
+      />
 
       <section className="dev-cta fade-in">
         <h2>Ready to be on the bench?</h2>
@@ -102,7 +123,7 @@ const Developers = () => {
       <footer className="terms-conditions">
         <div className="terms-container">
           <Link to="/terms-and-conditions"><p className="terms-conditions-link">Terms and conditions</p></Link>
-          <p>&#123;out-of-house.dev&#125;. All Rights Reserved. © Copyright 2026</p>
+          <p>&#123;out-of-house.dev&#125;. All Rights Reserved. © 2026</p>
           <Link to="/privacy-policy"><p className="terms-conditions-link">Privacy policy</p></Link>
         </div>
       </footer>

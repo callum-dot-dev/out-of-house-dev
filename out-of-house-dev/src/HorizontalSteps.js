@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-const STEPS = [
+const DEFAULT_STEPS = [
   {
     num: '01',
     title: 'The Call',
@@ -27,7 +27,13 @@ const STEPS = [
   },
 ];
 
-const HorizontalSteps = () => {
+const DEFAULT_HEADER = {
+  eyebrow: 'How we work',
+  title: (<>A call. A scope. <span className="accent">Working software</span>, fast.</>),
+};
+
+const HorizontalSteps = ({ id = 'workflow', steps = DEFAULT_STEPS, header = DEFAULT_HEADER }) => {
+  const STEPS = steps;
   const wrapperRef = useRef(null);
   const trackRef = useRef(null);
   const progressRef = useRef(null);
@@ -136,12 +142,10 @@ const HorizontalSteps = () => {
 
   if (isMobile) {
     return (
-      <section id="workflow" className="hsteps-wrapper hsteps-mobile">
+      <section id={id} className="hsteps-wrapper hsteps-mobile">
         <div className="hsteps-mobile-inner">
-          <div className="eyebrow">How we work</div>
-          <h2 className="section-title">
-            A call. A scope. <span className="accent">Working software</span>, fast.
-          </h2>
+          <div className="eyebrow">{header.eyebrow}</div>
+          <h2 className="section-title">{header.title}</h2>
           <div className="hsteps-mobile-list">
             {STEPS.map((s) => (
               <div key={s.num} className="hstep-card">
@@ -160,14 +164,12 @@ const HorizontalSteps = () => {
   }
 
   return (
-    <section id="workflow" className="hsteps-wrapper" ref={wrapperRef}>
+    <section id={id} className="hsteps-wrapper" ref={wrapperRef}>
       <div className="hsteps-pin">
         <div className="hsteps-header">
           <div>
-            <div className="eyebrow">How we work</div>
-            <h2 className="section-title">
-              A call. A scope. <span className="accent">Working software</span>, fast.
-            </h2>
+            <div className="eyebrow">{header.eyebrow}</div>
+            <h2 className="section-title">{header.title}</h2>
           </div>
           <div className="hsteps-counter">
             <span className="hsteps-counter-active">{String(activeIndex + 1).padStart(2, '0')}</span>

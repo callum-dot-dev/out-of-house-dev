@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { HashRouter as Router, Route, Routes, Link, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Route, Routes, Link, Navigate, useLocation } from 'react-router-dom';
 import Header from './Header';
 import TermsAndConditions from './TermsAndConditions';
 import PrivacyPolicy from './PrivacyPolicy';
@@ -40,6 +40,22 @@ function App() {
   const [activeSection, setActiveSection] = useState('home');
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
   const [openServiceIndex, setOpenServiceIndex] = useState(0);
+
+  // If we arrived here because a nav link on another page asked us to
+  // scroll to a section, consume the stashed target and scroll once the
+  // DOM is painted.
+  useEffect(() => {
+    let target = null;
+    try { target = sessionStorage.getItem('scrollToSection'); } catch {}
+    if (!target) return;
+    try { sessionStorage.removeItem('scrollToSection'); } catch {}
+    // wait a tick so the section refs are mounted
+    const t = setTimeout(() => {
+      const el = document.querySelector(target);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 60);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     const sectionIds = ['home', 'services', 'workflow', 'benefits', 'pricing', 'faq', 'contact-us'];
@@ -95,12 +111,18 @@ function App() {
 
   const handleNavClick = (e, sectionId) => {
     e.preventDefault();
-    if (window.location.pathname !== "/") {
-      window.location.href = `${sectionId.slice(1)}`;
-    } else {
-      const section = document.querySelector(sectionId);
-      if (section) section.scrollIntoView({ behavior: 'smooth' });
+    // sectionId looks like "#services". HashRouter encodes the route in
+    // the URL hash, so when we're NOT on `/` we need to go to `/#/` and
+    // then scroll. Setting window.location.hash directly would shadow the
+    // router. Easiest: send the user to the root, then scroll after mount.
+    if (window.location.hash !== '#/' && window.location.hash !== '') {
+      // Stash the target so the home page can scroll to it on next mount.
+      try { sessionStorage.setItem('scrollToSection', sectionId); } catch {}
+      window.location.href = window.location.origin + '/#/';
+      return;
     }
+    const section = document.querySelector(sectionId);
+    if (section) section.scrollIntoView({ behavior: 'smooth' });
   };
 
   const toggleService = (index) => {
@@ -519,6 +541,10 @@ function App() {
             <Route path="admin/applications" element={<ProtectedRoute roles={['admin']}><Applications /></ProtectedRoute>} />
             <Route path="admin/users"        element={<ProtectedRoute roles={['admin']}><Users /></ProtectedRoute>} />
           </Route>
+
+          {/* Anything that doesn't match — including stray /#/ variants —
+              goes home rather than rendering a white screen. */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
     </Router>
