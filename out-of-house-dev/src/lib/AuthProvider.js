@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 
 const AuthContext = createContext(null);
 
-const SESSION_LOAD_TIMEOUT_MS = 4000;
+const SESSION_LOAD_TIMEOUT_MS = 12000;
 
 export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
 
   const loadProfile = useCallback(async (userId) => {
     if (!userId) return null;
-    const PROFILE_TIMEOUT_MS = 5000;
+    const PROFILE_TIMEOUT_MS = 15000;
     try {
       const query = supabase
         .from('profiles')
