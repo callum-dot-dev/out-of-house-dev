@@ -3,6 +3,8 @@ import { supabase } from './supabase';
 
 const AuthContext = createContext(null);
 
+const SESSION_LOAD_TIMEOUT_MS = 4000;
+
 export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -10,52 +12,96 @@ export const AuthProvider = ({ children }) => {
 
   const loadProfile = useCallback(async (userId) => {
     if (!userId) return null;
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    if (error) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.warn('[auth] profile load failed', error.message);
+        return null;
+      }
+      return data;
+    } catch (e) {
       // eslint-disable-next-line no-console
-      console.warn('[auth] profile load failed', error.message);
+      console.warn('[auth] profile load threw', e?.message ?? e);
       return null;
     }
-    return data;
   }, []);
 
   useEffect(() => {
     let mounted = true;
+    let timeout;
 
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!mounted) return;
-      setSession(data.session ?? null);
-      if (data.session?.user) {
-        const p = await loadProfile(data.session.user.id);
-        if (mounted) setProfile(p);
+    // Safety: if Supabase getSession hangs (stale token, network blip),
+    // unstick the UI after a few seconds so the user can actually log in /
+    // out instead of staring at a loader forever.
+    timeout = setTimeout(() => {
+      if (mounted && loading) {
+        // eslint-disable-next-line no-console
+        console.warn('[auth] session load timed out, forcing loading=false');
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    }, SESSION_LOAD_TIMEOUT_MS);
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!mounted) return;
+        setSession(data.session ?? null);
+        if (data.session?.user) {
+          const p = await loadProfile(data.session.user.id);
+          if (mounted) setProfile(p);
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[auth] getSession threw', e?.message ?? e);
+      } finally {
+        if (mounted) setLoading(false);
+        clearTimeout(timeout);
+      }
+    })();
+
+    const { data: sub } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       setSession(newSession ?? null);
       if (newSession?.user) {
         const p = await loadProfile(newSession.user.id);
-        setProfile(p);
+        if (mounted) setProfile(p);
       } else {
-        setProfile(null);
+        if (mounted) setProfile(null);
       }
+      // Always settle loading on any auth event.
+      if (mounted) setLoading(false);
     });
 
     return () => {
       mounted = false;
+      clearTimeout(timeout);
       sub.subscription.unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadProfile]);
 
+  // Clear local state immediately so the UI updates even if the network call
+  // hangs. Best-effort call to Supabase + storage clear for any stale token.
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
     setSession(null);
     setProfile(null);
+    setLoading(false);
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('[auth] signOut threw, clearing local storage manually', e?.message ?? e);
+    }
+    // Belt-and-braces: wipe any lingering Supabase auth keys from localStorage.
+    try {
+      Object.keys(window.localStorage)
+        .filter((k) => k.startsWith('sb-') && k.endsWith('-auth-token'))
+        .forEach((k) => window.localStorage.removeItem(k));
+    } catch { /* private mode */ }
   }, []);
 
   const refreshProfile = useCallback(async () => {
