@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import logo from './images/out-of-house-logo.png';
+import { useAuth } from './lib/AuthProvider';
 import './App.css';
 
 const Header = ({ activeSection, handleNavClick }) => {
   const location = useLocation();
+  const { isAuthenticated, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -87,15 +89,38 @@ const Header = ({ activeSection, handleNavClick }) => {
               Developers
             </Link>
           </li>
-          <li>
-            <Link
-              to="/login"
-              className={location.pathname === '/login' ? 'active' : ''}
-              onClick={() => setMenuOpen(false)}
-            >
-              Sign in
-            </Link>
-          </li>
+          {isAuthenticated ? (
+            <>
+              <li>
+                <Link
+                  to="/app"
+                  className={location.pathname.startsWith('/app') ? 'active' : ''}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Open app
+                </Link>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  className="nav-link-button"
+                  onClick={() => { signOut(); setMenuOpen(false); }}
+                >
+                  Sign out
+                </button>
+              </li>
+            </>
+          ) : (
+            <li>
+              <Link
+                to="/login"
+                className={location.pathname === '/login' ? 'active' : ''}
+                onClick={() => setMenuOpen(false)}
+              >
+                Sign in
+              </Link>
+            </li>
+          )}
           {/* Only render "Contact Us" in the dropdown for mobile */}
           {isMobile && (
             <li>

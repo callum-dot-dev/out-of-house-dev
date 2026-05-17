@@ -151,6 +151,19 @@ img, svg { display: block; max-width: 100%; }
 .nav-links li a.active { color: var(--ink); }
 .nav-links li a.active::after { background-color: var(--ink); }
 
+.nav-link-button {
+  background: transparent;
+  border: none;
+  padding: 0 0 6px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  transition: color 0.2s var(--ease-out);
+}
+.nav-link-button:hover { color: var(--accent-deep); }
+
 /* Contact button — header */
 .App-nav > a .contact-btn,
 .App-nav > a span.contact-btn {
