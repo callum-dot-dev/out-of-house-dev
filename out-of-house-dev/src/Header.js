@@ -35,12 +35,9 @@ const Header = ({ activeSection, handleNavClick }) => {
         <ul className={`nav-links ${menuOpen ? 'open' : ''}`}>
           <li>
             <Link
-              to=" "
-              className={activeSection === 'home' ? 'active' : ''}
-              onClick={(e) => {
-                handleNavClick(e, '#home');
-                setMenuOpen(false); // Close the menu after click
-              }}
+              to="/"
+              className={activeSection === 'home' && location.pathname === '/' ? 'active' : ''}
+              onClick={() => setMenuOpen(false)}
             >
               Home
             </Link>
@@ -79,6 +76,24 @@ const Header = ({ activeSection, handleNavClick }) => {
               }}
             >
               Pricing
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/developers"
+              className={location.pathname === '/developers' ? 'active' : ''}
+              onClick={() => setMenuOpen(false)}
+            >
+              Developers
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/login"
+              className={location.pathname === '/login' ? 'active' : ''}
+              onClick={() => setMenuOpen(false)}
+            >
+              Sign in
             </Link>
           </li>
           {/* Only render "Contact Us" in the dropdown for mobile */}
