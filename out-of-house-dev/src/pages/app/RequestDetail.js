@@ -43,7 +43,7 @@ const RequestDetail = () => {
   };
 
   const claim = async () => {
-    await supabase.from('feature_requests').update({ claimed_by: profile.id, status: request.status === 'submitted' ? 'scoped' : request.status }).eq('id', id);
+    await supabase.from('feature_requests').update({ claimed_by: profile?.id, status: request.status === 'submitted' ? 'scoped' : request.status }).eq('id', id);
     load();
   };
 
@@ -56,7 +56,7 @@ const RequestDetail = () => {
     e.preventDefault();
     if (!body.trim()) return;
     setWorking(true);
-    const { error } = await supabase.from('request_comments').insert([{ request_id: id, author_id: profile.id, body }]);
+    const { error } = await supabase.from('request_comments').insert([{ request_id: id, author_id: profile?.id, body }]);
     setWorking(false);
     if (!error) { setBody(''); load(); }
   };
@@ -87,7 +87,7 @@ const RequestDetail = () => {
               {REQUEST_STATUSES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
             </select>
             {request.claimed_by ? (
-              request.claimed_by === profile.id
+              request.claimed_by === profile?.id
                 ? <button className="ghost-btn" onClick={release}>Release</button>
                 : <span className="app-muted">Claimed by {authors[request.claimed_by]?.full_name || 'another dev'}</span>
             ) : (
@@ -111,7 +111,7 @@ const RequestDetail = () => {
           <div className="comments">
             {comments.map(c => {
               const a = authors[c.author_id];
-              const mine = c.author_id === profile.id;
+              const mine = c.author_id === profile?.id;
               return (
                 <div key={c.id} className={`comment ${mine ? 'is-mine' : ''}`}>
                   <div className="comment-head">

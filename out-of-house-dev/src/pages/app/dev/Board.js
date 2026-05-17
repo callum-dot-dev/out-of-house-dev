@@ -54,7 +54,7 @@ const Board = () => {
   };
 
   const claim = async (request) => {
-    await supabase.from('feature_requests').update({ claimed_by: profile.id, status: request.status === 'submitted' ? 'scoped' : request.status }).eq('id', request.id);
+    await supabase.from('feature_requests').update({ claimed_by: profile?.id, status: request.status === 'submitted' ? 'scoped' : request.status }).eq('id', request.id);
     load();
   };
 
@@ -64,7 +64,7 @@ const Board = () => {
   };
 
   const visible = requests.filter(r => {
-    if (scope === 'mine')      return r.claimed_by === profile.id;
+    if (scope === 'mine')      return r.claimed_by === profile?.id;
     if (scope === 'unclaimed') return !r.claimed_by;
     return true;
   });
@@ -100,7 +100,7 @@ const Board = () => {
                   const proj = projects[r.project_id];
                   const client = proj ? authors[proj.client_id] : null;
                   const claimedBy = r.claimed_by ? authors[r.claimed_by] : null;
-                  const mine = r.claimed_by === profile.id;
+                  const mine = r.claimed_by === profile?.id;
                   return (
                     <div key={r.id} className="board-card">
                       <div className="board-card-meta">

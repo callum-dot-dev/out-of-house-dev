@@ -22,16 +22,16 @@ const DevDashboard = () => {
   useEffect(() => {
     (async () => {
       const [{ count: assigned }, { count: submitted }, { count: building }, { count: review }, { data: mineData }] = await Promise.all([
-        supabase.from('feature_requests').select('*', { count: 'exact', head: true }).eq('claimed_by', profile.id).in('status', ['scoped','building','review']),
+        supabase.from('feature_requests').select('*', { count: 'exact', head: true }).eq('claimed_by', profile?.id).in('status', ['scoped','building','review']),
         supabase.from('feature_requests').select('*', { count: 'exact', head: true }).eq('status', 'submitted'),
         supabase.from('feature_requests').select('*', { count: 'exact', head: true }).eq('status', 'building'),
         supabase.from('feature_requests').select('*', { count: 'exact', head: true }).eq('status', 'review'),
-        supabase.from('feature_requests').select('*').eq('claimed_by', profile.id).order('updated_at', { ascending: false }).limit(6),
+        supabase.from('feature_requests').select('*').eq('claimed_by', profile?.id).order('updated_at', { ascending: false }).limit(6),
       ]);
       setCounts({ assigned: assigned ?? 0, submitted: submitted ?? 0, building: building ?? 0, review: review ?? 0 });
       setMine(mineData ?? []);
     })();
-  }, [profile.id]);
+  }, [profile?.id]);
 
   const firstName = (profile.full_name || profile.email).split(' ')[0];
 

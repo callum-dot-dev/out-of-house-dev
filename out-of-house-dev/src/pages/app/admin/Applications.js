@@ -46,7 +46,7 @@ const Applications = () => {
       .update({
         status: 'approved',
         admin_notes: adminNotes,
-        reviewed_by: profile.id,
+        reviewed_by: profile?.id,
         reviewed_at: new Date().toISOString(),
       })
       .eq('id', active.id);
@@ -105,7 +105,7 @@ const Applications = () => {
     const { error } = await supabase.from('applications').update({
       status: 'rejected',
       admin_notes: adminNotes,
-      reviewed_by: profile.id,
+      reviewed_by: profile?.id,
       reviewed_at: new Date().toISOString(),
     }).eq('id', active.id);
     setWorking(false);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthProvider';
 import logo from '../../images/out-of-house-logo.png';
@@ -43,9 +43,39 @@ const Icon = ({ name }) => {
   }
 };
 
+const ProfileGate = () => {
+  const { signOut, refreshProfile } = useAuth();
+  const [showRescue, setShowRescue] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setShowRescue(true), 5000);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div className="app-loader">
+      <div className="app-loader-dot" />
+      <div className="app-loader-text">Loading your profile…</div>
+      {showRescue && (
+        <div style={{ marginTop: 24, textAlign: 'center', maxWidth: 420, padding: '0 20px' }}>
+          <p style={{ color: 'var(--muted)', fontSize: 14, lineHeight: 1.5, marginBottom: 16 }}>
+            Still loading. Your profile may not be set up yet, or the network is slow.
+          </p>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button className="ghost-btn" onClick={refreshProfile}>Retry</button>
+            <button className="ghost-btn" onClick={signOut}>Sign out</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AppShell = () => {
   const { profile, role, signOut, isAdmin, isDeveloper, isClient } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Authenticated but profile not yet loaded — show a dedicated loader so
+  // child pages never have to defend against a null profile.
+  if (!profile) return <ProfileGate />;
 
   const nav = isAdmin ? ADMIN_NAV : isDeveloper ? DEV_NAV : CLIENT_NAV;
 

@@ -18,7 +18,7 @@ const ClientDashboard = () => {
 
   useEffect(() => {
     (async () => {
-      const { data: p } = await supabase.from('projects').select('*').eq('client_id', profile.id).order('created_at', { ascending: false });
+      const { data: p } = await supabase.from('projects').select('*').eq('client_id', profile?.id).order('created_at', { ascending: false });
       setProjects(p ?? []);
       if (p && p.length > 0) {
         const { data: r } = await supabase
@@ -30,7 +30,7 @@ const ClientDashboard = () => {
         setRequests(r ?? []);
       }
     })();
-  }, [profile.id]);
+  }, [profile?.id]);
 
   const firstName = (profile.full_name || profile.email).split(' ')[0];
 

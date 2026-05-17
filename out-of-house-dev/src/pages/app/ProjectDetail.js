@@ -40,7 +40,7 @@ const ProjectDetail = () => {
     const { error } = await supabase.from('feature_requests').insert([{
       ...newReq,
       project_id: id,
-      created_by: profile.id,
+      created_by: profile?.id,
     }]);
     setWorking(false);
     if (!error) {

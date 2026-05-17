@@ -15,11 +15,11 @@ const Projects = () => {
   useEffect(() => {
     (async () => {
       let q = supabase.from('projects').select('*, profiles!projects_client_id_fkey(full_name, email, company)').order('created_at', { ascending: false });
-      if (isClient) q = q.eq('client_id', profile.id);
+      if (isClient) q = q.eq('client_id', profile?.id);
       const { data } = await q;
       setProjects(data ?? []);
     })();
-  }, [isClient, profile.id]);
+  }, [isClient, profile?.id]);
 
   const filtered = projects.filter(p => {
     if (filter === 'all') return true;

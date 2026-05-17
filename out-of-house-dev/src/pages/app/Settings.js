@@ -15,7 +15,7 @@ const Settings = () => {
   const save = async (e) => {
     e.preventDefault();
     setWorking(true);
-    const { error } = await supabase.from('profiles').update(form).eq('id', profile.id);
+    const { error } = await supabase.from('profiles').update(form).eq('id', profile?.id);
     setWorking(false);
     setMsg(error ? `Error: ${error.message}` : 'Saved.');
     if (!error) refreshProfile();
