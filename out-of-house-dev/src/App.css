@@ -1456,7 +1456,7 @@ section { position: relative; }
      last-card position and translates proportionally inside this
      scroll range. Higher value = slower horizontal movement per
      unit of vertical scroll. */
-  --hsteps-track-vh: 360vh;
+  --hsteps-track-vh: 420vh;
   --hsteps-nav-offset: 84px; /* matches fixed header height; overridden by JS */
   position: relative;
   height: var(--hsteps-track-vh);
@@ -1519,39 +1519,67 @@ section { position: relative; }
 
 .hsteps-track {
   display: flex;
-  gap: clamp(16px, 2.5vw, 36px);
-  padding: 0 clamp(28px, 5vw, 72px);
+  gap: clamp(24px, 3vw, 56px);
+  /* Push the first card into the viewport's reading column. */
+  padding: 0 clamp(40px, 6vw, 96px);
   align-items: stretch;
   /* GPU-promote so scroll-driven translate stays smooth. */
   will-change: transform;
   transform: translate3d(0, 0, 0);
 }
 
+/* Each card fills ~88% of viewport so only one reads at a time; the next
+   peeks ~10% in to telegraph the journey. Inactive cards dim, scale, and
+   blur so the active one pops by contrast — no aggressive accent colour
+   required. */
 .hstep-card {
-  flex: 0 0 min(520px, 84vw);
+  flex: 0 0 min(900px, 88vw);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: clamp(22px, 2.6vw, 36px);
-  box-shadow: var(--shadow-soft);
+  padding: clamp(32px, 4.2vw, 72px);
+  box-shadow: 0 1px 2px rgba(20, 20, 15, 0.04);
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: clamp(8px, 1.2vw, 14px);
-  /* Card height has to fit inside the sticky stage WITHOUT pushing the
-     progress bar off-screen. Real chrome budget:
-       nav offset           ~84px (live-measured)
-       pin padding y         ~64px
-       header row            ~96px (eyebrow + h2 + counter)
-       gap above + below     ~50px
-       progress bar           ~6px
-       total non-card       ~300px
-     Floor at 280 so phone-landscape doesn't collapse content.
-     Cap at 520 on tall screens so cards stay readable. */
-  height: min(520px, max(280px, calc(100vh - var(--hsteps-nav-offset) - 300px)));
-  transition: border-color 0.4s var(--ease-out), transform 0.5s var(--ease-out), box-shadow 0.4s var(--ease-out);
+  gap: clamp(14px, 1.8vw, 24px);
+  height: min(640px, max(320px, calc(100vh - var(--hsteps-nav-offset) - 260px)));
+  /* Default = inactive state. */
+  opacity: 0.42;
+  transform: scale(0.94);
+  filter: blur(1.5px);
+  transform-origin: center center;
+  transition:
+    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+.hstep-card.is-active {
+  opacity: 1;
+  transform: scale(1);
+  filter: none;
+  box-shadow:
+    0 1px 2px rgba(20, 20, 15, 0.04),
+    0 28px 70px -28px rgba(20, 20, 15, 0.20);
+}
+
+/* Thin accent rule along the top edge, only on the active card. */
+.hstep-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.hstep-card.is-active::before { transform: scaleX(1); }
 
 /* Pin's own header sits inside the constrained viewport budget, so its
    title must be much smaller than the global section-title scale. */
@@ -1561,52 +1589,38 @@ section { position: relative; }
   margin-bottom: 0;
 }
 
-.hstep-card::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: var(--radius-lg);
-  pointer-events: none;
-  background: radial-gradient(80% 60% at 100% 0%, rgba(43, 191, 134, 0.10) 0%, transparent 60%);
-  opacity: 0;
-  transition: opacity 0.5s var(--ease-out);
-}
-
-.hstep-card.is-active {
-  border-color: var(--accent);
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-card);
-}
-
-.hstep-card.is-active::before { opacity: 1; }
-
 .hstep-meta {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: clamp(10px, 2vw, 20px);
+  margin-bottom: clamp(20px, 3vw, 36px);
 }
 
 .hstep-num {
-  font-size: clamp(1.8rem, 3.6vw, 3rem);
-  font-weight: 700;
+  font-size: clamp(1.1rem, 1.4vw, 1.4rem);
+  font-weight: 600;
   line-height: 1;
-  letter-spacing: -0.04em;
-  color: var(--ink);
+  letter-spacing: 0.04em;
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  transition: color 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.hstep-card.is-active .hstep-num { color: var(--accent-deep); }
+.hstep-card.is-active .hstep-num { color: var(--ink); }
 
 .hstep-accent {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
-  padding: 5px 10px;
+  padding: 5px 12px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-pill);
+  transition: color 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+              background-color 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .hstep-card.is-active .hstep-accent {
@@ -1616,20 +1630,21 @@ section { position: relative; }
 }
 
 .hstep-card h3 {
-  font-size: clamp(1.4rem, 2.4vw, 2.1rem);
+  font-size: clamp(2rem, 4.2vw, 3.4rem);
   font-weight: 700;
-  margin: 0 0 4px 0;
-  letter-spacing: -0.025em;
+  margin: 0;
+  letter-spacing: -0.03em;
   color: var(--ink);
-  line-height: 1.15;
+  line-height: 1.02;
+  max-width: 18ch;
 }
 
 .hstep-card p {
-  font-size: clamp(0.92rem, 1.1vw, 1.05rem);
-  line-height: 1.55;
+  font-size: clamp(1.05rem, 1.35vw, 1.25rem);
+  line-height: 1.6;
   color: var(--muted);
   margin: 0;
-  max-width: 50ch;
+  max-width: 52ch;
   /* Body grows to fill the remaining card space rather than overflowing. */
   flex: 1 1 auto;
   overflow: hidden;
@@ -1669,49 +1684,48 @@ section { position: relative; }
   will-change: transform;
 }
 
-/* Short laptop viewports (typical 13–14" panels). Tightens chrome so
-   the card never overflows the sticky stage. */
+/* Short laptop viewports (typical 13–14" panels). Tighten chrome but keep
+   the immersive card width. */
 @media (min-width: 901px) and (max-height: 820px) {
-  .hsteps-wrapper { --hsteps-track-vh: 320vh; }
-  .hsteps-pin     { padding: 18px 0 14px; gap: 14px; }
+  .hsteps-wrapper { --hsteps-track-vh: 380vh; }
+  .hsteps-pin     { padding: 20px 0 16px; gap: 18px; }
   .hsteps-header .section-title { font-size: clamp(1.15rem, 2vw, 1.5rem); }
   .hsteps-header .eyebrow       { margin-bottom: 4px; font-size: 0.72rem; }
   .hsteps-counter               { font-size: 0.9rem; }
   .hsteps-counter-active        { font-size: 1.4rem; }
   .hstep-card {
-    flex-basis: min(460px, 80vw);
-    height: min(440px, max(260px, calc(100vh - var(--hsteps-nav-offset) - 240px)));
-    padding: 20px 22px;
-    gap: 8px;
+    flex-basis: min(820px, 88vw);
+    height: min(520px, max(280px, calc(100vh - var(--hsteps-nav-offset) - 220px)));
+    padding: clamp(28px, 3.4vw, 48px);
+    gap: 16px;
   }
-  .hstep-num     { font-size: 1.8rem; }
-  .hstep-accent  { font-size: 0.7rem; padding: 3px 8px; }
-  .hstep-card h3 { font-size: clamp(1.15rem, 1.9vw, 1.55rem); }
-  .hstep-card p  { font-size: 0.9rem; line-height: 1.5; }
+  .hstep-meta    { margin-bottom: 18px; }
+  .hstep-card h3 { font-size: clamp(1.6rem, 3.2vw, 2.4rem); }
+  .hstep-card p  { font-size: clamp(0.98rem, 1.2vw, 1.1rem); line-height: 1.55; }
 }
 
-/* Very tight laptop viewports (1280×720, 1366×768). Same idea, harder. */
+/* Very tight laptop viewports (1280×720, 1366×768). Slimmer cards, less
+   chrome, but still immersive. */
 @media (min-width: 901px) and (max-height: 720px) {
-  .hsteps-wrapper { --hsteps-track-vh: 300vh; }
-  .hsteps-pin     { padding: 12px 0 10px; gap: 10px; }
+  .hsteps-wrapper { --hsteps-track-vh: 360vh; }
+  .hsteps-pin     { padding: 14px 0 12px; gap: 14px; }
   .hsteps-header .section-title { font-size: clamp(1rem, 1.8vw, 1.3rem); }
   .hstep-card {
-    flex-basis: min(420px, 78vw);
-    height: min(380px, max(240px, calc(100vh - var(--hsteps-nav-offset) - 200px)));
-    padding: 16px 18px;
-    gap: 6px;
+    flex-basis: min(760px, 86vw);
+    height: min(440px, max(240px, calc(100vh - var(--hsteps-nav-offset) - 180px)));
+    padding: clamp(22px, 2.8vw, 38px);
+    gap: 12px;
   }
-  .hstep-num     { font-size: 1.5rem; }
-  .hstep-card h3 { font-size: clamp(1.05rem, 1.6vw, 1.35rem); margin-bottom: 2px; }
-  .hstep-card p  { font-size: 0.85rem; line-height: 1.45; }
+  .hstep-meta    { margin-bottom: 14px; }
+  .hstep-card h3 { font-size: clamp(1.4rem, 2.8vw, 2.1rem); }
+  .hstep-card p  { font-size: clamp(0.95rem, 1.15vw, 1.05rem); line-height: 1.5; }
 }
 
-/* Narrow desktops / large tablets (typical 1024-1100 width). Reduces
-   card width so two cards don't try to occupy the whole viewport. */
+/* Narrow desktops / large tablets. Card stays roomy but uses more of the
+   viewport so the immersive feel holds. */
 @media (min-width: 901px) and (max-width: 1100px) {
-  .hsteps-wrapper { --hsteps-track-vh: 340vh; }
-  .hstep-card { flex-basis: min(440px, 78vw); }
-  .hstep-num  { font-size: 1.6rem; }
+  .hsteps-wrapper { --hsteps-track-vh: 380vh; }
+  .hstep-card { flex-basis: min(720px, 88vw); }
 }
 
 /* Mobile fallback */
