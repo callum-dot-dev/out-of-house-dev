@@ -17,7 +17,11 @@ export const supabase = createClient(
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true,
+      // We use HashRouter so the URL always contains a `#`. Letting Supabase
+      // try to detect auth tokens in that hash on every mount can hang the
+      // client init. AuthCallback.js handles the magic-link flow explicitly
+      // via getSession() after the redirect lands.
+      detectSessionInUrl: false,
     },
   },
 );

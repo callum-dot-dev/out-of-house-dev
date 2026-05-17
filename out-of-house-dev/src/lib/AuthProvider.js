@@ -12,21 +12,31 @@ export const AuthProvider = ({ children }) => {
 
   const loadProfile = useCallback(async (userId) => {
     if (!userId) return null;
+    const PROFILE_TIMEOUT_MS = 5000;
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
+      const timed = new Promise((resolve) =>
+        setTimeout(() => resolve({ data: null, error: { message: 'profile query timed out' } }), PROFILE_TIMEOUT_MS),
+      );
+      const { data, error } = await Promise.race([query, timed]);
       if (error) {
         // eslint-disable-next-line no-console
-        console.warn('[auth] profile load failed', error.message);
+        console.warn('[auth] profile load failed for', userId, '·', error.message ?? error.code ?? error);
+        return null;
+      }
+      if (!data) {
+        // eslint-disable-next-line no-console
+        console.warn('[auth] no profile row found for user', userId, '— check the profiles table.');
         return null;
       }
       return data;
     } catch (e) {
       // eslint-disable-next-line no-console
-      console.warn('[auth] profile load threw', e?.message ?? e);
+      console.warn('[auth] profile load threw for', userId, '·', e?.message ?? e);
       return null;
     }
   }, []);
