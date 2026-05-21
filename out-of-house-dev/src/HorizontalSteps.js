@@ -1,30 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 const DEFAULT_STEPS = [
-  {
-    num: '01',
-    title: 'The Call',
-    body: 'We hop on a 30-minute call to understand your business, the problem, and what "done" looks like. No questionnaires, no forms — just a real conversation.',
-    accent: 'Day 0',
-  },
-  {
-    num: '02',
-    title: 'Scope & Quote',
-    body: 'Within 24 hours, often within the hour, you get a tight scope, a fixed price, and a delivery date you can plan around. No surprises later.',
-    accent: 'Day 0–1',
-  },
-  {
-    num: '03',
-    title: 'We Build',
-    body: 'Senior engineers shipping working slices daily. Direct Slack access to the team. You see real progress every day — no black-box waiting.',
-    accent: 'Day 1–14',
-  },
-  {
-    num: '04',
-    title: 'Live & Iterate',
-    body: 'We deploy it, hand it over (or host it for you), and stick around to evolve it as your needs change. Pause or keep going — your call.',
-    accent: 'Live',
-  },
+  { num: '01', title: 'The call',     body: 'A 30-minute call to understand your business and what done looks like. No questionnaires. No forms. Real conversation.', accent: 'Day 0' },
+  { num: '02', title: 'Scope and quote', body: 'Within 24 hours, often within the hour, you get a tight scope, a fixed price, and a delivery date you can plan around. No surprises later.', accent: 'Day 0 to 1' },
+  { num: '03', title: 'We build',     body: 'Senior engineers shipping working slices daily. Direct Slack access. You see real progress every day. No black-box waiting.', accent: 'Day 1 to 14' },
+  { num: '04', title: 'Live and iterate', body: 'We deploy it, hand it over (or host it for you), and stick around to evolve it as your needs change. Pause or keep going. Your call.', accent: 'Live' },
 ];
 
 const DEFAULT_HEADER = {
@@ -37,45 +17,61 @@ const HorizontalSteps = ({ id = 'workflow', steps = DEFAULT_STEPS, header = DEFA
   const wrapperRef = useRef(null);
   const trackRef = useRef(null);
   const progressRef = useRef(null);
+  const totalRef = useRef(0);
+  const maxShiftRef = useRef(0);
   const rafRef = useRef(0);
+  const activeIndexRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
+  const [mode, setMode] = useState('desktop'); // 'desktop' | 'mobile' | 'reduced'
 
-  // Mobile / reduced-motion detection
+  // Mode detection (mobile + reduced motion)
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
-    const mq = window.matchMedia('(max-width: 900px)');
-    const handler = (e) => setIsMobile(e.matches);
-    setIsMobile(mq.matches);
-    mq.addEventListener?.('change', handler);
-    mq.addListener?.(handler);
+    const mqMobile = window.matchMedia('(max-width: 900px)');
+    const mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const apply = () => {
+      if (mqReduce.matches) setMode('reduced');
+      else if (mqMobile.matches) setMode('mobile');
+      else setMode('desktop');
+    };
+    apply();
+    mqMobile.addEventListener?.('change', apply);
+    mqReduce.addEventListener?.('change', apply);
     return () => {
-      mq.removeEventListener?.('change', handler);
-      mq.removeListener?.(handler);
+      mqMobile.removeEventListener?.('change', apply);
+      mqReduce.removeEventListener?.('change', apply);
     };
   }, []);
 
-  // Measure the fixed marketing header's real on-screen height and surface
-  // it as `--hsteps-nav-offset` on the wrapper. Without this the sticky
-  // stage docks under the header and the section reads as half-broken.
+  // Measurement, only on resize
   useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    const wrapper = wrapperRef.current;
-    if (!wrapper) return undefined;
+    if (mode !== 'desktop' || typeof window === 'undefined') return undefined;
     const measure = () => {
-      const header = document.querySelector('.App-header');
-      const h = header ? Math.round(header.getBoundingClientRect().height) : 0;
+      const wrapper = wrapperRef.current;
+      const track = trackRef.current;
+      if (!wrapper || !track) return;
+      const headerEl = document.querySelector('.App-header');
+      const h = headerEl ? Math.round(headerEl.getBoundingClientRect().height) : 0;
       wrapper.style.setProperty('--hsteps-nav-offset', `${h > 0 ? h : 84}px`);
+
+      const rect = wrapper.getBoundingClientRect();
+      totalRef.current = rect.height - window.innerHeight;
+
+      const vw = window.innerWidth;
+      const lastCard = track.lastElementChild;
+      if (lastCard) {
+        const trailingGap = vw * 0.06;
+        const lastRight = lastCard.offsetLeft + lastCard.offsetWidth;
+        maxShiftRef.current = Math.max(0, lastRight + trailingGap - vw);
+      } else {
+        maxShiftRef.current = Math.max(0, track.scrollWidth - vw);
+      }
     };
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
-  }, []);
+  }, [mode]);
 
-  // rAF-throttled scroll handler. Maps section scroll-progress (0..1) onto
-  // the horizontal distance the track needs to travel. End anchor sits the
-  // last card's right edge ~6vw inside the viewport's right edge so it
-  // reads as the closing card, not pinned against the edge.
   const update = useCallback(() => {
     const wrapper = wrapperRef.current;
     const track = trackRef.current;
@@ -83,64 +79,51 @@ const HorizontalSteps = ({ id = 'workflow', steps = DEFAULT_STEPS, header = DEFA
     if (!wrapper || !track) return;
 
     const rect = wrapper.getBoundingClientRect();
-    const vh = window.innerHeight;
-    const total = rect.height - vh;
+    const total = totalRef.current;
     if (total <= 0) {
       track.style.transform = 'translate3d(0,0,0)';
       if (progress) progress.style.transform = 'scaleX(0)';
-      setActiveIndex(0);
       return;
     }
 
-    const raw = (-rect.top) / total;
+    const raw = -rect.top / total;
     const p = Math.max(0, Math.min(1, raw));
-
-    const vw = window.innerWidth;
-    const lastCard = track.lastElementChild;
-    let maxShift;
-    if (lastCard) {
-      const trailingGap = vw * 0.06;
-      const lastRight = lastCard.offsetLeft + lastCard.offsetWidth;
-      maxShift = Math.max(0, lastRight + trailingGap - vw);
-    } else {
-      maxShift = Math.max(0, track.scrollWidth - vw);
-    }
-
+    const maxShift = maxShiftRef.current;
     track.style.transform = `translate3d(${(-p * maxShift).toFixed(2)}px, 0, 0)`;
     if (progress) progress.style.transform = `scaleX(${p.toFixed(4)})`;
 
     const idx = Math.min(STEPS.length - 1, Math.floor(p * STEPS.length));
-    setActiveIndex(idx);
-  }, []);
+    if (idx !== activeIndexRef.current) {
+      activeIndexRef.current = idx;
+      setActiveIndex(idx);
+    }
+  }, [STEPS.length]);
 
   useEffect(() => {
-    if (isMobile) {
-      // Clear any leftover transform from desktop.
+    if (mode !== 'desktop') {
       if (trackRef.current) trackRef.current.style.transform = '';
       if (progressRef.current) progressRef.current.style.transform = '';
       return undefined;
     }
-
-    const onScrollOrResize = () => {
+    const onScroll = () => {
       if (rafRef.current) return;
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = 0;
         update();
       });
     };
-
     update();
-    window.addEventListener('scroll', onScrollOrResize, { passive: true });
-    window.addEventListener('resize', onScrollOrResize);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
     return () => {
-      window.removeEventListener('scroll', onScrollOrResize);
-      window.removeEventListener('resize', onScrollOrResize);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = 0;
     };
-  }, [isMobile, update]);
+  }, [mode, update]);
 
-  if (isMobile) {
+  if (mode !== 'desktop') {
     return (
       <section id={id} className="hsteps-wrapper hsteps-mobile">
         <div className="hsteps-mobile-inner">
@@ -177,14 +160,10 @@ const HorizontalSteps = ({ id = 'workflow', steps = DEFAULT_STEPS, header = DEFA
             <span className="hsteps-counter-total">{String(STEPS.length).padStart(2, '0')}</span>
           </div>
         </div>
-
         <div className="hsteps-track-viewport">
           <div className="hsteps-track" ref={trackRef}>
             {STEPS.map((s, i) => (
-              <div
-                key={s.num}
-                className={`hstep-card ${i === activeIndex ? 'is-active' : ''}`}
-              >
+              <div key={s.num} className={`hstep-card ${i === activeIndex ? 'is-active' : ''}`}>
                 <div className="hstep-meta">
                   <span className="hstep-num">{s.num}</span>
                   <span className="hstep-accent">{s.accent}</span>
@@ -195,7 +174,6 @@ const HorizontalSteps = ({ id = 'workflow', steps = DEFAULT_STEPS, header = DEFA
             ))}
           </div>
         </div>
-
         <div className="hsteps-progress">
           <div className="hsteps-progress-bar" ref={progressRef} />
         </div>

@@ -97,7 +97,7 @@ async function seedDemoProject(clientId, developerId) {
 
   const { data: project, error: pErr } = await admin.from('projects').insert([{
     client_id: clientId,
-    name: 'Acme Coffee Roasters — Website refresh',
+    name: 'Acme Coffee Roasters: Website refresh',
     project_type: 'website',
     description: 'Modern marketing site for Acme Coffee Roasters. Hero, story, product grid, wholesale enquiry form. Same-day delivery target.',
     status: 'building',
@@ -140,9 +140,9 @@ async function seedDemoApplications() {
     return;
   }
   const apps = [
-    { full_name: 'Sara Lim',     email: 'sara@northlight.studio',  company: 'Northlight Studio',  phone: '',           project_type: 'website',         project_description: 'New marketing site for our photography studio. 5 pages, portfolio grid, contact form.', budget_range: '£1,000 – £5,000', timeline: 'ASAP',           source: 'Referral',  status: 'pending' },
-    { full_name: 'Marcus Webb',  email: 'marcus@routerly.io',      company: 'Routerly',           phone: '+44 7700 1234', project_type: 'automation',     project_description: 'Need an automation that processes inbound sales emails: classify, draft reply, push to HubSpot.', budget_range: '£5,000 – £20,000', timeline: 'Within a month', source: 'Search',    status: 'pending' },
-    { full_name: 'Priya Shah',   email: 'priya@ledgerlift.co',     company: 'LedgerLift',         phone: '',           project_type: 'web_app',         project_description: 'MVP for a small-business expense tracker. Auth, capture receipts, monthly summary, export to CSV.', budget_range: '£5,000 – £20,000', timeline: '1–3 months',     source: 'LinkedIn',  status: 'pending' },
+    { full_name: 'Sara Lim',     email: 'sara@northlight.studio',  company: 'Northlight Studio',  phone: '',           project_type: 'website',         project_description: 'New marketing site for our photography studio. 5 pages, portfolio grid, contact form.', budget_range: '£1,000 to £5,000', timeline: 'ASAP',           source: 'Referral',  status: 'pending' },
+    { full_name: 'Marcus Webb',  email: 'marcus@routerly.io',      company: 'Routerly',           phone: '+44 7700 1234', project_type: 'automation',     project_description: 'Need an automation that processes inbound sales emails: classify, draft reply, push to HubSpot.', budget_range: '£5,000 to £20,000', timeline: 'Within a month', source: 'Search',    status: 'pending' },
+    { full_name: 'Priya Shah',   email: 'priya@ledgerlift.co',     company: 'LedgerLift',         phone: '',           project_type: 'web_app',         project_description: 'MVP for a small-business expense tracker. Auth, capture receipts, monthly summary, export to CSV.', budget_range: '£5,000 to £20,000', timeline: '1 to 3 months',     source: 'LinkedIn',  status: 'pending' },
   ];
   await admin.from('applications').insert(apps);
   console.log(`  ✓ ${apps.length} demo applications`);

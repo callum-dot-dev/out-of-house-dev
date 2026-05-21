@@ -1,38 +1,51 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../lib/AuthProvider';
 import { supabase } from '../../../lib/supabase';
+import { useRealtimeTable } from '../../../lib/realtime';
+import { SkeletonGrid, Skeleton } from '../../../components/Skeleton';
 
 const STATUS_LABELS = {
-  discovery: 'Discovery',
-  building:  'Building',
-  live:      'Live',
-  paused:    'Paused',
-  completed: 'Completed',
+  discovery: 'Discovery', building: 'Building', live: 'Live', paused: 'Paused', completed: 'Completed',
 };
 
 const ClientDashboard = () => {
   const { profile } = useAuth();
   const [projects, setProjects] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [activity, setActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      const { data: p } = await supabase.from('projects').select('*').eq('client_id', profile?.id).order('created_at', { ascending: false });
-      setProjects(p ?? []);
-      if (p && p.length > 0) {
-        const { data: r } = await supabase
-          .from('feature_requests')
-          .select('*')
-          .in('project_id', p.map(x => x.id))
-          .order('created_at', { ascending: false })
-          .limit(8);
-        setRequests(r ?? []);
-      }
-    })();
+  const load = useCallback(async () => {
+    if (!profile?.id) return;
+    setLoading(true);
+    const { data: p } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('client_id', profile.id)
+      .order('created_at', { ascending: false });
+    setProjects(p ?? []);
+    if (p && p.length > 0) {
+      const projectIds = p.map((x) => x.id);
+      const [{ data: r }, { data: ev }] = await Promise.all([
+        supabase.from('feature_requests').select('*').in('project_id', projectIds).order('created_at', { ascending: false }).limit(8),
+        supabase.from('activity_events').select('*').in('project_id', projectIds).order('created_at', { ascending: false }).limit(6),
+      ]);
+      setRequests(r ?? []);
+      setActivity(ev ?? []);
+    }
+    setLoading(false);
   }, [profile?.id]);
 
-  const firstName = (profile.full_name || profile.email).split(' ')[0];
+  useEffect(() => { load(); }, [load]);
+
+  useRealtimeTable({
+    channel: profile?.id ? `client-dash-${profile.id}` : null,
+    table: 'feature_requests',
+    onChange: () => load(),
+  });
+
+  const firstName = (profile?.full_name || profile?.email || 'there').split(' ')[0];
 
   return (
     <div className="app-page">
@@ -45,7 +58,13 @@ const ClientDashboard = () => {
         <Link to="/app/book"><button className="primary-btn"><span>Book a call</span></button></Link>
       </div>
 
-      {projects.length === 0 ? (
+      {loading ? (
+        <>
+          <Skeleton h={16} w={140} />
+          <div style={{ height: 16 }} />
+          <SkeletonGrid count={2} />
+        </>
+      ) : projects.length === 0 ? (
         <div className="app-card app-empty-card">
           <h3>No projects yet</h3>
           <p>Once we kick off your first project, it'll show up here. If you haven't already, book a discovery call.</p>
@@ -53,21 +72,41 @@ const ClientDashboard = () => {
         </div>
       ) : (
         <>
+          {activity.length > 0 && (
+            <section className="app-section">
+              <div className="app-section-head"><h2 className="app-h2">Since you were last here</h2></div>
+              <div className="app-card">
+                <ul className="activity-feed">
+                  {activity.slice(0, 6).map((ev) => (
+                    <li key={ev.id} className={`activity-row activity-${ev.kind?.split('.')[0]}`}>
+                      <span className="activity-dot" />
+                      <div>
+                        <strong>{ev.title}</strong>
+                        <span className="app-muted">{new Date(ev.created_at).toLocaleString()}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
+
           <section className="app-section">
             <h2 className="app-h2">Your projects</h2>
             <div className="project-grid">
-              {projects.map(p => (
+              {projects.map((p) => (
                 <Link key={p.id} to={`/app/projects/${p.id}`} className="project-card">
                   <div className="project-card-head">
                     <span className={`badge badge-status badge-${p.status}`}>{STATUS_LABELS[p.status] || p.status}</span>
-                    <span className="project-card-type">{p.project_type.replace('_',' ')}</span>
+                    <span className="project-card-type">{p.project_type.replace('_', ' ')}</span>
                   </div>
                   <h3>{p.name}</h3>
                   <p>{p.description || 'No description yet.'}</p>
                   <div className="project-card-foot">
                     <span>Started {new Date(p.created_at).toLocaleDateString()}</span>
-                    <span className="project-card-cta">Open →</span>
+                    <span className="project-card-cta">Open ›</span>
                   </div>
+                  {p.preview_url && <div className="project-card-preview">Latest build: {new URL(p.preview_url).hostname}</div>}
                 </Link>
               ))}
             </div>
@@ -82,15 +121,20 @@ const ClientDashboard = () => {
             ) : (
               <div className="app-card">
                 <ul className="app-list">
-                  {requests.map(r => (
-                    <li key={r.id} className="app-list-row">
-                      <div>
-                        <strong>{r.title}</strong>
-                        <div className="app-muted">{new Date(r.created_at).toLocaleDateString()}</div>
-                      </div>
-                      <span className={`badge badge-status badge-${r.status}`}>{r.status}</span>
-                    </li>
-                  ))}
+                  {requests.map((r) => {
+                    const proj = projects.find((x) => x.id === r.project_id);
+                    return (
+                      <li key={r.id} className="app-list-row">
+                        <div>
+                          <Link to={`/app/requests/${r.id}`}><strong>{r.title}</strong></Link>
+                          <div className="app-muted">
+                            {proj ? proj.name : 'project'} · {new Date(r.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <span className={`badge badge-status badge-${r.status}`}>{r.status}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}

@@ -46,9 +46,9 @@ const Users = () => {
           <tbody>
             {filtered.map(u => (
               <tr key={u.id}>
-                <td>{u.full_name || '—'}</td>
+                <td>{u.full_name || '–'}</td>
                 <td>{u.email}</td>
-                <td>{u.company || '—'}</td>
+                <td>{u.company || '–'}</td>
                 <td><span className={`badge badge-${u.role}`}>{u.role}</span></td>
                 <td className="app-muted">{new Date(u.created_at).toLocaleDateString()}</td>
                 <td>

@@ -10,7 +10,7 @@
 const PLAN_TEMPLATES = [
   {
     type: 'website',
-    name: 'Marketing site — same-day delivery',
+    name: 'Marketing site: same-day delivery',
     summary: 'Single-day landing site or small marketing site. Discovery to live in under 24 hours.',
     phases: [
       {
@@ -59,7 +59,7 @@ const PLAN_TEMPLATES = [
 
   {
     type: 'automation',
-    name: 'AI automation — workflow build',
+    name: 'AI automation: workflow build',
     summary: 'Single-purpose AI workflow live in a few days. Pattern: ingest → reason → act → notify.',
     phases: [
       {
@@ -211,7 +211,7 @@ const PLAN_TEMPLATES = [
 
   {
     type: 'platform',
-    name: 'Full platform — multi-tenant',
+    name: 'Full platform: multi-tenant',
     summary: 'Multi-tenant platform with multiple user roles, billing, and ongoing iteration.',
     phases: [
       {

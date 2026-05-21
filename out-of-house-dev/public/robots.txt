@@ -1,3 +1,8 @@
-# https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+
+Disallow: /app/
+Disallow: /auth/
+Disallow: /password-reset
+
+Sitemap: https://out-of-house.dev/sitemap.xml

@@ -8,10 +8,15 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>
+  </React.StrictMode>,
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
+
+if (typeof window !== 'undefined') {
+  window.__OOH_REPORT_ERROR__ = (error, info) => {
+    // Plug Sentry / Logtail here once configured.
+    // eslint-disable-next-line no-console
+    if (process.env.NODE_ENV !== 'production') console.error('[boundary]', error, info);
+  };
+}

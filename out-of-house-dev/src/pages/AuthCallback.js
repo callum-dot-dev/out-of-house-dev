@@ -8,31 +8,31 @@ const AuthCallback = () => {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    let attempts = 0;
+    const maxAttempts = 6;
+
+    const probe = async () => {
+      attempts += 1;
       const { data, error: err } = await supabase.auth.getSession();
       if (cancelled) return;
-      if (err) {
-        setError(err.message);
-        return;
-      }
+      if (err) { setError(err.message); return; }
       if (data.session) {
         navigate('/app', { replace: true });
+      } else if (attempts < maxAttempts) {
+        setTimeout(probe, 350);
       } else {
-        // Sometimes Supabase needs a tick to settle the URL hash
-        setTimeout(async () => {
-          const { data: d2 } = await supabase.auth.getSession();
-          if (d2.session) navigate('/app', { replace: true });
-          else navigate('/login', { replace: true });
-        }, 800);
+        navigate('/login', { replace: true });
       }
-    })();
+    };
+
+    probe();
     return () => { cancelled = true; };
   }, [navigate]);
 
   return (
     <div className="auth-page">
-      <div className="auth-card">
-        <div className="app-loader-dot" />
+      <div className="auth-card auth-callback">
+        <div className="app-loader-dots"><span /><span /><span /></div>
         <h1 className="auth-title">{error ? 'Sign-in error' : 'Signing you in…'}</h1>
         {error && <p className="auth-error">{error}</p>}
       </div>

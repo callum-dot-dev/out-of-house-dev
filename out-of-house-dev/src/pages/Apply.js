@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import Captcha from '../components/Captcha';
 
 const PROJECT_TYPES = [
   { value: 'website',          label: 'Website / landing page' },
@@ -11,8 +12,19 @@ const PROJECT_TYPES = [
   { value: 'other',            label: 'Something else' },
 ];
 
-const BUDGETS = ['< £1,000', '£1,000 – £5,000', '£5,000 – £20,000', '£20,000+'];
-const TIMELINES = ['ASAP', 'Within a month', '1–3 months', 'Just exploring'];
+const BUDGETS = ['Under £1,000', '£1,000 to £5,000', '£5,000 to £20,000', '£20,000+'];
+const TIMELINES = ['ASAP', 'Within a month', '1 to 3 months', 'Just exploring'];
+
+const readUtm = () => {
+  try {
+    const params = new URLSearchParams(window.location.search.replace('?', ''));
+    return {
+      utm_source: params.get('utm_source') || '',
+      utm_medium: params.get('utm_medium') || '',
+      utm_campaign: params.get('utm_campaign') || '',
+    };
+  } catch { return {}; }
+};
 
 const initial = {
   full_name: '', email: '', company: '', phone: '',
@@ -22,22 +34,26 @@ const initial = {
 
 const Apply = () => {
   const [form, setForm] = useState(initial);
+  const [captchaToken, setCaptchaToken] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
 
-  const update = (k) => (e) => setForm(prev => ({ ...prev, [k]: e.target.value }));
+  const update = (k) => (e) => setForm((prev) => ({ ...prev, [k]: e.target.value }));
 
   const submit = async (e) => {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
-    const { error: err } = await supabase.from('applications').insert([form]);
+    const payload = {
+      ...form,
+      ...readUtm(),
+      captcha_token: captchaToken,
+      user_agent: navigator.userAgent,
+    };
+    const { error: err } = await supabase.from('applications').insert([payload]);
     setSubmitting(false);
-    if (err) {
-      setError(err.message);
-      return;
-    }
+    if (err) { setError(err.message); return; }
     setSubmitted(true);
   };
 
@@ -48,7 +64,7 @@ const Apply = () => {
           <div className="eyebrow">Application received</div>
           <h1 className="auth-title">Thanks, {form.full_name.split(' ')[0]}.</h1>
           <p className="auth-lead">
-            We've got your details. We'll reach out within 48 hours to book a discovery call.
+            We've got your details. We'll reach out within one business day to book a discovery call.
             If we're a fit, we'll create your account so you can log in and follow the build live.
           </p>
           <div className="auth-actions">
@@ -62,18 +78,17 @@ const Apply = () => {
   return (
     <div className="auth-page">
       <div className="auth-card auth-card-wide">
-        <Link to="/" className="auth-back">← Back to home</Link>
+        <Link to="/" className="auth-back">‹ Back to home</Link>
         <div className="eyebrow">Apply to work with us</div>
         <h1 className="auth-title">Tell us about the project.</h1>
         <p className="auth-lead">
-          Quick intake form. We'll review it, book a call to dig into the detail, and if we're a fit we'll
-          set up your client account so you can follow the build inside this site.
+          A quick form. We review, book a call, and if it's a fit we spin up your client account so you can follow the build inside this site.
         </p>
 
         {!isSupabaseConfigured && (
           <div className="auth-banner">
             Supabase isn't configured yet. Add your <code>REACT_APP_SUPABASE_URL</code> and{' '}
-            <code>REACT_APP_SUPABASE_ANON_KEY</code> to <code>.env.local</code> &mdash; see README.
+            <code>REACT_APP_SUPABASE_ANON_KEY</code> to <code>.env.local</code>. See README.
           </div>
         )}
 
@@ -95,14 +110,14 @@ const Apply = () => {
             </label>
             <label>
               <span>Phone (optional)</span>
-              <input value={form.phone} onChange={update('phone')} />
+              <input value={form.phone} onChange={update('phone')} type="tel" />
             </label>
           </div>
 
           <label>
             <span>What are we building?</span>
             <select value={form.project_type} onChange={update('project_type')}>
-              {PROJECT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+              {PROJECT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </label>
 
@@ -121,13 +136,13 @@ const Apply = () => {
             <label>
               <span>Budget</span>
               <select value={form.budget_range} onChange={update('budget_range')}>
-                {BUDGETS.map(b => <option key={b}>{b}</option>)}
+                {BUDGETS.map((b) => <option key={b}>{b}</option>)}
               </select>
             </label>
             <label>
               <span>Timeline</span>
               <select value={form.timeline} onChange={update('timeline')}>
-                {TIMELINES.map(t => <option key={t}>{t}</option>)}
+                {TIMELINES.map((t) => <option key={t}>{t}</option>)}
               </select>
             </label>
           </div>
@@ -136,6 +151,8 @@ const Apply = () => {
             <span>How did you find us? (optional)</span>
             <input value={form.source} onChange={update('source')} placeholder="Referral, search, social..." />
           </label>
+
+          <Captcha onToken={setCaptchaToken} />
 
           {error && <div className="auth-error">{error}</div>}
 

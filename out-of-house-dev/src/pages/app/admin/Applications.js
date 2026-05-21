@@ -66,7 +66,7 @@ const Applications = () => {
       const { error: otpErr } = await supabase.auth.signInWithOtp({
         email: active.email,
         options: {
-          emailRedirectTo: `${window.location.origin}/#/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           shouldCreateUser: true,
           data: { full_name: active.full_name, role: 'client' },
         },
@@ -85,7 +85,7 @@ const Applications = () => {
     // 4. Create the project
     const { error: projErr } = await supabase.from('projects').insert([{
       client_id: clientId,
-      name: active.company ? `${active.company} — ${TYPE_LABELS[active.project_type]}` : `${active.full_name}'s ${TYPE_LABELS[active.project_type]}`,
+      name: active.company ? `${active.company} · ${TYPE_LABELS[active.project_type]}` : `${active.full_name}'s ${TYPE_LABELS[active.project_type]}`,
       project_type: active.project_type,
       description: active.project_description,
       created_from_application_id: active.id,
@@ -175,12 +175,12 @@ const Applications = () => {
               <h2>{active.full_name}</h2>
               <div className="kv-grid">
                 <div><span>Email</span><strong>{active.email}</strong></div>
-                <div><span>Company</span><strong>{active.company || '—'}</strong></div>
-                <div><span>Phone</span><strong>{active.phone || '—'}</strong></div>
+                <div><span>Company</span><strong>{active.company || '–'}</strong></div>
+                <div><span>Phone</span><strong>{active.phone || '–'}</strong></div>
                 <div><span>Project</span><strong>{TYPE_LABELS[active.project_type]}</strong></div>
-                <div><span>Budget</span><strong>{active.budget_range || '—'}</strong></div>
-                <div><span>Timeline</span><strong>{active.timeline || '—'}</strong></div>
-                <div><span>Source</span><strong>{active.source || '—'}</strong></div>
+                <div><span>Budget</span><strong>{active.budget_range || '–'}</strong></div>
+                <div><span>Timeline</span><strong>{active.timeline || '–'}</strong></div>
+                <div><span>Source</span><strong>{active.source || '–'}</strong></div>
                 <div><span>Submitted</span><strong>{new Date(active.created_at).toLocaleString()}</strong></div>
               </div>
               <div className="app-detail-block">

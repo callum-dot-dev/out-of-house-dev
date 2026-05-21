@@ -11,7 +11,7 @@ const BookCall = () => {
         <div>
           <div className="eyebrow">Book a call</div>
           <h1 className="app-h1">Pick a time that suits you.</h1>
-          <p className="app-lead">We use Cal.com to keep scheduling simple. Pick a slot &mdash; we'll see you there.</p>
+          <p className="app-lead">Slots open this week and next. Sub-30 minute calls, no questionnaires.</p>
         </div>
       </div>
 

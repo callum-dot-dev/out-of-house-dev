@@ -1,40 +1,54 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+
+const STORAGE_KEY = 'ooh.calculator.v1';
 
 const BUILD_TYPES = [
-  { id: 'website',   label: 'Website',         base: 500,  unit: 'page',    perUnit: 150, sub: 'from £500' },
-  { id: 'automation', label: 'AI Automation',  base: 750,  unit: 'workflow', perUnit: 400, sub: 'from £750' },
-  { id: 'webapp',    label: 'Web App / MVP',   base: 2500, unit: 'feature', perUnit: 600, sub: 'from £2,500' },
-  { id: 'custom',    label: 'Custom Software', base: 3500, unit: 'module',  perUnit: 800, sub: 'from £3,500' },
+  { id: 'website',    label: 'Website',         base: 500,  unit: 'page',     perUnit: 150, sub: 'from £500' },
+  { id: 'automation', label: 'AI automation',   base: 750,  unit: 'workflow', perUnit: 400, sub: 'from £750' },
+  { id: 'webapp',     label: 'Web app / MVP',   base: 2500, unit: 'feature',  perUnit: 600, sub: 'from £2,500' },
+  { id: 'custom',     label: 'Custom software', base: 3500, unit: 'module',   perUnit: 800, sub: 'from £3,500' },
 ];
 
 const ADDONS = [
-  { id: 'hosting',  label: 'Hosting & maintenance',  detail: 'We host on IONOS + keep it patched, fast, and live', oneOff: 0,    monthly: 100 },
-  { id: 'ai',       label: 'Built-in AI features',    detail: 'AI-powered features built into the product',     oneOff: 600,  monthly: 0 },
-  { id: 'auth',     label: 'Auth & payments',          detail: 'User accounts, Stripe checkout, subscriptions',       oneOff: 900,  monthly: 0 },
-  { id: 'cms',      label: 'CMS / content editing',    detail: 'You update copy and images without us',               oneOff: 400,  monthly: 0 },
+  { id: 'hosting', label: 'Hosting and maintenance',  detail: 'We host on IONOS, keep it patched, fast, and live', oneOff: 0,   monthly: 100 },
+  { id: 'ai',      label: 'Built-in AI features',     detail: 'AI-powered features baked into the product',        oneOff: 600, monthly: 0 },
+  { id: 'auth',    label: 'Auth and payments',         detail: 'User accounts, Stripe checkout, subscriptions',     oneOff: 900, monthly: 0 },
+  { id: 'cms',     label: 'CMS / content editing',     detail: 'Update copy and images without us',                 oneOff: 400, monthly: 0 },
 ];
 
 const SCOPE_LABELS = {
-  website:    n => `${n} page${n === 1 ? '' : 's'}`,
-  automation: n => `${n} workflow${n === 1 ? '' : 's'}`,
-  webapp:     n => `${n} core feature${n === 1 ? '' : 's'}`,
-  custom:     n => `${n} module${n === 1 ? '' : 's'}`,
+  website:    (n) => `${n} page${n === 1 ? '' : 's'}`,
+  automation: (n) => `${n} workflow${n === 1 ? '' : 's'}`,
+  webapp:     (n) => `${n} core feature${n === 1 ? '' : 's'}`,
+  custom:     (n) => `${n} module${n === 1 ? '' : 's'}`,
 };
 
-const fmt = n => '£' + n.toLocaleString('en-GB');
+const fmt = (n) => '£' + n.toLocaleString('en-GB');
+
+const loadInitial = () => {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    return parsed;
+  } catch { return null; }
+};
 
 const PricingCalculator = () => {
-  const [type, setType] = useState('website');
-  const [units, setUnits] = useState(1);
-  const [addons, setAddons] = useState({ hosting: true });
+  const persisted = loadInitial();
+  const [type, setType] = useState(persisted?.type || 'website');
+  const [units, setUnits] = useState(persisted?.units || 1);
+  const [addons, setAddons] = useState(persisted?.addons || { hosting: true });
 
-  const buildType = BUILD_TYPES.find(b => b.id === type);
+  const buildType = BUILD_TYPES.find((b) => b.id === type);
 
   const { oneOff, monthly } = useMemo(() => {
     const base = buildType.base + Math.max(0, units - 1) * buildType.perUnit;
     let oneOffSum = base;
     let monthlySum = 0;
-    ADDONS.forEach(a => {
+    ADDONS.forEach((a) => {
       if (addons[a.id]) {
         oneOffSum += a.oneOff;
         monthlySum += a.monthly;
@@ -43,12 +57,28 @@ const PricingCalculator = () => {
     return { oneOff: oneOffSum, monthly: monthlySum };
   }, [buildType, units, addons]);
 
-  const toggleAddon = id => setAddons(prev => ({ ...prev, [id]: !prev[id] }));
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ type, units, addons }));
+    } catch { /* ignore */ }
+  }, [type, units, addons]);
 
-  const handleTypeChange = id => {
+  const toggleAddon = (id) => setAddons((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const handleTypeChange = (id) => {
     setType(id);
     setUnits(1);
   };
+
+  const applyQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set('utm_source', 'calculator');
+    params.set('quote_type', type);
+    params.set('quote_units', String(units));
+    params.set('quote_oneoff', String(oneOff));
+    if (monthly > 0) params.set('quote_monthly', String(monthly));
+    return params.toString();
+  }, [type, units, oneOff, monthly]);
 
   return (
     <div className="calculator">
@@ -56,7 +86,7 @@ const PricingCalculator = () => {
         <div className="calc-group">
           <div className="calc-label">What are we building?</div>
           <div className="calc-options">
-            {BUILD_TYPES.map(b => (
+            {BUILD_TYPES.map((b) => (
               <button
                 key={b.id}
                 type="button"
@@ -71,7 +101,7 @@ const PricingCalculator = () => {
         </div>
 
         <div className="calc-group">
-          <div className="calc-label">Scope &mdash; {SCOPE_LABELS[type](units)}</div>
+          <div className="calc-label">Scope: {SCOPE_LABELS[type](units)}</div>
           <div className="calc-slider-row">
             <input
               type="range"
@@ -79,7 +109,7 @@ const PricingCalculator = () => {
               max="10"
               step="1"
               value={units}
-              onChange={e => setUnits(Number(e.target.value))}
+              onChange={(e) => setUnits(Number(e.target.value))}
               className="calc-slider"
               aria-label="Scope size"
             />
@@ -90,23 +120,16 @@ const PricingCalculator = () => {
         <div className="calc-group">
           <div className="calc-label">Add-ons</div>
           <div className="calc-checks">
-            {ADDONS.map(a => (
-              <label
-                key={a.id}
-                className={`calc-check ${addons[a.id] ? 'active' : ''}`}
-              >
-                <input
-                  type="checkbox"
-                  checked={!!addons[a.id]}
-                  onChange={() => toggleAddon(a.id)}
-                />
+            {ADDONS.map((a) => (
+              <label key={a.id} className={`calc-check ${addons[a.id] ? 'active' : ''}`}>
+                <input type="checkbox" checked={!!addons[a.id]} onChange={() => toggleAddon(a.id)} />
                 <div className="calc-check-text">
                   <strong>{a.label}</strong>
                   <span>
                     {a.detail}
                     {' · '}
                     {a.oneOff > 0 && <>+{fmt(a.oneOff)}</>}
-                    {a.oneOff > 0 && a.monthly > 0 && ' & '}
+                    {a.oneOff > 0 && a.monthly > 0 && ' and '}
                     {a.monthly > 0 && <>+{fmt(a.monthly)}/m</>}
                   </span>
                 </div>
@@ -127,13 +150,18 @@ const PricingCalculator = () => {
         <div className="calc-result-summary">
           {buildType.label.toLowerCase()} build, {SCOPE_LABELS[type](units)}
           {Object.values(addons).some(Boolean) && (
-            <>, with {ADDONS.filter(a => addons[a.id]).map(a => a.label.toLowerCase()).join(', ')}</>
+            <>, with {ADDONS.filter((a) => addons[a.id]).map((a) => a.label.toLowerCase()).join(', ')}</>
           )}.
           {' '}Final quote confirmed within 24 hours of a call.
         </div>
-        <a href="https://cal.com/out-of-house.dev" target="_blank" rel="noopener noreferrer">
-          <button type="button">Lock in this quote →</button>
-        </a>
+        <div className="calc-result-actions">
+          <a href="https://cal.com/out-of-house.dev" target="_blank" rel="noopener noreferrer">
+            <button type="button" className="primary-btn"><span>Lock in this quote</span></button>
+          </a>
+          <Link to={`/apply?${applyQuery}`}>
+            <button type="button" className="secondary-btn"><span>Apply with this scope</span></button>
+          </Link>
+        </div>
       </div>
     </div>
   );
