@@ -6,14 +6,20 @@
 // No npm dependency — uses headless --print-to-pdf.
 //
 // Usage:
-//   node scripts/build-roadmap-pdf.js
+//   node scripts/build-roadmap-pdf.js                         # default v3 roadmap
+//   node scripts/build-roadmap-pdf.js path/to.html path/to.pdf  # any doc
 
 const { execFileSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const HTML = path.resolve(__dirname, '..', 'docs', 'roadmap', 'out-of-house-dev-roadmap.html');
-const PDF  = path.resolve(__dirname, '..', 'docs', 'roadmap', 'out-of-house-dev-roadmap.pdf');
+const DEFAULT_HTML = path.resolve(__dirname, '..', 'docs', 'roadmap', 'out-of-house-dev-roadmap.html');
+const DEFAULT_PDF  = path.resolve(__dirname, '..', 'docs', 'roadmap', 'out-of-house-dev-roadmap.pdf');
+
+const argHtml = process.argv[2];
+const argPdf  = process.argv[3];
+const HTML = argHtml ? path.resolve(argHtml) : DEFAULT_HTML;
+const PDF  = argPdf  ? path.resolve(argPdf)  : (argHtml ? HTML.replace(/\.html?$/i, '.pdf') : DEFAULT_PDF);
 
 if (!fs.existsSync(HTML)) {
   console.error(`Missing HTML at ${HTML}`);

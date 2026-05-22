@@ -1,0 +1,1514 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>out-of-house.dev — Internal Architecture &amp; Delivery Toolchain</title>
+<style>
+  :root {
+    --bg: #fbfaf8;
+    --ink: #11140f;
+    --ink-soft: #292a25;
+    --muted: #6b6b66;
+    --border: rgba(20, 20, 15, 0.10);
+    --border-strong: rgba(20, 20, 15, 0.18);
+    --accent: #2bbf86;
+    --accent-deep: #1f8a60;
+    --accent-soft: rgba(43, 191, 134, 0.10);
+    --danger: #c44a3a;
+    --danger-soft: rgba(196, 74, 58, 0.10);
+    --warning: #c98a32;
+    --warning-soft: rgba(201, 138, 50, 0.10);
+    --info: #4a72c4;
+    --info-soft: rgba(74, 114, 196, 0.10);
+    --dark: #121413;
+    --dark-ink: #f4f3ef;
+    --tweak: #b35bd1;
+    --tweak-soft: rgba(179, 91, 209, 0.10);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+    font-size: 13.5px;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 { letter-spacing: -0.01em; color: var(--ink); margin: 0; }
+  h1 { font-size: 40px; line-height: 1.1; }
+  h2 { font-size: 28px; line-height: 1.15; margin-top: 4px; }
+  h3 { font-size: 16px; line-height: 1.3; }
+  h4 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-deep); margin-top: 12px; }
+  p { margin: 0 0 12px; color: var(--ink-soft); }
+  ul, ol { margin: 0 0 14px 20px; padding: 0; color: var(--ink-soft); }
+  ul li, ol li { margin-bottom: 4px; }
+  .accent { color: var(--accent-deep); }
+  .danger { color: var(--danger); }
+  .tweak { color: var(--tweak); font-weight: 600; }
+  code { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 12mm auto;
+    padding: 16mm 14mm;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 4px 22px rgba(0,0,0,0.08);
+    page-break-after: always;
+    position: relative;
+  }
+  .page:last-of-type { page-break-after: auto; }
+  .page-num {
+    position: absolute;
+    bottom: 8mm;
+    right: 14mm;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+  .page-foot-brand {
+    position: absolute;
+    bottom: 8mm;
+    left: 14mm;
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .page-title {
+    position: absolute;
+    top: 6mm;
+    left: 14mm;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent-deep); font-weight: 600; }
+
+  .banner {
+    margin: -16mm -14mm 12mm;
+    padding: 14mm 14mm 8mm;
+    background: var(--ink);
+    color: var(--dark-ink);
+  }
+  .banner h2 { color: var(--dark-ink); }
+  .banner .eyebrow { color: var(--accent); }
+  .banner p { color: rgba(244,243,239,0.7); }
+
+  .cover {
+    background: linear-gradient(160deg, var(--ink) 0%, #1d2820 100%);
+    color: var(--dark-ink);
+    padding: 28mm 14mm;
+  }
+  .cover .brand-mark {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--accent);
+    font-size: 15px;
+    margin-bottom: 32mm;
+  }
+  .cover h1 { color: var(--dark-ink); font-size: 48px; max-width: 88%; }
+  .cover .lead { color: rgba(244,243,239,0.78); font-size: 16px; max-width: 75%; margin-top: 16px; }
+  .cover .meta {
+    margin-top: 30mm;
+    display: flex;
+    gap: 30px;
+    color: rgba(244,243,239,0.55);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .cover .meta strong { color: rgba(244,243,239,0.95); display: block; margin-bottom: 4px; }
+  .cover .index {
+    margin-top: 16mm;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px 30px;
+    color: rgba(244,243,239,0.62);
+    font-size: 11.5px;
+  }
+  .cover .index span { display: inline-block; min-width: 26px; color: var(--accent); margin-right: 6px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+  .card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: #fff;
+  }
+  .card-soft { background: var(--bg); }
+  .card h3 { margin-bottom: 4px; }
+
+  .pill { display: inline-block; font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .pill-accent { background: var(--accent-soft); color: var(--accent-deep); }
+  .pill-danger { background: var(--danger-soft); color: var(--danger); }
+  .pill-warn   { background: var(--warning-soft); color: var(--warning); }
+  .pill-info   { background: var(--info-soft); color: var(--info); }
+  .pill-tweak  { background: var(--tweak-soft); color: var(--tweak); }
+  .pill-muted  { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  th, td { border-bottom: 1px solid var(--border); padding: 7px 6px; text-align: left; vertical-align: top; }
+  th { background: var(--bg); color: var(--ink); font-weight: 600; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; }
+  td.num { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  .diagram { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin: 8px 0 14px; }
+  .diagram-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 10.5px; color: var(--muted); }
+  .legend-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+
+  .tweak-note {
+    border-left: 3px solid var(--tweak);
+    background: var(--tweak-soft);
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 8px 0;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+  .tweak-note strong { color: var(--tweak); }
+
+  .manual-note {
+    border-left: 3px solid var(--danger);
+    background: var(--danger-soft);
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 8px 0;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+  .manual-note strong { color: var(--danger); }
+
+  blockquote {
+    border-left: 3px solid var(--accent);
+    margin: 10px 0;
+    padding: 6px 14px;
+    color: var(--ink-soft);
+    background: var(--accent-soft);
+    border-radius: 4px;
+    font-size: 11.5px;
+  }
+
+  @media print {
+    body { background: #fff; }
+    .page { box-shadow: none; margin: 0; border-radius: 0; width: 210mm; min-height: 297mm; padding: 16mm 14mm; }
+  }
+  @page { size: A4; margin: 0; }
+</style>
+</head>
+<body>
+
+<!-- ===================== COVER ===================== -->
+<section class="page cover">
+  <div class="brand-mark">{out-of-house.dev}</div>
+  <h1>Internal Architecture &amp; Delivery Toolchain</h1>
+  <p class="lead">How we actually deliver every customer-facing service — the internal tools, the agents, the integrations, and the per-customer "tweak knobs" that let one delivery toolchain produce bespoke work for every client without writing new code.</p>
+
+  <div class="meta">
+    <div><strong>Document</strong>Internal Ops Doc v1.0</div>
+    <div><strong>Date</strong>22 May 2026</div>
+    <div><strong>Companion</strong>v3 Roadmap</div>
+    <div><strong>Audience</strong>You + future team</div>
+  </div>
+
+  <div class="index">
+    <div><span>01</span>The factory floor — internal services</div>
+    <div><span>09</span>Coaching · 1:1 + courses</div>
+    <div><span>02</span>How customisation stays automated</div>
+    <div><span>10</span>SaaS ops (LogoVault)</div>
+    <div><span>03</span>Master mapping table</div>
+    <div><span>11</span>Lead engine (sold + internal)</div>
+    <div><span>04</span>AI automations · delivery</div>
+    <div><span>12</span>AISEO programme · delivery</div>
+    <div><span>05</span>Websites &amp; landing pages</div>
+    <div><span>13</span>The tweak layer in detail</div>
+    <div><span>06</span>Web apps &amp; SaaS builds</div>
+    <div><span>14</span>MCP &amp; agent inventory</div>
+    <div><span>07</span>Custom internal software</div>
+    <div><span>15</span>Adding a new service</div>
+    <div><span>08</span>Maintenance retainer</div>
+    <div><span>16</span>Cost-to-serve breakdown</div>
+  </div>
+</section>
+
+<!-- ===================== 01 — THE FACTORY FLOOR ===================== -->
+<section class="page">
+  <span class="page-title">01 · the factory floor</span>
+  <div class="banner">
+    <div class="eyebrow">01 · The factory floor</div>
+    <h2>Every internal tool, grouped by job.</h2>
+    <p>This is what we own (or rent) to actually deliver work. Every customer-facing service composes a subset of this list. Nothing custom-built lives outside this map.</p>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">The internal toolchain — eight layers</div>
+    <svg viewBox="0 0 760 540" width="100%" xmlns="http://www.w3.org/2000/svg" role="img">
+      <defs>
+        <style>
+          .ll  { font: 600 11px Inter, sans-serif; fill: #11140f; }
+          .lll { font: 9px Inter, sans-serif; fill: #6b6b66; }
+          .lay { font: 10px Inter, sans-serif; fill: #6b6b66; letter-spacing: 0.10em; text-transform: uppercase; }
+        </style>
+      </defs>
+
+      <!-- Layer 1: Source of truth -->
+      <text class="lay" x="20" y="20">1 · Source of truth (always-on)</text>
+      <rect x="20" y="28" width="720" height="50" rx="6" fill="#fff" stroke="rgba(20,20,15,0.15)"/>
+      <g><rect x="32" y="40" width="120" height="28" rx="5" fill="#1f8a60" opacity="0.14" stroke="#1f8a60"/><text class="ll" x="92" y="58" text-anchor="middle">Supabase Postgres</text></g>
+      <g><rect x="160" y="40" width="110" height="28" rx="5" fill="#1f8a60" opacity="0.14" stroke="#1f8a60"/><text class="ll" x="215" y="58" text-anchor="middle">GitHub</text></g>
+      <g><rect x="280" y="40" width="110" height="28" rx="5" fill="#1f8a60" opacity="0.14" stroke="#1f8a60"/><text class="ll" x="335" y="58" text-anchor="middle">IONOS DNS</text></g>
+      <g><rect x="400" y="40" width="110" height="28" rx="5" fill="#1f8a60" opacity="0.14" stroke="#1f8a60"/><text class="ll" x="455" y="58" text-anchor="middle">Supabase Storage</text></g>
+      <g><rect x="520" y="40" width="110" height="28" rx="5" fill="#1f8a60" opacity="0.14" stroke="#1f8a60"/><text class="ll" x="575" y="58" text-anchor="middle">Cloudflare CDN</text></g>
+      <g><rect x="640" y="40" width="92" height="28" rx="5" fill="#1f8a60" opacity="0.14" stroke="#1f8a60"/><text class="ll" x="686" y="58" text-anchor="middle">Stripe Sigma</text></g>
+
+      <!-- Layer 2: AI agents -->
+      <text class="lay" x="20" y="100">2 · AI agents (the workforce)</text>
+      <rect x="20" y="108" width="720" height="76" rx="6" fill="#fff" stroke="rgba(20,20,15,0.15)"/>
+      <g><rect x="32" y="120" width="125" height="26" rx="5" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/><text class="ll" x="94" y="137" text-anchor="middle">Claude Opus 4.7</text><text class="lll" x="94" y="148" text-anchor="middle">plan + build prompt</text></g>
+      <g><rect x="165" y="120" width="125" height="26" rx="5" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/><text class="ll" x="227" y="137" text-anchor="middle">Claude Sonnet 4.6</text><text class="lll" x="227" y="148" text-anchor="middle">scope, draft, review</text></g>
+      <g><rect x="298" y="120" width="125" height="26" rx="5" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/><text class="ll" x="360" y="137" text-anchor="middle">Claude Haiku 4.5</text><text class="lll" x="360" y="148" text-anchor="middle">scoring, deploy notes</text></g>
+      <g><rect x="431" y="120" width="125" height="26" rx="5" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/><text class="ll" x="493" y="137" text-anchor="middle">Claude Code (headless)</text><text class="lll" x="493" y="148" text-anchor="middle">runs the build on a worktree</text></g>
+      <g><rect x="564" y="120" width="125" height="26" rx="5" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/><text class="ll" x="627" y="137" text-anchor="middle">Cursor (manual)</text><text class="lll" x="627" y="148" text-anchor="middle">when human writes code</text></g>
+      <g><rect x="32" y="152" width="125" height="26" rx="5" fill="#2bbf86" opacity="0.06" stroke="rgba(43,191,134,0.6)"/><text class="ll" x="94" y="169" text-anchor="middle">OpenAI GPT-4o</text><text class="lll" x="94" y="180" text-anchor="middle">fallback / breadth</text></g>
+      <g><rect x="165" y="152" width="125" height="26" rx="5" fill="#2bbf86" opacity="0.06" stroke="rgba(43,191,134,0.6)"/><text class="ll" x="227" y="169" text-anchor="middle">Anthropic API</text><text class="lll" x="227" y="180" text-anchor="middle">native tool use</text></g>
+      <g><rect x="298" y="152" width="125" height="26" rx="5" fill="#2bbf86" opacity="0.06" stroke="rgba(43,191,134,0.6)"/><text class="ll" x="360" y="169" text-anchor="middle">Higgsfield MCP</text><text class="lll" x="360" y="180" text-anchor="middle">image + video gen</text></g>
+      <g><rect x="431" y="152" width="125" height="26" rx="5" fill="#2bbf86" opacity="0.06" stroke="rgba(43,191,134,0.6)"/><text class="ll" x="493" y="169" text-anchor="middle">LogoVault MCP</text><text class="lll" x="493" y="180" text-anchor="middle">we publish this</text></g>
+      <g><rect x="564" y="152" width="125" height="26" rx="5" fill="#2bbf86" opacity="0.06" stroke="rgba(43,191,134,0.6)"/><text class="ll" x="627" y="169" text-anchor="middle">Notion / Monday MCP</text><text class="lll" x="627" y="180" text-anchor="middle">project ops</text></g>
+
+      <!-- Layer 3: Workers / runtime -->
+      <text class="lay" x="20" y="206">3 · Worker runtime</text>
+      <rect x="20" y="214" width="720" height="48" rx="6" fill="#fff" stroke="rgba(20,20,15,0.15)"/>
+      <g><rect x="32" y="226" width="135" height="26" rx="5" fill="#4a72c4" opacity="0.12" stroke="#4a72c4"/><text class="ll" x="100" y="243" text-anchor="middle">Supabase Edge Fns</text></g>
+      <g><rect x="172" y="226" width="135" height="26" rx="5" fill="#4a72c4" opacity="0.12" stroke="#4a72c4"/><text class="ll" x="240" y="243" text-anchor="middle">Render / Fly</text></g>
+      <g><rect x="312" y="226" width="135" height="26" rx="5" fill="#4a72c4" opacity="0.12" stroke="#4a72c4"/><text class="ll" x="380" y="243" text-anchor="middle">Vercel (client deploys)</text></g>
+      <g><rect x="452" y="226" width="135" height="26" rx="5" fill="#4a72c4" opacity="0.12" stroke="#4a72c4"/><text class="ll" x="520" y="243" text-anchor="middle">GitHub Actions (CI)</text></g>
+      <g><rect x="592" y="226" width="140" height="26" rx="5" fill="#4a72c4" opacity="0.12" stroke="#4a72c4"/><text class="ll" x="662" y="243" text-anchor="middle">Supabase cron</text></g>
+
+      <!-- Layer 4: Comms -->
+      <text class="lay" x="20" y="282">4 · Communication</text>
+      <rect x="20" y="290" width="720" height="48" rx="6" fill="#fff" stroke="rgba(20,20,15,0.15)"/>
+      <g><rect x="32" y="302" width="120" height="26" rx="5" fill="#c98a32" opacity="0.14" stroke="#c98a32"/><text class="ll" x="92" y="319" text-anchor="middle">Resend (email)</text></g>
+      <g><rect x="160" y="302" width="120" height="26" rx="5" fill="#c98a32" opacity="0.14" stroke="#c98a32"/><text class="ll" x="220" y="319" text-anchor="middle">Cal.com</text></g>
+      <g><rect x="288" y="302" width="120" height="26" rx="5" fill="#c98a32" opacity="0.14" stroke="#c98a32"/><text class="ll" x="348" y="319" text-anchor="middle">Slack (per-client)</text></g>
+      <g><rect x="416" y="302" width="120" height="26" rx="5" fill="#c98a32" opacity="0.14" stroke="#c98a32"/><text class="ll" x="476" y="319" text-anchor="middle">Loom (recordings)</text></g>
+      <g><rect x="544" y="302" width="120" height="26" rx="5" fill="#c98a32" opacity="0.14" stroke="#c98a32"/><text class="ll" x="604" y="319" text-anchor="middle">in-app notifications</text></g>
+      <g><rect x="672" y="302" width="60" height="26" rx="5" fill="#c98a32" opacity="0.14" stroke="#c98a32"/><text class="ll" x="702" y="319" text-anchor="middle">SMS*</text></g>
+
+      <!-- Layer 5: Data acquisition -->
+      <text class="lay" x="20" y="358">5 · Data acquisition</text>
+      <rect x="20" y="366" width="720" height="48" rx="6" fill="#fff" stroke="rgba(20,20,15,0.15)"/>
+      <g><rect x="32" y="378" width="130" height="26" rx="5" fill="#b35bd1" opacity="0.12" stroke="#b35bd1"/><text class="ll" x="97" y="395" text-anchor="middle">Google Places API</text></g>
+      <g><rect x="170" y="378" width="130" height="26" rx="5" fill="#b35bd1" opacity="0.12" stroke="#b35bd1"/><text class="ll" x="235" y="395" text-anchor="middle">Companies House</text></g>
+      <g><rect x="308" y="378" width="130" height="26" rx="5" fill="#b35bd1" opacity="0.12" stroke="#b35bd1"/><text class="ll" x="373" y="395" text-anchor="middle">Reddit public</text></g>
+      <g><rect x="446" y="378" width="130" height="26" rx="5" fill="#b35bd1" opacity="0.12" stroke="#b35bd1"/><text class="ll" x="511" y="395" text-anchor="middle">News RSS</text></g>
+      <g><rect x="584" y="378" width="148" height="26" rx="5" fill="#b35bd1" opacity="0.12" stroke="#b35bd1"/><text class="ll" x="658" y="395" text-anchor="middle">LinkedIn (planned)</text></g>
+
+      <!-- Layer 6: Money -->
+      <text class="lay" x="20" y="434">6 · Payments &amp; billing</text>
+      <rect x="20" y="442" width="720" height="48" rx="6" fill="#fff" stroke="rgba(20,20,15,0.15)"/>
+      <g><rect x="32" y="454" width="170" height="26" rx="5" fill="#11140f" opacity="0.08" stroke="rgba(20,20,15,0.4)"/><text class="ll" x="117" y="471" text-anchor="middle">Stripe Checkout</text></g>
+      <g><rect x="210" y="454" width="170" height="26" rx="5" fill="#11140f" opacity="0.08" stroke="rgba(20,20,15,0.4)"/><text class="ll" x="295" y="471" text-anchor="middle">Stripe Webhooks</text></g>
+      <g><rect x="388" y="454" width="170" height="26" rx="5" fill="#11140f" opacity="0.08" stroke="rgba(20,20,15,0.4)"/><text class="ll" x="473" y="471" text-anchor="middle">Stripe Billing (subs)</text></g>
+      <g><rect x="566" y="454" width="170" height="26" rx="5" fill="#11140f" opacity="0.08" stroke="rgba(20,20,15,0.4)"/><text class="ll" x="651" y="471" text-anchor="middle">Stripe Sigma (recon.)</text></g>
+
+      <!-- Layer 7: Observability -->
+      <text class="lay" x="20" y="510">7 · Observability</text>
+      <rect x="20" y="518" width="720" height="20" rx="6" fill="#fff" stroke="rgba(20,20,15,0.15)"/>
+      <g><text class="lll" x="32" y="533">Sentry · Logtail · Supabase logs · Stripe logs · claude_runs telemetry · api_usage · aiseo_audits archive</text></g>
+    </svg>
+
+    <div class="legend">
+      <span><span class="legend-dot" style="background:#1f8a60"></span>Source of truth</span>
+      <span><span class="legend-dot" style="background:#2bbf86"></span>AI agents</span>
+      <span><span class="legend-dot" style="background:#4a72c4"></span>Runtime</span>
+      <span><span class="legend-dot" style="background:#c98a32"></span>Communication</span>
+      <span><span class="legend-dot" style="background:#b35bd1"></span>Data acquisition</span>
+      <span><span class="legend-dot" style="background:rgba(20,20,15,0.55)"></span>Payments</span>
+    </div>
+  </div>
+
+  <blockquote>Anything we do that's not on this map = a new entry on this map. We refuse to build a service that requires a tool we don't already operate. Otherwise the surface area expands faster than the senior eng can hold it.</blockquote>
+
+  <div class="page-foot-brand">{out-of-house.dev} · internal architecture</div><div class="page-num">01</div>
+</section>
+
+<!-- ===================== 02 — HOW CUSTOMISATION STAYS AUTOMATED ===================== -->
+<section class="page">
+  <span class="page-title">02 · the customisation philosophy</span>
+  <div class="banner">
+    <div class="eyebrow">02 · How customisation stays automated</div>
+    <h2>Tweaks live in data, not in code.</h2>
+    <p>Every client gets bespoke output without us writing new code. The magic is that the customisation parameters are <em>rows in the database</em>, not new files in a repo.</p>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">The tweak loop</div>
+    <svg viewBox="0 0 760 220" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="t-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a60"/>
+        </marker>
+        <style>
+          .b   { font: 600 11px Inter; fill: #11140f; }
+          .bs  { font: 9px Inter; fill: #6b6b66; }
+        </style>
+      </defs>
+
+      <g><rect x="20"  y="40" width="150" height="60" rx="8" fill="#b35bd1" opacity="0.12" stroke="#b35bd1"/>
+         <text class="b"  x="95"  y="60" text-anchor="middle">Tweak knob</text>
+         <text class="bs" x="95"  y="74" text-anchor="middle">(a row or field)</text>
+         <text class="bs" x="95"  y="86" text-anchor="middle">e.g. lead_icps.prompt</text>
+      </g>
+
+      <line x1="170" y1="70" x2="200" y2="70" stroke="#1f8a60" stroke-width="1.4" marker-end="url(#t-ar)"/>
+
+      <g><rect x="200" y="40" width="160" height="60" rx="8" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text class="b"  x="280" y="60" text-anchor="middle">Edge function reads</text>
+         <text class="bs" x="280" y="74" text-anchor="middle">the row, runs the same code</text>
+         <text class="bs" x="280" y="86" text-anchor="middle">with different inputs</text>
+      </g>
+
+      <line x1="360" y1="70" x2="390" y2="70" stroke="#1f8a60" stroke-width="1.4" marker-end="url(#t-ar)"/>
+
+      <g><rect x="390" y="40" width="160" height="60" rx="8" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text class="b"  x="470" y="60" text-anchor="middle">LLM call</text>
+         <text class="bs" x="470" y="74" text-anchor="middle">with the customer's</text>
+         <text class="bs" x="470" y="86" text-anchor="middle">prompt as system message</text>
+      </g>
+
+      <line x1="550" y1="70" x2="580" y2="70" stroke="#1f8a60" stroke-width="1.4" marker-end="url(#t-ar)"/>
+
+      <g><rect x="580" y="40" width="160" height="60" rx="8" fill="#c98a32" opacity="0.12" stroke="#c98a32"/>
+         <text class="b"  x="660" y="60" text-anchor="middle">Bespoke output</text>
+         <text class="bs" x="660" y="74" text-anchor="middle">delivered to the client</text>
+         <text class="bs" x="660" y="86" text-anchor="middle">via Slack / email / app</text>
+      </g>
+
+      <text x="380" y="140" text-anchor="middle" font-size="11" fill="#11140f" font-weight="600">No code is written. No PR is opened. No deploy is triggered.</text>
+      <text x="380" y="156" text-anchor="middle" font-size="10" fill="#6b6b66">A row changes; the next scheduled run produces a different output.</text>
+      <text x="380" y="180" text-anchor="middle" font-size="10" fill="#6b6b66">When the client wants something genuinely new, that's when we write code — and that's billed as a build.</text>
+    </svg>
+  </div>
+
+  <h3 style="margin-top:14px">Where the tweak knobs live</h3>
+
+  <table>
+    <thead><tr><th>Knob</th><th>Table / field</th><th>What it controls</th></tr></thead>
+    <tbody>
+      <tr><td>Voice prompt</td><td><code>outreach_campaigns.voice_prompt</code></td><td>How outreach drafts sound for this client.</td></tr>
+      <tr><td>ICP prompt</td><td><code>lead_icps.prompt</code></td><td>How the LLM scores leads against the client's ideal customer.</td></tr>
+      <tr><td>ICP rules</td><td><code>lead_icps.rules</code> (JSONB)</td><td>Structured filters fed to discovery adapters (e.g. <code>places_query</code>, <code>incorporation_within_days</code>).</td></tr>
+      <tr><td>Send rate</td><td><code>outreach_campaigns.send_rate_per_day</code></td><td>How aggressive the outbound cadence is.</td></tr>
+      <tr><td>Approval mode</td><td><code>outreach_campaigns.approval_mode</code></td><td><code>'manual'</code> or <code>'auto'</code> — flip on when trust is built.</td></tr>
+      <tr><td>Plan phases</td><td><code>project_plans.phases</code> (JSONB)</td><td>Per-project override of a template's standard phases.</td></tr>
+      <tr><td>Brief context</td><td><code>projects.description</code> + <code>projects.metadata</code></td><td>Passed into every claude_run for this project.</td></tr>
+      <tr><td>Repo + preview URLs</td><td><code>projects.repo_url</code>, <code>projects.preview_url</code></td><td>Where Claude Code commits + where the client reviews builds.</td></tr>
+      <tr><td>AISEO questions</td><td><code>aiseo_subscriptions.questions</code></td><td>The 30 buyer-intent queries we ask LLMs about this client.</td></tr>
+      <tr><td>AISEO engines</td><td><code>aiseo_subscriptions.engines</code></td><td>Which LLM surfaces to monitor.</td></tr>
+      <tr><td>Notification routing</td><td><code>profiles.notify_email</code> / <code>notify_in_app</code></td><td>Where the client wants to hear from us.</td></tr>
+      <tr><td>Visibility per doc</td><td><code>project_documents.visible_to_client</code></td><td>What the client sees vs. what stays internal.</td></tr>
+      <tr><td>Cohort placement</td><td><code>enrollments.cohort_id</code></td><td>Which cohort a learner joins (auto-placed by next-available).</td></tr>
+      <tr><td>Brand voice (LogoVault private)</td><td><code>logovault_brands.ai_tags</code></td><td>Per-client logo library tagging.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:14px">Three rules of the tweak layer</h3>
+  <ol>
+    <li><strong>If a tweak takes a row update, do it that way.</strong> No exceptions for "small custom changes" — the next person will ask for "just one more".</li>
+    <li><strong>If a tweak takes a code change, charge for it.</strong> That's a build, not a customisation. It enters the orchestrator pipeline like any other request.</li>
+    <li><strong>Every tweak knob has a default.</strong> A new customer is productive on day zero with the platform defaults; tweaks are optional from there.</li>
+  </ol>
+
+  <div class="page-foot-brand">{out-of-house.dev} · internal architecture</div><div class="page-num">02</div>
+</section>
+
+<!-- ===================== 03 — MASTER MAPPING TABLE ===================== -->
+<section class="page">
+  <span class="page-title">03 · master mapping</span>
+  <div class="banner">
+    <div class="eyebrow">03 · Master mapping</div>
+    <h2>Every service → every internal tool it touches.</h2>
+    <p>One page. Read horizontally to see what a service needs; read vertically to see how much we depend on a tool.</p>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:18%">Service</th>
+        <th>Supabase</th>
+        <th>Claude API</th>
+        <th>Claude Code</th>
+        <th>Stripe</th>
+        <th>Resend</th>
+        <th>Cal.com</th>
+        <th>Slack</th>
+        <th>MCPs</th>
+        <th>Data APIs</th>
+        <th>Hosting</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>AI automations</strong></td>
+        <td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>○</td><td>●</td>
+      </tr>
+      <tr>
+        <td><strong>Websites &amp; landing</strong></td>
+        <td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>○</td><td>●</td>
+      </tr>
+      <tr>
+        <td><strong>Web apps &amp; SaaS builds</strong></td>
+        <td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>○</td><td>●</td>
+      </tr>
+      <tr>
+        <td><strong>Custom internal software</strong></td>
+        <td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>○</td><td>●</td>
+      </tr>
+      <tr>
+        <td><strong>Maintenance retainer</strong></td>
+        <td>●</td><td>●</td><td>●</td><td>●</td><td>●</td><td>—</td><td>●</td><td>—</td><td>—</td><td>●</td>
+      </tr>
+      <tr>
+        <td><strong>1:1 coaching</strong></td>
+        <td>●</td><td>●</td><td>—</td><td>●</td><td>●</td><td>●</td><td>—</td><td>—</td><td>—</td><td>—</td>
+      </tr>
+      <tr>
+        <td><strong>Cohort courses</strong></td>
+        <td>●</td><td>●</td><td>—</td><td>●</td><td>●</td><td>●</td><td>●</td><td>—</td><td>—</td><td>—</td>
+      </tr>
+      <tr>
+        <td><strong>Business programmes</strong></td>
+        <td>●</td><td>●</td><td>○</td><td>●</td><td>●</td><td>●</td><td>●</td><td>○</td><td>—</td><td>—</td>
+      </tr>
+      <tr>
+        <td><strong>LogoVault SaaS</strong></td>
+        <td>●</td><td>●</td><td>—</td><td>●</td><td>—</td><td>—</td><td>—</td><td>●</td><td>—</td><td>●</td>
+      </tr>
+      <tr>
+        <td><strong>Lead engine (sold)</strong></td>
+        <td>●</td><td>●</td><td>—</td><td>●</td><td>●</td><td>○</td><td>●</td><td>—</td><td>●</td><td>●</td>
+      </tr>
+      <tr>
+        <td><strong>AISEO programme</strong></td>
+        <td>●</td><td>●</td><td>●</td><td>●</td><td>○</td><td>○</td><td>●</td><td>—</td><td>○</td><td>●</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="legend">
+    <span><strong>●</strong> primary dependency</span>
+    <span><strong>○</strong> used occasionally / per-project</span>
+    <span><strong>—</strong> not used</span>
+  </div>
+
+  <h3 style="margin-top:14px">What this reveals</h3>
+  <ul>
+    <li><strong>Supabase is universal.</strong> Every service writes to it. Losing it = losing the business.</li>
+    <li><strong>Claude API is universal too.</strong> Every service uses LLMs for something. Anthropic outage = degraded service across the board (fallback to OpenAI helps but isn't equivalent for tool use).</li>
+    <li><strong>Claude Code is build-only.</strong> Coaching and courses don't touch it; LogoVault doesn't either. That gives us a smaller blast radius if the worker fails.</li>
+    <li><strong>Slack only matters for delivery services.</strong> Per-client channels are how clients reach the engineer. SaaS and coaching don't need them.</li>
+    <li><strong>MCPs are still nascent for us.</strong> One we publish (LogoVault), several we consume occasionally (Higgsfield, Notion, Monday, Meta Ads). Mostly used as enrichments rather than load-bearing.</li>
+  </ul>
+
+  <div class="page-foot-brand">{out-of-house.dev} · internal architecture</div><div class="page-num">03</div>
+</section>
+
+<!-- ===================== 04 — AI AUTOMATIONS ===================== -->
+<section class="page">
+  <span class="page-title">04 · ai automations · delivery</span>
+  <div class="banner">
+    <div class="eyebrow">04 · AI automations · delivery toolchain</div>
+    <h2>From "we have an inbox triage problem" → live agent on the client's stack.</h2>
+    <p>Flagship service. Highest-touch initial scope; highest-automation delivery. This is the canonical pattern every other build service inherits from.</p>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">Delivery flow</div>
+    <svg viewBox="0 0 760 360" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ai-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a60"/>
+        </marker>
+        <style>
+          .stp { font: 600 10.5px Inter; fill: #11140f; }
+          .stps{ font: 9px Inter; fill: #6b6b66; }
+        </style>
+      </defs>
+
+      <!-- Top row: stages -->
+      <g><rect x="20" y="40" width="110" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text class="stp"  x="75" y="60" text-anchor="middle">01 · Apply</text>
+        <text class="stps" x="75" y="74" text-anchor="middle">/apply form</text></g>
+      <g><rect x="140" y="40" width="110" height="44" rx="6" fill="#c44a3a" opacity="0.16" stroke="#c44a3a"/>
+        <text class="stp"  x="195" y="60" text-anchor="middle">02 · Call 🔴</text>
+        <text class="stps" x="195" y="74" text-anchor="middle">Cal.com · 30 min</text></g>
+      <g><rect x="260" y="40" width="110" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text class="stp"  x="315" y="60" text-anchor="middle">03 · Scope</text>
+        <text class="stps" x="315" y="74" text-anchor="middle">Claude Sonnet</text></g>
+      <g><rect x="380" y="40" width="110" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text class="stp"  x="435" y="60" text-anchor="middle">04 · Quote</text>
+        <text class="stps" x="435" y="74" text-anchor="middle">Stripe + auth</text></g>
+      <g><rect x="500" y="40" width="110" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text class="stp"  x="555" y="60" text-anchor="middle">05 · Plan</text>
+        <text class="stps" x="555" y="74" text-anchor="middle">Claude Opus</text></g>
+      <g><rect x="620" y="40" width="110" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text class="stp"  x="675" y="60" text-anchor="middle">06 · Build</text>
+        <text class="stps" x="675" y="74" text-anchor="middle">Claude Code</text></g>
+
+      <line x1="130" y1="62" x2="140" y2="62" stroke="#1f8a60" stroke-width="1.2" marker-end="url(#ai-ar)"/>
+      <line x1="250" y1="62" x2="260" y2="62" stroke="#1f8a60" stroke-width="1.2" marker-end="url(#ai-ar)"/>
+      <line x1="370" y1="62" x2="380" y2="62" stroke="#1f8a60" stroke-width="1.2" marker-end="url(#ai-ar)"/>
+      <line x1="490" y1="62" x2="500" y2="62" stroke="#1f8a60" stroke-width="1.2" marker-end="url(#ai-ar)"/>
+      <line x1="610" y1="62" x2="620" y2="62" stroke="#1f8a60" stroke-width="1.2" marker-end="url(#ai-ar)"/>
+
+      <!-- Second row: stages 7-10 -->
+      <g><rect x="20" y="110" width="110" height="44" rx="6" fill="#c44a3a" opacity="0.16" stroke="#c44a3a"/>
+        <text class="stp"  x="75" y="130" text-anchor="middle">07 · Review 🔴</text>
+        <text class="stps" x="75" y="144" text-anchor="middle">Senior eng</text></g>
+      <g><rect x="140" y="110" width="110" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text class="stp"  x="195" y="130" text-anchor="middle">08 · Deploy</text>
+        <text class="stps" x="195" y="144" text-anchor="middle">CI / Vercel / Fly</text></g>
+      <g><rect x="260" y="110" width="110" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text class="stp"  x="315" y="130" text-anchor="middle">09 · Connect</text>
+        <text class="stps" x="315" y="144" text-anchor="middle">client's stack APIs</text></g>
+      <g><rect x="380" y="110" width="110" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text class="stp"  x="435" y="130" text-anchor="middle">10 · Evals</text>
+        <text class="stps" x="435" y="144" text-anchor="middle">automation_runs</text></g>
+      <g><rect x="500" y="110" width="230" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text class="stp"  x="615" y="130" text-anchor="middle">11 · Hand-off + 30 days post-launch fixes</text>
+        <text class="stps" x="615" y="144" text-anchor="middle">digest-weekly · activity_events · Slack channel</text></g>
+
+      <line x1="730" y1="62" x2="730" y2="100" stroke="#1f8a60" stroke-width="1.2"/>
+      <line x1="730" y1="100" x2="55" y2="100" stroke="#1f8a60" stroke-width="1.2"/>
+      <line x1="55"  y1="100" x2="55" y2="110" stroke="#1f8a60" stroke-width="1.2" marker-end="url(#ai-ar)"/>
+      <line x1="130" y1="132" x2="140" y2="132" stroke="#1f8a60" stroke-width="1.2" marker-end="url(#ai-ar)"/>
+      <line x1="250" y1="132" x2="260" y2="132" stroke="#1f8a60" stroke-width="1.2" marker-end="url(#ai-ar)"/>
+      <line x1="370" y1="132" x2="380" y2="132" stroke="#1f8a60" stroke-width="1.2" marker-end="url(#ai-ar)"/>
+      <line x1="490" y1="132" x2="500" y2="132" stroke="#1f8a60" stroke-width="1.2" marker-end="url(#ai-ar)"/>
+
+      <!-- Tweak knobs band -->
+      <rect x="20" y="190" width="720" height="60" rx="6" fill="#b35bd1" opacity="0.06" stroke="rgba(179,91,209,0.5)"/>
+      <text x="38" y="208" font-size="10" fill="#b35bd1" font-weight="700" letter-spacing="0.08em" text-transform="uppercase">Per-company tweak knobs</text>
+      <text x="38" y="225" font-size="10.5" fill="#11140f">• <tspan font-weight="600">applications.project_description</tspan> — the verbatim brief, fed into every Claude run</text>
+      <text x="38" y="240" font-size="10.5" fill="#11140f">• <tspan font-weight="600">projects.repo_url + projects.metadata</tspan> — where Claude Code commits, plus integration secrets (encrypted)</text>
+
+      <!-- Internal services band -->
+      <rect x="20" y="262" width="720" height="80" rx="6" fill="#fff" stroke="rgba(20,20,15,0.15)"/>
+      <text x="38" y="280" font-size="10" fill="#1f8a60" font-weight="700" letter-spacing="0.08em" text-transform="uppercase">Internal services in play</text>
+      <text x="38" y="298" font-size="10.5" fill="#11140f">Supabase (applications, projects, claude_runs, activity_events) · Claude Opus + Sonnet + Haiku · Claude Code headless worker</text>
+      <text x="38" y="312" font-size="10.5" fill="#11140f">Stripe Checkout (£750+ deposit) · Cal.com (kick-off call) · Slack (per-client channel) · Resend (digests)</text>
+      <text x="38" y="326" font-size="10.5" fill="#11140f">GitHub (client repo) · Vercel / Render / Fly (deploy target) · Sentry (errors) · digest-weekly cron (status emails)</text>
+    </svg>
+  </div>
+
+  <div class="tweak-note"><strong>The tweak.</strong> The customer's brief and stack appear in one place — <code>applications</code> + <code>projects</code>. The orchestrator pipeline reads the brief and the integration metadata and produces a totally different Claude Code prompt for every client. The code we wrote is constant; the output is bespoke because the input is.</div>
+
+  <div class="manual-note"><strong>Manual surfaces.</strong> The discovery call (stage 02) and the senior code review (stage 07). Both deliberate — the call is the sale, the review is the quality gate. Everything else is scheduled or trigger-driven.</div>
+
+  <div class="page-foot-brand">{out-of-house.dev} · internal architecture</div><div class="page-num">04</div>
+</section>
+
+<!-- ===================== 05 — WEBSITES ===================== -->
+<section class="page">
+  <span class="page-title">05 · websites · delivery</span>
+  <div class="banner">
+    <div class="eyebrow">05 · Websites &amp; landing pages</div>
+    <h2>Brief in the morning, live by the evening.</h2>
+    <p>The most automated build line. A starter site has a single human touchpoint — the brief call — and ships before the call recording's been transcribed.</p>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">Same-day-site toolchain</div>
+    <svg viewBox="0 0 760 320" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ws-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a60"/>
+        </marker>
+      </defs>
+
+      <g><rect x="20"  y="40" width="130" height="44" rx="6" fill="#c44a3a" opacity="0.16" stroke="#c44a3a"/>
+         <text x="85" y="60" text-anchor="middle" font-size="11" font-weight="600">01 · Brief call 🔴</text>
+         <text x="85" y="74" text-anchor="middle" font-size="9" fill="#6b6b66">Cal.com 30-min, recorded</text></g>
+
+      <g><rect x="160" y="40" width="130" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text x="225" y="60" text-anchor="middle" font-size="11" font-weight="600">02 · Transcribe</text>
+         <text x="225" y="74" text-anchor="middle" font-size="9" fill="#6b6b66">Claude Sonnet → brief</text></g>
+
+      <g><rect x="300" y="40" width="130" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text x="365" y="60" text-anchor="middle" font-size="11" font-weight="600">03 · Quote</text>
+         <text x="365" y="74" text-anchor="middle" font-size="9" fill="#6b6b66">£500 + £100/mo · Stripe</text></g>
+
+      <g><rect x="440" y="40" width="130" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text x="505" y="60" text-anchor="middle" font-size="11" font-weight="600">04 · Plan</text>
+         <text x="505" y="74" text-anchor="middle" font-size="9" fill="#6b6b66">plan_templates 'website'</text></g>
+
+      <g><rect x="580" y="40" width="150" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text x="655" y="60" text-anchor="middle" font-size="11" font-weight="600">05 · Build</text>
+         <text x="655" y="74" text-anchor="middle" font-size="9" fill="#6b6b66">Claude Code on a starter repo</text></g>
+
+      <line x1="150" y1="62" x2="160" y2="62" stroke="#1f8a60" marker-end="url(#ws-ar)"/>
+      <line x1="290" y1="62" x2="300" y2="62" stroke="#1f8a60" marker-end="url(#ws-ar)"/>
+      <line x1="430" y1="62" x2="440" y2="62" stroke="#1f8a60" marker-end="url(#ws-ar)"/>
+      <line x1="570" y1="62" x2="580" y2="62" stroke="#1f8a60" marker-end="url(#ws-ar)"/>
+
+      <g><rect x="20" y="110" width="130" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text x="85" y="130" text-anchor="middle" font-size="11" font-weight="600">06 · Assets</text>
+         <text x="85" y="144" text-anchor="middle" font-size="9" fill="#6b6b66">LogoVault MCP + Higgsfield</text></g>
+
+      <g><rect x="160" y="110" width="130" height="44" rx="6" fill="#c44a3a" opacity="0.16" stroke="#c44a3a"/>
+         <text x="225" y="130" text-anchor="middle" font-size="11" font-weight="600">07 · Review 🔴</text>
+         <text x="225" y="144" text-anchor="middle" font-size="9" fill="#6b6b66">Senior eng &lt; 15 min</text></g>
+
+      <g><rect x="300" y="110" width="130" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text x="365" y="130" text-anchor="middle" font-size="11" font-weight="600">08 · Deploy</text>
+         <text x="365" y="144" text-anchor="middle" font-size="9" fill="#6b6b66">Vercel + IONOS DNS</text></g>
+
+      <g><rect x="440" y="110" width="130" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text x="505" y="130" text-anchor="middle" font-size="11" font-weight="600">09 · Notify</text>
+         <text x="505" y="144" text-anchor="middle" font-size="9" fill="#6b6b66">Resend + in-app · "live"</text></g>
+
+      <g><rect x="580" y="110" width="150" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text x="655" y="130" text-anchor="middle" font-size="11" font-weight="600">10 · Care subscription</text>
+         <text x="655" y="144" text-anchor="middle" font-size="9" fill="#6b6b66">£100/mo Stripe recurring</text></g>
+
+      <line x1="730" y1="62" x2="730" y2="100" stroke="#1f8a60"/>
+      <line x1="730" y1="100" x2="55" y2="100" stroke="#1f8a60"/>
+      <line x1="55"  y1="100" x2="55" y2="110" stroke="#1f8a60" marker-end="url(#ws-ar)"/>
+      <line x1="150" y1="132" x2="160" y2="132" stroke="#1f8a60" marker-end="url(#ws-ar)"/>
+      <line x1="290" y1="132" x2="300" y2="132" stroke="#1f8a60" marker-end="url(#ws-ar)"/>
+      <line x1="430" y1="132" x2="440" y2="132" stroke="#1f8a60" marker-end="url(#ws-ar)"/>
+      <line x1="570" y1="132" x2="580" y2="132" stroke="#1f8a60" marker-end="url(#ws-ar)"/>
+
+      <!-- Tweak band -->
+      <rect x="20" y="180" width="720" height="120" rx="6" fill="#b35bd1" opacity="0.06" stroke="rgba(179,91,209,0.5)"/>
+      <text x="38" y="200" font-size="10" fill="#b35bd1" font-weight="700" letter-spacing="0.08em" text-transform="uppercase">Per-company tweak knobs</text>
+      <text x="38" y="218" font-size="10.5" fill="#11140f">• <tspan font-weight="600">applications.project_description</tspan> — the brief, fed verbatim into the Claude Code prompt</text>
+      <text x="38" y="234" font-size="10.5" fill="#11140f">• <tspan font-weight="600">applications.company</tspan> — drives LogoVault MCP lookup for the customer's logo</text>
+      <text x="38" y="250" font-size="10.5" fill="#11140f">• <tspan font-weight="600">projects.metadata.brand_colors</tspan> — colour palette injected into the Tailwind config of the starter repo</text>
+      <text x="38" y="266" font-size="10.5" fill="#11140f">• <tspan font-weight="600">projects.metadata.target_audience</tspan> — tone of voice + image style for Higgsfield generation</text>
+      <text x="38" y="282" font-size="10.5" fill="#11140f">• <tspan font-weight="600">project_documents.visible_to_client</tspan> — what's in the client doc room vs. our internal scratch</text>
+    </svg>
+  </div>
+
+  <h3>Internal services in play</h3>
+  <ul>
+    <li><strong>Build:</strong> Claude Code → starter site repo (Next.js + Tailwind) → Vercel deploy.</li>
+    <li><strong>Assets:</strong> LogoVault MCP for logos, Higgsfield MCP for hero imagery and team photos.</li>
+    <li><strong>Hosting:</strong> Vercel (preview) → IONOS (DNS) → live. Care plan keeps it on Vercel with us paying the bill.</li>
+    <li><strong>Care:</strong> automation_runs writes "uptime check" rows; nightly cron pings the site, alerts if down.</li>
+  </ul>
+
+  <blockquote>One starter-site template repo (private) is the seed for every starter site. Claude Code clones, edits, deploys. The whole flow is &lt; 90 minutes of senior-eng time per site — the rest is wall-clock waiting for build/deploy.</blockquote>
+
+  <div class="page-foot-brand">{out-of-house.dev} · internal architecture</div><div class="page-num">05</div>
+</section>
+
+<!-- ===================== 06 — WEB APPS / MVPs ===================== -->
+<section class="page">
+  <span class="page-title">06 · web apps · delivery</span>
+  <div class="banner">
+    <div class="eyebrow">06 · Web apps &amp; SaaS builds</div>
+    <h2>MVPs in weeks. Same toolchain, more orchestrator passes.</h2>
+    <p>The most code-heavy delivery line. Same internal stack as AI automations, but the Claude Code worker runs many more times — one per slice — and Vercel handles preview deploys per PR.</p>
+  </div>
+
+  <h3>Differences vs. the standard AI-automation pipeline</h3>
+  <table>
+    <thead><tr><th>Pipeline element</th><th>For AI automation</th><th>For web app</th></tr></thead>
+    <tbody>
+      <tr><td>Plan template</td><td><code>'automation'</code></td><td><code>'web_app'</code> — auth + billing + multi-tenant phases included</td></tr>
+      <tr><td>Claude Code runs</td><td>1–3</td><td>8–20 (one per slice)</td></tr>
+      <tr><td>Senior reviews</td><td>1–3</td><td>5–10 (one per slice)</td></tr>
+      <tr><td>Deploy target</td><td>Render / Fly worker</td><td>Vercel (PR previews + prod)</td></tr>
+      <tr><td>Database</td><td>None or client's existing</td><td>Fresh Supabase project per client</td></tr>
+      <tr><td>Auth</td><td>API-key based</td><td>Supabase Auth (email + Google)</td></tr>
+      <tr><td>Billing</td><td>Not in scope</td><td>Stripe Checkout wired in week 1</td></tr>
+      <tr><td>Status surface</td><td>activity_events feed</td><td>activity_events + per-PR preview URLs</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:14px">Tweak knobs unique to web app builds</h3>
+  <ul>
+    <li><code>projects.preview_url</code> — Vercel deployment URL, auto-updated per PR.</li>
+    <li><code>projects.metadata.tenancy</code> — <code>'single'</code> or <code>'multi'</code>. Multi-tenant triggers RLS-by-default code generation.</li>
+    <li><code>projects.metadata.auth_providers</code> — array, e.g. <code>['email','google','passkey']</code>.</li>
+    <li><code>projects.metadata.billing_model</code> — <code>'subscription'</code>, <code>'metered'</code>, or <code>'one-off'</code>. Drives Stripe wiring in the build prompt.</li>
+    <li><code>projects.metadata.ai_features</code> — list of AI features to bake in (RAG, chat, suggest, etc.).</li>
+  </ul>
+
+  <h3>Internal services in play</h3>
+  <ul>
+    <li><strong>Code:</strong> Claude Code headless worker on Render / Fly — long-running execution per slice.</li>
+    <li><strong>Repo:</strong> private GitHub repo per client; we keep admin until client takes over post-handoff.</li>
+    <li><strong>Hosting:</strong> Vercel for the front-end, Supabase for the back-end. Both transferable to client account at handoff.</li>
+    <li><strong>Observability:</strong> Sentry (errors), Supabase logs, claude_runs (LLM cost per slice).</li>
+    <li><strong>Comms:</strong> Slack channel per client, per-PR preview URLs auto-posted, weekly digest email via <code>digest-weekly</code>.</li>
+  </ul>
+
+  <div class="tweak-note"><strong>The tweak that does the most work.</strong> <code>projects.metadata.ai_features</code> — listing things like <code>['rag-over-docs','inbox-triage','recommendation-engine']</code> — gets joined to template fragments in the planner. Each named feature is a known prompt module we've already shipped before; the LLM stitches them into the project's plan.</div>
+
+  <div class="page-foot-brand">{out-of-house.dev} · internal architecture</div><div class="page-num">06</div>
+</section>
+
+<!-- ===================== 07 — INTERNAL SOFTWARE ===================== -->
+<section class="page">
+  <span class="page-title">07 · custom internal software · delivery</span>
+  <div class="banner">
+    <div class="eyebrow">07 · Custom internal software</div>
+    <h2>The spreadsheet replacement business.</h2>
+    <p>Same orchestrator pipeline. The difference is the discovery phase — we sit with operators on-site and use a structured workflow-mapping LLM session to produce the brief.</p>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">Discovery layer (the only stage that differs)</div>
+    <svg viewBox="0 0 760 240" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="is-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a60"/>
+        </marker>
+      </defs>
+
+      <g><rect x="20" y="40" width="130" height="50" rx="6" fill="#c44a3a" opacity="0.16" stroke="#c44a3a"/>
+        <text x="85" y="62" text-anchor="middle" font-size="11" font-weight="600">01 · On-site audit 🔴</text>
+        <text x="85" y="78" text-anchor="middle" font-size="9" fill="#6b6b66">1 day, senior + operators</text></g>
+
+      <g><rect x="170" y="40" width="130" height="50" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="235" y="62" text-anchor="middle" font-size="11" font-weight="600">02 · Workflow map</text>
+        <text x="235" y="78" text-anchor="middle" font-size="9" fill="#6b6b66">Sonnet builds DAG from notes</text></g>
+
+      <g><rect x="320" y="40" width="130" height="50" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="385" y="62" text-anchor="middle" font-size="11" font-weight="600">03 · Architecture</text>
+        <text x="385" y="78" text-anchor="middle" font-size="9" fill="#6b6b66">Opus drafts replace-vs-integrate</text></g>
+
+      <g><rect x="470" y="40" width="130" height="50" rx="6" fill="#c44a3a" opacity="0.16" stroke="#c44a3a"/>
+        <text x="535" y="62" text-anchor="middle" font-size="11" font-weight="600">04 · Sign-off 🔴</text>
+        <text x="535" y="78" text-anchor="middle" font-size="9" fill="#6b6b66">Senior + client owner</text></g>
+
+      <g><rect x="620" y="40" width="120" height="50" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="680" y="62" text-anchor="middle" font-size="11" font-weight="600">05 → standard build</text>
+        <text x="680" y="78" text-anchor="middle" font-size="9" fill="#6b6b66">claude-orchestrate</text></g>
+
+      <line x1="150" y1="65" x2="170" y2="65" stroke="#1f8a60" marker-end="url(#is-ar)"/>
+      <line x1="300" y1="65" x2="320" y2="65" stroke="#1f8a60" marker-end="url(#is-ar)"/>
+      <line x1="450" y1="65" x2="470" y2="65" stroke="#1f8a60" marker-end="url(#is-ar)"/>
+      <line x1="600" y1="65" x2="620" y2="65" stroke="#1f8a60" marker-end="url(#is-ar)"/>
+
+      <rect x="20" y="130" width="720" height="90" rx="6" fill="#b35bd1" opacity="0.06" stroke="rgba(179,91,209,0.5)"/>
+      <text x="38" y="148" font-size="10" fill="#b35bd1" font-weight="700" letter-spacing="0.08em" text-transform="uppercase">Per-company tweak knobs</text>
+      <text x="38" y="166" font-size="10.5" fill="#11140f">• <tspan font-weight="600">projects.metadata.workflow_dag</tspan> — JSON of the audited workflow; fed into every Claude Code build prompt for the project</text>
+      <text x="38" y="182" font-size="10.5" fill="#11140f">• <tspan font-weight="600">projects.metadata.existing_tools</tspan> — what we integrate with vs. what we replace</text>
+      <text x="38" y="198" font-size="10.5" fill="#11140f">• <tspan font-weight="600">projects.metadata.operator_personas</tspan> — who uses what UI; drives role-based access design</text>
+    </svg>
+  </div>
+
+  <h3>Internal services unique to this line</h3>
+  <ul>
+    <li><strong>Workflow capture toolkit (planned Q3 2026):</strong> a Notion template + LLM session script. Senior eng captures workflows in Notion using a structured template; an edge function extracts the DAG into JSONB on the project record.</li>
+    <li><strong>Retool / refine.dev as fallback:</strong> for very lightweight admin UIs, we use Retool with a generated config. For anything serious, we generate a custom React admin under <code>/app/admin/*</code> in the client's repo.</li>
+    <li><strong>Slack escalation bot (planned):</strong> when an operator marks a workflow as "stuck", the bot writes a feature_request and pings the engineer.</li>
+  </ul>
+
+  <div class="manual-note"><strong>Manual surfaces.</strong> The on-site audit (irreducible — we need eyes on the actual ops floor) and the architecture sign-off (the moment the client commits to the build). Everything after stage 04 is the same automated pipeline as AI automations.</div>
+
+  <div class="page-foot-brand">{out-of-house.dev} · internal architecture</div><div class="page-num">07</div>
+</section>
+
+<!-- ===================== 08 — MAINTENANCE ===================== -->
+<section class="page">
+  <span class="page-title">08 · maintenance retainer · delivery</span>
+  <div class="banner">
+    <div class="eyebrow">08 · Maintenance retainer</div>
+    <h2>The flywheel. Every retainer is a request loop running indefinitely.</h2>
+    <p>Once a client is live, this is the steady-state interface. Most of our recurring revenue. Almost zero net-new infrastructure — it reuses every system already on this map.</p>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">The retainer loop</div>
+    <svg viewBox="0 0 760 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="mt-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a60"/>
+        </marker>
+      </defs>
+
+      <g><rect x="290" y="20" width="180" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="380" y="40" text-anchor="middle" font-size="11" font-weight="600">Client posts request</text>
+        <text x="380" y="54" text-anchor="middle" font-size="9" fill="#6b6b66">in /app/projects/:id (Supabase)</text></g>
+
+      <line x1="380" y1="64" x2="380" y2="86" stroke="#1f8a60" marker-end="url(#mt-ar)"/>
+
+      <g><rect x="290" y="86" width="180" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="380" y="106" text-anchor="middle" font-size="11" font-weight="600">claude-orchestrate scopes</text>
+        <text x="380" y="120" text-anchor="middle" font-size="9" fill="#6b6b66">Sonnet · 5 min · scope_md back to client</text></g>
+
+      <line x1="380" y1="130" x2="380" y2="152" stroke="#1f8a60" marker-end="url(#mt-ar)"/>
+
+      <g><rect x="290" y="152" width="180" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="380" y="172" text-anchor="middle" font-size="11" font-weight="600">Build → review → deploy</text>
+        <text x="380" y="186" text-anchor="middle" font-size="9" fill="#6b6b66">claude-orchestrate · 2–3 day cycle</text></g>
+
+      <line x1="380" y1="196" x2="380" y2="218" stroke="#1f8a60" marker-end="url(#mt-ar)"/>
+
+      <g><rect x="290" y="218" width="180" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="380" y="238" text-anchor="middle" font-size="11" font-weight="600">activity_events + Slack ping</text>
+        <text x="380" y="252" text-anchor="middle" font-size="9" fill="#6b6b66">client sees "shipped" automatically</text></g>
+
+      <!-- Side rails -->
+      <g><rect x="20" y="86" width="200" height="44" rx="6" fill="#c98a32" opacity="0.14" stroke="#c98a32"/>
+        <text x="120" y="106" text-anchor="middle" font-size="11" font-weight="600">digest-weekly</text>
+        <text x="120" y="120" text-anchor="middle" font-size="9" fill="#6b6b66">Monday 7am UK summary email</text></g>
+
+      <g><rect x="20" y="152" width="200" height="44" rx="6" fill="#c98a32" opacity="0.14" stroke="#c98a32"/>
+        <text x="120" y="172" text-anchor="middle" font-size="11" font-weight="600">monthly_reports</text>
+        <text x="120" y="186" text-anchor="middle" font-size="9" fill="#6b6b66">PDF impact report on 1st of month</text></g>
+
+      <g><rect x="540" y="86" width="200" height="44" rx="6" fill="#c98a32" opacity="0.14" stroke="#c98a32"/>
+        <text x="640" y="106" text-anchor="middle" font-size="11" font-weight="600">Stripe Billing</text>
+        <text x="640" y="120" text-anchor="middle" font-size="9" fill="#6b6b66">monthly recurring; paused = paused</text></g>
+
+      <g><rect x="540" y="152" width="200" height="44" rx="6" fill="#c98a32" opacity="0.14" stroke="#c98a32"/>
+        <text x="640" y="172" text-anchor="middle" font-size="11" font-weight="600">automation_runs</text>
+        <text x="640" y="186" text-anchor="middle" font-size="9" fill="#6b6b66">live odometer: runs + hours saved</text></g>
+    </svg>
+  </div>
+
+  <h3>Tweak knobs (these are the retainer "configuration")</h3>
+  <ul>
+    <li><code>subscriptions.plan</code> — <code>'lite'</code> / <code>'standard'</code> / <code>'heavy'</code> — drives senior-eng hours/month + response SLA.</li>
+    <li><code>projects.health_status</code> — <code>'healthy'</code> / <code>'degraded'</code> / <code>'down'</code> — auto-updated by uptime ping; drives Slack alert priority.</li>
+    <li><code>feature_requests.priority</code> — client-set; surfaces in order in the dev board.</li>
+    <li><code>projects.metadata.on_call</code> — boolean. Premium retainers get out-of-hours response.</li>
+    <li><code>profiles.notify_email</code> / <code>notify_in_app</code> — per-user preference, no separate config to maintain.</li>
+  </ul>
+
+  <blockquote>The retainer is just the platform running on autopilot for one specific client. No new internal tools, no new templates. Tools we built for delivery become the daily interface for the relationship.</blockquote>
+
+  <div class="page-foot-brand">{out-of-house.dev} · internal architecture</div><div class="page-num">08</div>
+</section>
+
+<!-- ===================== 09 — COACHING + COURSES ===================== -->
+<section class="page">
+  <span class="page-title">09 · coaching + courses · delivery</span>
+  <div class="banner">
+    <div class="eyebrow">09 · Coaching &amp; courses</div>
+    <h2>The education stack — same database, very different toolchain.</h2>
+    <p>Almost no Claude Code usage. Much more Cal.com, Stripe, Slack, Resend. The learner lifecycle uses the same Supabase schema but doesn't touch the build pipeline.</p>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">1:1 coaching toolchain</div>
+    <svg viewBox="0 0 760 130" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="c-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a60"/></marker></defs>
+      <g><rect x="20" y="30" width="110" height="40" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="75" y="48" text-anchor="middle" font-size="11" font-weight="600">/coaching page</text>
+        <text x="75" y="62" text-anchor="middle" font-size="9" fill="#6b6b66">Stripe checkout</text></g>
+      <g><rect x="140" y="30" width="110" height="40" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="195" y="48" text-anchor="middle" font-size="11" font-weight="600">stripe-webhook</text>
+        <text x="195" y="62" text-anchor="middle" font-size="9" fill="#6b6b66">coaching_bookings</text></g>
+      <g><rect x="260" y="30" width="110" height="40" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="315" y="48" text-anchor="middle" font-size="11" font-weight="600">Cal.com hand-off</text>
+        <text x="315" y="62" text-anchor="middle" font-size="9" fill="#6b6b66">slot confirmed</text></g>
+      <g><rect x="380" y="30" width="110" height="40" rx="6" fill="#c44a3a" opacity="0.16" stroke="#c44a3a"/>
+        <text x="435" y="48" text-anchor="middle" font-size="11" font-weight="600">Session 🔴</text>
+        <text x="435" y="62" text-anchor="middle" font-size="9" fill="#6b6b66">Zoom + Loom</text></g>
+      <g><rect x="500" y="30" width="110" height="40" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="555" y="48" text-anchor="middle" font-size="11" font-weight="600">Recording</text>
+        <text x="555" y="62" text-anchor="middle" font-size="9" fill="#6b6b66">→ Supabase Storage</text></g>
+      <g><rect x="620" y="30" width="110" height="40" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="675" y="48" text-anchor="middle" font-size="11" font-weight="600">Follow-up</text>
+        <text x="675" y="62" text-anchor="middle" font-size="9" fill="#6b6b66">Sonnet drafts email</text></g>
+      <line x1="130" y1="50" x2="140" y2="50" stroke="#1f8a60" marker-end="url(#c-ar)"/>
+      <line x1="250" y1="50" x2="260" y2="50" stroke="#1f8a60" marker-end="url(#c-ar)"/>
+      <line x1="370" y1="50" x2="380" y2="50" stroke="#1f8a60" marker-end="url(#c-ar)"/>
+      <line x1="490" y1="50" x2="500" y2="50" stroke="#1f8a60" marker-end="url(#c-ar)"/>
+      <line x1="610" y1="50" x2="620" y2="50" stroke="#1f8a60" marker-end="url(#c-ar)"/>
+    </svg>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">Cohort course toolchain</div>
+    <svg viewBox="0 0 760 160" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="cc-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a60"/></marker></defs>
+      <g><rect x="20" y="20" width="110" height="40" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="75" y="38" text-anchor="middle" font-size="11" font-weight="600">/courses</text>
+        <text x="75" y="52" text-anchor="middle" font-size="9" fill="#6b6b66">Stripe checkout</text></g>
+      <g><rect x="140" y="20" width="110" height="40" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="195" y="38" text-anchor="middle" font-size="11" font-weight="600">enrolment row</text>
+        <text x="195" y="52" text-anchor="middle" font-size="9" fill="#6b6b66">cohort auto-placed</text></g>
+      <g><rect x="260" y="20" width="110" height="40" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="315" y="38" text-anchor="middle" font-size="11" font-weight="600">Slack invite</text>
+        <text x="315" y="52" text-anchor="middle" font-size="9" fill="#6b6b66">Resend ↦ cohort channel</text></g>
+      <g><rect x="380" y="20" width="110" height="40" rx="6" fill="#c44a3a" opacity="0.16" stroke="#c44a3a"/>
+        <text x="435" y="38" text-anchor="middle" font-size="11" font-weight="600">Live sessions 🔴</text>
+        <text x="435" y="52" text-anchor="middle" font-size="9" fill="#6b6b66">weekly Zoom + Loom</text></g>
+      <g><rect x="500" y="20" width="110" height="40" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="555" y="38" text-anchor="middle" font-size="11" font-weight="600">Capstone</text>
+        <text x="555" y="52" text-anchor="middle" font-size="9" fill="#6b6b66">grader (Sonnet) + senior</text></g>
+      <g><rect x="620" y="20" width="110" height="40" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="675" y="38" text-anchor="middle" font-size="11" font-weight="600">cert-issue</text>
+        <text x="675" y="52" text-anchor="middle" font-size="9" fill="#6b6b66">/verify/:code</text></g>
+      <line x1="130" y1="40" x2="140" y2="40" stroke="#1f8a60" marker-end="url(#cc-ar)"/>
+      <line x1="250" y1="40" x2="260" y2="40" stroke="#1f8a60" marker-end="url(#cc-ar)"/>
+      <line x1="370" y1="40" x2="380" y2="40" stroke="#1f8a60" marker-end="url(#cc-ar)"/>
+      <line x1="490" y1="40" x2="500" y2="40" stroke="#1f8a60" marker-end="url(#cc-ar)"/>
+      <line x1="610" y1="40" x2="620" y2="40" stroke="#1f8a60" marker-end="url(#cc-ar)"/>
+
+      <rect x="20" y="80" width="720" height="68" rx="6" fill="#b35bd1" opacity="0.06" stroke="rgba(179,91,209,0.5)"/>
+      <text x="38" y="98" font-size="10" fill="#b35bd1" font-weight="700" letter-spacing="0.08em" text-transform="uppercase">Per-learner tweak knobs</text>
+      <text x="38" y="116" font-size="10.5" fill="#11140f">• <tspan font-weight="600">enrollments.capstone_url</tspan> — what they submitted · <tspan font-weight="600">enrollments.capstone_grade</tspan> — what they earned</text>
+      <text x="38" y="132" font-size="10.5" fill="#11140f">• <tspan font-weight="600">profiles.timezone</tspan> — drives session-time formatting in emails · <tspan font-weight="600">enrollments.notes</tspan> — anything bespoke for that learner</text>
+    </svg>
+  </div>
+
+  <h3>Business programmes (£1.5k / £3.5k / £6.5k)</h3>
+  <p>Same as cohort course pipeline + a workflow audit phase at the start (reusing the internal-software audit toolkit) + Slack escalation for the client team. We sometimes spin up small Claude automations as part of the programme; those go through the standard claude-orchestrate pipeline.</p>
+
+  <div class="tweak-note"><strong>The shared insight.</strong> Coaching and courses don't need Claude Code at all (almost zero builds happen during a cohort). They lean heavily on Cal.com + Stripe + Slack + Resend. That makes the coaching line operationally simple — much fewer moving parts than a build.</div>
+
+  <div class="page-foot-brand">{out-of-house.dev} · internal architecture</div><div class="page-num">09</div>
+</section>
+
+<!-- ===================== 10 — SAAS OPS ===================== -->
+<section class="page">
+  <span class="page-title">10 · saas ops · logovault</span>
+  <div class="banner">
+    <div class="eyebrow">10 · SaaS operations (LogoVault as exemplar)</div>
+    <h2>SaaS = product running itself, with us watching.</h2>
+    <p>The most "set and forget" line. Once seeded, the only manual surfaces are DMCA takedowns and onboarding new brands above the AI tagger's confidence threshold.</p>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">LogoVault operational flow</div>
+    <svg viewBox="0 0 760 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="sa-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a60"/></marker></defs>
+
+      <text x="20" y="20" font-size="10" fill="#6b6b66" letter-spacing="0.08em" text-transform="uppercase">User-facing path</text>
+
+      <g><rect x="20"  y="32" width="120" height="40" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="80"  y="50" text-anchor="middle" font-size="11" font-weight="600">User signs up</text>
+        <text x="80"  y="64" text-anchor="middle" font-size="9" fill="#6b6b66">Supabase Auth</text></g>
+      <g><rect x="150" y="32" width="120" height="40" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="210" y="50" text-anchor="middle" font-size="11" font-weight="600">Free tier active</text>
+        <text x="210" y="64" text-anchor="middle" font-size="9" fill="#6b6b66">50 calls/day</text></g>
+      <g><rect x="280" y="32" width="120" height="40" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="340" y="50" text-anchor="middle" font-size="11" font-weight="600">Stripe upgrade</text>
+        <text x="340" y="64" text-anchor="middle" font-size="9" fill="#6b6b66">£9 / £39 / £149</text></g>
+      <g><rect x="410" y="32" width="120" height="40" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="470" y="50" text-anchor="middle" font-size="11" font-weight="600">API key issued</text>
+        <text x="470" y="64" text-anchor="middle" font-size="9" fill="#6b6b66">olv_ prefix</text></g>
+      <g><rect x="540" y="32" width="120" height="40" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="600" y="50" text-anchor="middle" font-size="11" font-weight="600">logo-search</text>
+        <text x="600" y="64" text-anchor="middle" font-size="9" fill="#6b6b66">per-call</text></g>
+      <g><rect x="670" y="32" width="70" height="40" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="705" y="50" text-anchor="middle" font-size="11" font-weight="600">api_usage</text>
+        <text x="705" y="64" text-anchor="middle" font-size="9" fill="#6b6b66">log</text></g>
+      <line x1="140" y1="52" x2="150" y2="52" stroke="#1f8a60" marker-end="url(#sa-ar)"/>
+      <line x1="270" y1="52" x2="280" y2="52" stroke="#1f8a60" marker-end="url(#sa-ar)"/>
+      <line x1="400" y1="52" x2="410" y2="52" stroke="#1f8a60" marker-end="url(#sa-ar)"/>
+      <line x1="530" y1="52" x2="540" y2="52" stroke="#1f8a60" marker-end="url(#sa-ar)"/>
+      <line x1="660" y1="52" x2="670" y2="52" stroke="#1f8a60" marker-end="url(#sa-ar)"/>
+
+      <text x="20" y="110" font-size="10" fill="#6b6b66" letter-spacing="0.08em" text-transform="uppercase">Content / inventory path</text>
+
+      <g><rect x="20" y="122" width="140" height="40" rx="6" fill="#b35bd1" opacity="0.12" stroke="#b35bd1"/>
+        <text x="90" y="140" text-anchor="middle" font-size="11" font-weight="600">SimpleIcons import</text>
+        <text x="90" y="154" text-anchor="middle" font-size="9" fill="#6b6b66">seed · cron weekly</text></g>
+      <g><rect x="170" y="122" width="140" height="40" rx="6" fill="#b35bd1" opacity="0.12" stroke="#b35bd1"/>
+        <text x="240" y="140" text-anchor="middle" font-size="11" font-weight="600">Brandfetch fallback</text>
+        <text x="240" y="154" text-anchor="middle" font-size="9" fill="#6b6b66">per missed lookup</text></g>
+      <g><rect x="320" y="122" width="140" height="40" rx="6" fill="#b35bd1" opacity="0.12" stroke="#b35bd1"/>
+        <text x="390" y="140" text-anchor="middle" font-size="11" font-weight="600">User uploads</text>
+        <text x="390" y="154" text-anchor="middle" font-size="9" fill="#6b6b66">private library</text></g>
+      <g><rect x="470" y="122" width="140" height="40" rx="6" fill="#b35bd1" opacity="0.12" stroke="#b35bd1"/>
+        <text x="540" y="140" text-anchor="middle" font-size="11" font-weight="600">Claude vision tag</text>
+        <text x="540" y="154" text-anchor="middle" font-size="9" fill="#6b6b66">auto-classify</text></g>
+      <g><rect x="620" y="122" width="120" height="40" rx="6" fill="#c44a3a" opacity="0.16" stroke="#c44a3a"/>
+        <text x="680" y="140" text-anchor="middle" font-size="11" font-weight="600">Approve 🔴</text>
+        <text x="680" y="154" text-anchor="middle" font-size="9" fill="#6b6b66">if confidence &lt; 0.9</text></g>
+
+      <text x="20" y="200" font-size="10" fill="#6b6b66" letter-spacing="0.08em" text-transform="uppercase">Risk / legal path</text>
+
+      <g><rect x="20" y="212" width="180" height="44" rx="6" fill="#c44a3a" opacity="0.10" stroke="rgba(196,74,58,0.5)"/>
+        <text x="110" y="232" text-anchor="middle" font-size="11" font-weight="600">DMCA / takedown inbox</text>
+        <text x="110" y="246" text-anchor="middle" font-size="9" fill="#6b6b66">support@out-of-house.dev</text></g>
+      <g><rect x="220" y="212" width="180" height="44" rx="6" fill="#c44a3a" opacity="0.16" stroke="#c44a3a"/>
+        <text x="310" y="232" text-anchor="middle" font-size="11" font-weight="600">Manual review 🔴</text>
+        <text x="310" y="246" text-anchor="middle" font-size="9" fill="#6b6b66">admin reads, decides</text></g>
+      <g><rect x="420" y="212" width="180" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="510" y="232" text-anchor="middle" font-size="11" font-weight="600">Set takedown flag</text>
+        <text x="510" y="246" text-anchor="middle" font-size="9" fill="#6b6b66">logovault_brands.takedown_at</text></g>
+      <g><rect x="620" y="212" width="120" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text x="680" y="232" text-anchor="middle" font-size="11" font-weight="600">Search hides</text>
+        <text x="680" y="246" text-anchor="middle" font-size="9" fill="#6b6b66">filter in logo-search</text></g>
+    </svg>
+  </div>
+
+  <h3>Internal services in play</h3>
+  <ul>
+    <li><strong>Inventory build:</strong> SimpleIcons (CC0) seed + Brandfetch on-demand fallback (cached) + user uploads with Claude vision tagging.</li>
+    <li><strong>Search:</strong> Postgres <code>tsvector</code> index on <code>logovault_brands.search_tsv</code> — no Elasticsearch.</li>
+    <li><strong>Delivery:</strong> Cloudflare CDN in front of Supabase Storage for assets.</li>
+    <li><strong>Billing:</strong> Stripe Billing subscription per plan tier. <code>api_usage</code> meters per call; overages billed monthly.</li>
+    <li><strong>Distribution:</strong> direct UI + REST API + an MCP server we publish so Claude Code / Cursor users can call LogoVault as a tool.</li>
+  </ul>
+
+  <div class="tweak-note"><strong>The customer tweak.</strong> A LogoVault user's "tweak" is uploading their own brand library, which gets indexed alongside the public catalogue. Per-API-key scope means their private logos stay private without us writing any access-control code beyond standard RLS on <code>logovault_brands</code>.</div>
+
+  <div class="page-foot-brand">{out-of-house.dev} · internal architecture</div><div class="page-num">10</div>
+</section>
+
+<!-- ===================== 11 — LEAD ENGINE ===================== -->
+<section class="page">
+  <span class="page-title">11 · lead engine · delivery</span>
+  <div class="banner">
+    <div class="eyebrow">11 · Lead engine (sold + internal)</div>
+    <h2>The same pipeline serves us and serves clients — partitioned by RLS.</h2>
+    <p>We run our own ICP through the engine to feed our own pipeline. Clients run their own ICPs through the same engine. Same code, same cron, different rows.</p>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">Engine pipeline (clients + us, on the same rails)</div>
+    <svg viewBox="0 0 760 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="le-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a60"/></marker></defs>
+
+      <g><rect x="20" y="40" width="100" height="40" rx="6" fill="#b35bd1" opacity="0.12" stroke="#b35bd1"/>
+         <text x="70" y="58" text-anchor="middle" font-size="11" font-weight="600">lead-discover</text>
+         <text x="70" y="72" text-anchor="middle" font-size="9" fill="#6b6b66">cron 30m</text></g>
+      <g><rect x="130" y="40" width="100" height="40" rx="6" fill="#b35bd1" opacity="0.12" stroke="#b35bd1"/>
+         <text x="180" y="58" text-anchor="middle" font-size="11" font-weight="600">lead-enrich</text>
+         <text x="180" y="72" text-anchor="middle" font-size="9" fill="#6b6b66">website meta</text></g>
+      <g><rect x="240" y="40" width="100" height="40" rx="6" fill="#b35bd1" opacity="0.12" stroke="#b35bd1"/>
+         <text x="290" y="58" text-anchor="middle" font-size="11" font-weight="600">lead-score</text>
+         <text x="290" y="72" text-anchor="middle" font-size="9" fill="#6b6b66">Haiku</text></g>
+      <g><rect x="350" y="40" width="100" height="40" rx="6" fill="#b35bd1" opacity="0.12" stroke="#b35bd1"/>
+         <text x="400" y="58" text-anchor="middle" font-size="11" font-weight="600">outreach-draft</text>
+         <text x="400" y="72" text-anchor="middle" font-size="9" fill="#6b6b66">Sonnet</text></g>
+      <g><rect x="460" y="40" width="110" height="40" rx="6" fill="#c44a3a" opacity="0.16" stroke="#c44a3a"/>
+         <text x="515" y="58" text-anchor="middle" font-size="11" font-weight="600">Override 🔴</text>
+         <text x="515" y="72" text-anchor="middle" font-size="9" fill="#6b6b66">approval_mode</text></g>
+      <g><rect x="580" y="40" width="100" height="40" rx="6" fill="#b35bd1" opacity="0.12" stroke="#b35bd1"/>
+         <text x="630" y="58" text-anchor="middle" font-size="11" font-weight="600">outreach-send</text>
+         <text x="630" y="72" text-anchor="middle" font-size="9" fill="#6b6b66">Resend</text></g>
+      <g><rect x="690" y="40" width="50" height="40" rx="6" fill="#b35bd1" opacity="0.12" stroke="#b35bd1"/>
+         <text x="715" y="58" text-anchor="middle" font-size="11" font-weight="600">reply</text>
+         <text x="715" y="72" text-anchor="middle" font-size="9" fill="#6b6b66">parse</text></g>
+
+      <line x1="120" y1="60" x2="130" y2="60" stroke="#1f8a60" marker-end="url(#le-ar)"/>
+      <line x1="230" y1="60" x2="240" y2="60" stroke="#1f8a60" marker-end="url(#le-ar)"/>
+      <line x1="340" y1="60" x2="350" y2="60" stroke="#1f8a60" marker-end="url(#le-ar)"/>
+      <line x1="450" y1="60" x2="460" y2="60" stroke="#1f8a60" marker-end="url(#le-ar)"/>
+      <line x1="570" y1="60" x2="580" y2="60" stroke="#1f8a60" marker-end="url(#le-ar)"/>
+      <line x1="680" y1="60" x2="690" y2="60" stroke="#1f8a60" marker-end="url(#le-ar)"/>
+
+      <!-- Tweak band -->
+      <rect x="20" y="110" width="720" height="158" rx="6" fill="#b35bd1" opacity="0.06" stroke="rgba(179,91,209,0.5)"/>
+      <text x="38" y="128" font-size="10" fill="#b35bd1" font-weight="700" letter-spacing="0.08em" text-transform="uppercase">The tweak layer — every client/our ICP is one row</text>
+
+      <text x="38" y="148" font-size="10.5" fill="#11140f"><tspan font-weight="700">lead_icps</tspan> row (one per client):</text>
+      <text x="48" y="164" font-size="10.5" fill="#11140f">• <tspan font-weight="600">prompt</tspan> — LLM scoring instruction for this client</text>
+      <text x="48" y="178" font-size="10.5" fill="#11140f">• <tspan font-weight="600">rules</tspan> — JSONB filters passed to discovery adapters</text>
+      <text x="48" y="192" font-size="10.5" fill="#11140f">• <tspan font-weight="600">channels</tspan> — email / linkedin / x</text>
+
+      <text x="38" y="216" font-size="10.5" fill="#11140f"><tspan font-weight="700">outreach_campaigns</tspan> row (one per ICP per channel):</text>
+      <text x="48" y="232" font-size="10.5" fill="#11140f">• <tspan font-weight="600">voice_prompt</tspan> — write like the client's founder</text>
+      <text x="48" y="246" font-size="10.5" fill="#11140f">• <tspan font-weight="600">send_rate_per_day</tspan> — how aggressive · <tspan font-weight="600">approval_mode</tspan> — manual or auto</text>
+      <text x="48" y="260" font-size="10.5" fill="#11140f">All <tspan font-weight="600">leads</tspan>, <tspan font-weight="600">outreach_messages</tspan>, <tspan font-weight="600">lead_signals</tspan> rows scope to <tspan font-weight="600">client_id</tspan> · RLS handles isolation</text>
+    </svg>
+  </div>
+
+  <h3>Why one engine serves everyone</h3>
+  <ul>
+    <li>Every lead row has a <code>client_id</code>. RLS prevents one client from seeing another's leads — the same way we isolate <code>projects</code>.</li>
+    <li>Adapters (<code>places</code>, <code>companies_house</code>, <code>reddit</code>) read from <code>lead_sources</code> which is global. Adding a new source benefits every client.</li>
+    <li>Per-client ICP + voice are the only "code-shaped" knobs. Both are LLM prompts stored as text.</li>
+    <li>When a client wants something genuinely outside the engine (e.g. integrate their CRM), that's a paid AI-automation build on top of the engine, not a fork of it.</li>
+  </ul>
+
+  <div class="tweak-note"><strong>The tweak that makes us look bespoke.</strong> <code>voice_prompt</code> + <code>lead_icps.prompt</code> are 2–10 paragraphs of natural-language English. Per client, that's where the bespoke work lives. Our code reads those two paragraphs and produces wildly different outputs for every customer — without ever being modified.</div>
+
+  <div class="page-foot-brand">{out-of-house.dev} · internal architecture</div><div class="page-num">11</div>
+</section>
+
+<!-- ===================== 12 — AISEO ===================== -->
+<section class="page">
+  <span class="page-title">12 · aiseo · delivery</span>
+  <div class="banner">
+    <div class="eyebrow">12 · AISEO programme · delivery</div>
+    <h2>Audit → schema → authority → measure → tune.</h2>
+    <p>The most "engineer-as-craftsman" line. Foundations are automated; authority work needs human judgement (we draft with AI, decide with humans).</p>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">AISEO retainer pipeline</div>
+    <svg viewBox="0 0 760 320" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="ai-ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a60"/></marker></defs>
+
+      <!-- Audit row -->
+      <g><rect x="20" y="30" width="160" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text x="100" y="50" text-anchor="middle" font-size="11" font-weight="600">aiseo-audit (free)</text>
+         <text x="100" y="64" text-anchor="middle" font-size="9" fill="#6b6b66">14-axis · /aiseo</text></g>
+      <g><rect x="200" y="30" width="160" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text x="280" y="50" text-anchor="middle" font-size="11" font-weight="600">Stripe upgrade</text>
+         <text x="280" y="64" text-anchor="middle" font-size="9" fill="#6b6b66">£1.5k / £3.5k</text></g>
+      <g><rect x="380" y="30" width="160" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text x="460" y="50" text-anchor="middle" font-size="11" font-weight="600">Foundations ship</text>
+         <text x="460" y="64" text-anchor="middle" font-size="9" fill="#6b6b66">Claude Code · schema + llms.txt</text></g>
+      <g><rect x="560" y="30" width="180" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text x="650" y="50" text-anchor="middle" font-size="11" font-weight="600">aiseo-ranker (monthly)</text>
+         <text x="650" y="64" text-anchor="middle" font-size="9" fill="#6b6b66">30 queries × 6 engines</text></g>
+      <line x1="180" y1="50" x2="200" y2="50" stroke="#1f8a60" marker-end="url(#ai-ar2)"/>
+      <line x1="360" y1="50" x2="380" y2="50" stroke="#1f8a60" marker-end="url(#ai-ar2)"/>
+      <line x1="540" y1="50" x2="560" y2="50" stroke="#1f8a60" marker-end="url(#ai-ar2)"/>
+
+      <!-- Authority row -->
+      <g><rect x="20" y="100" width="160" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text x="100" y="120" text-anchor="middle" font-size="11" font-weight="600">Identify citation targets</text>
+         <text x="100" y="134" text-anchor="middle" font-size="9" fill="#6b6b66">Sonnet · top 50 in niche</text></g>
+      <g><rect x="200" y="100" width="160" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text x="280" y="120" text-anchor="middle" font-size="11" font-weight="600">Draft authority articles</text>
+         <text x="280" y="134" text-anchor="middle" font-size="9" fill="#6b6b66">Opus · question-led</text></g>
+      <g><rect x="380" y="100" width="160" height="44" rx="6" fill="#c44a3a" opacity="0.16" stroke="#c44a3a"/>
+         <text x="460" y="120" text-anchor="middle" font-size="11" font-weight="600">Outreach + placement 🔴</text>
+         <text x="460" y="134" text-anchor="middle" font-size="9" fill="#6b6b66">Senior owns relationship</text></g>
+      <g><rect x="560" y="100" width="180" height="44" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+         <text x="650" y="120" text-anchor="middle" font-size="11" font-weight="600">Adversarial defence</text>
+         <text x="650" y="134" text-anchor="middle" font-size="9" fill="#6b6b66">scan competitor sites for injection</text></g>
+
+      <!-- Tweak band -->
+      <rect x="20" y="170" width="720" height="130" rx="6" fill="#b35bd1" opacity="0.06" stroke="rgba(179,91,209,0.5)"/>
+      <text x="38" y="188" font-size="10" fill="#b35bd1" font-weight="700" letter-spacing="0.08em" text-transform="uppercase">Per-company tweak knobs</text>
+      <text x="38" y="206" font-size="10.5" fill="#11140f">• <tspan font-weight="600">aiseo_subscriptions.questions</tspan> — the 30 buyer-intent queries we ask LLMs for this brand</text>
+      <text x="38" y="222" font-size="10.5" fill="#11140f">• <tspan font-weight="600">aiseo_subscriptions.engines</tspan> — which LLM surfaces to monitor (default: all 6)</text>
+      <text x="38" y="238" font-size="10.5" fill="#11140f">• <tspan font-weight="600">aiseo_subscriptions.tier</tspan> — drives number of citation placements + articles per month</text>
+      <text x="38" y="254" font-size="10.5" fill="#11140f">• <tspan font-weight="600">projects.metadata.niche</tspan> — fed into citation-target identification + authority article topics</text>
+      <text x="38" y="270" font-size="10.5" fill="#11140f">• <tspan font-weight="600">projects.metadata.voice_guide</tspan> — same shape as outreach voice_prompt; defines how draft articles read</text>
+      <text x="38" y="286" font-size="10.5" fill="#11140f">• <tspan font-weight="600">projects.metadata.competitors</tspan> — adversarial-defence target list</text>
+    </svg>
+  </div>
+
+  <h3>Internal services in play</h3>
+  <ul>
+    <li><strong>Audit:</strong> <code>aiseo-audit</code> edge function (deterministic, no LLM cost on the audit itself).</li>
+    <li><strong>Foundations build:</strong> the standard Claude Code orchestrator — schema + llms.txt + page architecture changes are just normal build slices.</li>
+    <li><strong>Monthly ranking pull:</strong> <code>aiseo-ranker</code> (planned Q3 2026) — hits each of the 6 LLM engines via their respective APIs, captures presence/rank/citation.</li>
+    <li><strong>Authority drafting:</strong> Opus generates the long-form article in our voice; senior eng edits before publication.</li>
+    <li><strong>Adversarial defence:</strong> cron scans competitor sites for indirect prompt-injection attempts; alerts to client Slack.</li>
+  </ul>
+
+  <div class="manual-note"><strong>The red box.</strong> Outreach for citation placement (stage 3 of the authority row). LLMs can draft the pitch; humans own the relationship. We won't automate the "hey, would you link to this" outreach because relationship-based placements aren't credible when AI-sent.</div>
+
+  <div class="page-foot-brand">{out-of-house.dev} · internal architecture</div><div class="page-num">12</div>
+</section>
+
+<!-- ===================== 13 — THE TWEAK LAYER IN DETAIL ===================== -->
+<section class="page">
+  <span class="page-title">13 · the tweak layer in detail</span>
+  <div class="banner">
+    <div class="eyebrow">13 · The tweak layer in detail</div>
+    <h2>Where bespoke meets automated.</h2>
+    <p>For every service, the customisation surface is a handful of editable rows. This page catalogues exactly what's editable per customer, who edits it, and how often.</p>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Service</th>
+        <th>Primary tweak row(s)</th>
+        <th>Who edits</th>
+        <th>How often</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>AI automations</td>
+        <td><code>projects.description</code> · <code>projects.metadata.ai_features</code> · <code>projects.metadata.integration_secrets</code></td>
+        <td>Admin (us)</td>
+        <td>Once at intake, occasionally as scope evolves</td>
+      </tr>
+      <tr>
+        <td>Websites</td>
+        <td><code>applications.project_description</code> · <code>projects.metadata.brand_colors</code> · <code>projects.metadata.target_audience</code></td>
+        <td>Admin</td>
+        <td>Once at intake</td>
+      </tr>
+      <tr>
+        <td>Web apps / SaaS builds</td>
+        <td><code>projects.metadata.tenancy</code> · <code>auth_providers</code> · <code>billing_model</code> · <code>ai_features</code></td>
+        <td>Admin</td>
+        <td>Once at intake; one or two changes per build</td>
+      </tr>
+      <tr>
+        <td>Internal software</td>
+        <td><code>projects.metadata.workflow_dag</code> · <code>existing_tools</code> · <code>operator_personas</code></td>
+        <td>Admin (built during audit)</td>
+        <td>Once at audit, refined during build</td>
+      </tr>
+      <tr>
+        <td>Maintenance</td>
+        <td><code>subscriptions.plan</code> · <code>projects.health_status</code> · <code>profiles.notify_*</code></td>
+        <td>Admin + client (notify prefs)</td>
+        <td>Monthly review</td>
+      </tr>
+      <tr>
+        <td>1:1 coaching</td>
+        <td><code>coaching_bookings.topic</code> · <code>profiles.timezone</code></td>
+        <td>Client</td>
+        <td>Per booking</td>
+      </tr>
+      <tr>
+        <td>Cohort courses</td>
+        <td><code>enrollments.capstone_url</code> · <code>capstone_grade</code> · <code>enrollments.notes</code></td>
+        <td>Senior eng (grade) + learner (capstone)</td>
+        <td>Once per cohort cycle</td>
+      </tr>
+      <tr>
+        <td>Business programmes</td>
+        <td><code>projects.metadata.workflow_dag</code> · <code>enrollments.notes</code> · per-programme automation rows</td>
+        <td>Admin</td>
+        <td>Weekly through cohort</td>
+      </tr>
+      <tr>
+        <td>LogoVault</td>
+        <td><code>logovault_brands.*</code> (user uploads) · <code>api_keys.name</code> · <code>api_keys.scopes</code></td>
+        <td>User (self-serve)</td>
+        <td>Per upload</td>
+      </tr>
+      <tr>
+        <td>Lead engine</td>
+        <td><code>lead_icps.prompt</code> · <code>lead_icps.rules</code> · <code>outreach_campaigns.voice_prompt</code> · <code>approval_mode</code></td>
+        <td>Admin (us) + client (review on review)</td>
+        <td>Initial setup; monthly tuning</td>
+      </tr>
+      <tr>
+        <td>AISEO</td>
+        <td><code>aiseo_subscriptions.questions</code> · <code>engines</code> · <code>projects.metadata.niche</code> · <code>voice_guide</code> · <code>competitors</code></td>
+        <td>Admin (us)</td>
+        <td>Quarterly</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:14px">What if a client wants something that's NOT a tweak knob?</h3>
+  <p>It enters the standard build pipeline. The client posts a <code>feature_request</code>; <code>claude-orchestrate</code> scopes it; senior eng approves; build runs. Result: a new column, a new table, or a new edge function — committed to the platform and available to every client from then on.</p>
+
+  <blockquote>This is how we compound. Every bespoke ask becomes a tweak knob the next client can use without a build. Year 1 the menu of knobs is short; year 3 it's the deepest in the market.</blockquote>
+
+  <div class="page-foot-brand">{out-of-house.dev} · internal architecture</div><div class="page-num">13</div>
+</section>
+
+<!-- ===================== 14 — MCP & AGENT INVENTORY ===================== -->
+<section class="page">
+  <span class="page-title">14 · mcp + agent inventory</span>
+  <div class="banner">
+    <div class="eyebrow">14 · MCP &amp; agent inventory</div>
+    <h2>What we publish, what we consume, what we plan.</h2>
+    <p>MCP servers turn our internal tools into composable building blocks for any LLM. The list is short today; it's a deliberate roadmap, not an accident.</p>
+  </div>
+
+  <h3>MCP servers we publish</h3>
+  <table>
+    <thead><tr><th>Server</th><th>Status</th><th>Why it exists</th><th>Who uses it</th></tr></thead>
+    <tbody>
+      <tr><td><strong>LogoVault MCP</strong></td><td>Beta</td><td>Search logos from inside Claude / Cursor without leaving the editor.</td><td>Customers + us</td></tr>
+      <tr><td>Prompt Locker MCP</td><td>Planned Q3 2026</td><td>Recall vetted prompts from inside any LLM-enabled editor.</td><td>Customers + us</td></tr>
+      <tr><td>Plan Library MCP</td><td>Planned Q4 2026</td><td>Surface our plan_templates inside Claude Code so clients can read our standard plans.</td><td>Customers + us</td></tr>
+      <tr><td>Audit MCP</td><td>Planned Q1 2027</td><td>Expose AISEO audit + AISEO ranking pulls as Claude tools so any client agent can self-audit.</td><td>Customers</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:14px">MCP servers we consume</h3>
+  <table>
+    <thead><tr><th>Server</th><th>Use case</th></tr></thead>
+    <tbody>
+      <tr><td>Higgsfield MCP</td><td>Hero imagery + team photos + ad creative imagery for delivery work.</td></tr>
+      <tr><td>Notion MCP</td><td>Workflow capture (internal software audits) + course content storage.</td></tr>
+      <tr><td>Monday MCP</td><td>Project + sprint tracking when a client uses Monday and we mirror to <code>projects</code>.</td></tr>
+      <tr><td>Meta Ads MCP</td><td>Ads-push pipeline — generated creatives uploaded to Meta Marketing API.</td></tr>
+      <tr><td>GitHub MCP (built-in)</td><td>PR opens, branch creation, diff inspection.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:14px">Internal agent roles (what each Claude model does)</h3>
+  <table>
+    <thead><tr><th>Role</th><th>Model</th><th>Where it lives</th></tr></thead>
+    <tbody>
+      <tr><td>Scoper</td><td>Claude Sonnet 4.6</td><td><code>claude-orchestrate</code> stage 01</td></tr>
+      <tr><td>Planner</td><td>Claude Opus 4.7</td><td><code>claude-orchestrate</code> stage 02</td></tr>
+      <tr><td>Build-prompt writer</td><td>Claude Opus 4.7</td><td><code>claude-orchestrate</code> stage 03</td></tr>
+      <tr><td>Builder</td><td>Claude Code (headless)</td><td>Separate worker repo (planned Render/Fly)</td></tr>
+      <tr><td>Reviewer</td><td>Claude Sonnet 4.6 + 🔴 senior</td><td><code>claude-orchestrate</code> stage 05</td></tr>
+      <tr><td>Deployer</td><td>Claude Haiku 4.5</td><td><code>claude-orchestrate</code> stage 06</td></tr>
+      <tr><td>Lead scorer</td><td>Claude Haiku 4.5</td><td><code>lead-score</code></td></tr>
+      <tr><td>Outreach drafter</td><td>Claude Sonnet 4.6</td><td><code>outreach-draft</code></td></tr>
+      <tr><td>Digest writer</td><td>Claude Sonnet 4.6</td><td><code>digest-weekly</code></td></tr>
+      <tr><td>Ad creative writer</td><td>Claude Sonnet 4.6</td><td><code>ads-generate</code></td></tr>
+      <tr><td>Capstone grader</td><td>Claude Sonnet 4.6 + 🔴 senior</td><td>Course grading flow</td></tr>
+      <tr><td>Citation researcher</td><td>Claude Sonnet 4.6 (planned)</td><td>AISEO authority pipeline</td></tr>
+      <tr><td>Authority writer</td><td>Claude Opus 4.7 (planned)</td><td>AISEO authority pipeline</td></tr>
+      <tr><td>Adversarial scanner</td><td>Claude Haiku 4.5 (planned)</td><td>AISEO adversarial defence</td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:14px">Every role above has a system prompt stored in code (or in <code>plan_templates.claude_code_handoff</code> for the building part). When we say "tune the model", we mean edit one system prompt — not retrain anything.</p>
+
+  <div class="page-foot-brand">{out-of-house.dev} · internal architecture</div><div class="page-num">14</div>
+</section>
+
+<!-- ===================== 15 — ADDING A NEW SERVICE ===================== -->
+<section class="page">
+  <span class="page-title">15 · adding a new service</span>
+  <div class="banner">
+    <div class="eyebrow">15 · How a new service gets added to the platform</div>
+    <h2>The standard playbook.</h2>
+    <p>The platform's value is that adding service line #9, #10, #11 takes a week instead of a month. This is the checklist.</p>
+  </div>
+
+  <ol>
+    <li><strong>Decide if it's a service, a SaaS, or a programme.</strong> Service = bespoke work using existing internal tools. SaaS = self-serve subscription. Programme = cohort-based teaching. Each has a different schema home.</li>
+    <li><strong>Write the marketing page first.</strong> A new entry in <code>src/data/services.js</code> (delivery service) or <code>src/data/programmes.js</code> (programme) or <code>src/data/saasApps.js</code> (SaaS). The site dropdown auto-updates.</li>
+    <li><strong>Identify the new tweak knobs.</strong> What columns / JSONB fields will the customer's customisation live in? Add them to the relevant tables in a fresh migration.</li>
+    <li><strong>Decide which existing edge functions can serve it.</strong> 90% of the time the answer is "claude-orchestrate plus the new tweak knobs". Resist writing a new edge function.</li>
+    <li><strong>Add a Stripe product.</strong> One product per pricing tier; metadata links back to the slug in the data file.</li>
+    <li><strong>Write the plan template.</strong> Add a row to <code>plan_templates</code> with phases + a Claude Code handoff brief.</li>
+    <li><strong>Wire Cal.com if there's a call.</strong> A sub-path on cal.com per service surface.</li>
+    <li><strong>Add the page-level analytics events.</strong> Drop into <code>activity_events</code> for in-platform; nothing third-party.</li>
+    <li><strong>Ship the marketing copy.</strong> Apply for AISEO inside the platform — same way clients do — to catch our own positioning.</li>
+    <li><strong>Add a row to this document.</strong> Update the master mapping table on page 03 + the per-service spread.</li>
+  </ol>
+
+  <h3 style="margin-top:14px">What this looks like in practice</h3>
+  <table>
+    <thead><tr><th>Step</th><th>Files touched for "AISEO" addition</th></tr></thead>
+    <tbody>
+      <tr><td>1. Marketing data</td><td><code>src/data/aiseo.js</code></td></tr>
+      <tr><td>2. Marketing page</td><td><code>src/pages/AISEO.js</code></td></tr>
+      <tr><td>3. Route + nav</td><td><code>src/App.js</code> + <code>src/Header.js</code></td></tr>
+      <tr><td>4. Tweak-knob tables</td><td><code>supabase/migrations/005_v3_business_expansion.sql</code> (aiseo_audits, aiseo_subscriptions, aiseo_rankings)</td></tr>
+      <tr><td>5. Edge function (new behaviour)</td><td><code>supabase/functions/aiseo-audit/</code></td></tr>
+      <tr><td>6. Stripe products</td><td>(external, manual config — checklist item)</td></tr>
+      <tr><td>7. CSS</td><td><code>src/styles/v3.css</code></td></tr>
+      <tr><td>8. PDF entries</td><td>This doc + the v3 roadmap</td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:14px">Total time for the AISEO addition in this session: ~30 minutes of design + ~90 minutes of build. The platform's design is what makes that possible — every other service "shape" had been encoded already.</p>
+
+  <div class="page-foot-brand">{out-of-house.dev} · internal architecture</div><div class="page-num">15</div>
+</section>
+
+<!-- ===================== 16 — COST TO SERVE ===================== -->
+<section class="page">
+  <span class="page-title">16 · cost to serve</span>
+  <div class="banner">
+    <div class="eyebrow">16 · Cost to serve, per service</div>
+    <h2>How much it costs us in variable spend to deliver one unit.</h2>
+    <p>Knowing this is the difference between pricing for capacity and pricing for margin.</p>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Service / unit</th>
+        <th>LLM cost</th>
+        <th>Email / SMS</th>
+        <th>Hosting / API</th>
+        <th>Senior eng time</th>
+        <th>Total variable £</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1 AI automation build (£3k average)</td>
+        <td class="num">£12</td>
+        <td class="num">£0.20</td>
+        <td class="num">£3</td>
+        <td class="num">6 hrs @ £100 = £600</td>
+        <td class="num">~£615</td>
+      </tr>
+      <tr>
+        <td>1 starter website (£500)</td>
+        <td class="num">£3</td>
+        <td class="num">£0.10</td>
+        <td class="num">£2</td>
+        <td class="num">1.5 hrs = £150</td>
+        <td class="num">~£155</td>
+      </tr>
+      <tr>
+        <td>1 web app MVP (£8k average)</td>
+        <td class="num">£35</td>
+        <td class="num">£0.40</td>
+        <td class="num">£10</td>
+        <td class="num">24 hrs = £2,400</td>
+        <td class="num">~£2,445</td>
+      </tr>
+      <tr>
+        <td>1 month maintenance retainer (£2k)</td>
+        <td class="num">£18</td>
+        <td class="num">£0.50</td>
+        <td class="num">£8</td>
+        <td class="num">6 hrs = £600</td>
+        <td class="num">~£625</td>
+      </tr>
+      <tr>
+        <td>1 coaching hour (£100)</td>
+        <td class="num">£0.40</td>
+        <td class="num">£0.10</td>
+        <td class="num">£0.10</td>
+        <td class="num">1 hr = £100</td>
+        <td class="num">~£100.60</td>
+      </tr>
+      <tr>
+        <td>1 dev course enrolment (£395 @ 3w)</td>
+        <td class="num">£3</td>
+        <td class="num">£0.15</td>
+        <td class="num">£0.50</td>
+        <td class="num">12 hrs / cohort of 16 = £75</td>
+        <td class="num">~£79</td>
+      </tr>
+      <tr>
+        <td>1 LogoVault Studio sub (£39/mo)</td>
+        <td class="num">£0</td>
+        <td class="num">£0.05</td>
+        <td class="num">£2.70</td>
+        <td class="num">~0</td>
+        <td class="num">~£2.75</td>
+      </tr>
+      <tr>
+        <td>1 lead engine month (£1,000/mo)</td>
+        <td class="num">£40</td>
+        <td class="num">£3</td>
+        <td class="num">£25</td>
+        <td class="num">4 hrs = £400</td>
+        <td class="num">~£468</td>
+      </tr>
+      <tr>
+        <td>1 AISEO Authority month (£1,500/mo)</td>
+        <td class="num">£28</td>
+        <td class="num">£0.30</td>
+        <td class="num">£18</td>
+        <td class="num">6 hrs = £600</td>
+        <td class="num">~£646</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:14px">What this tells us</h3>
+  <ul>
+    <li><strong>Senior eng time dominates every cost line.</strong> The platform isn't expensive to run; the engineer behind it is the cost.</li>
+    <li><strong>SaaS is the only line where variable cost is near zero.</strong> That's why SaaS revenue is structurally different — every new sub is almost-pure margin once the product exists.</li>
+    <li><strong>LLM cost is &lt; 5% of total cost on every line.</strong> Provider price hikes are absorbable; engineer time hikes are not.</li>
+    <li><strong>The way to scale is to drive senior-hours-per-unit down.</strong> Either by automating more (claude-orchestrate auto-merge) or by leveraging the dev bench (more engineers at a similar quality bar).</li>
+  </ul>
+
+  <blockquote>The point of the platform is to make each senior-eng hour produce more revenue than the year before. The map in this document is how we do it — every system reduces what a human has to do per customer outcome.</blockquote>
+
+  <div class="page-foot-brand">{out-of-house.dev} · internal architecture · END</div><div class="page-num">16</div>
+</section>
+
+</body>
+</html>
