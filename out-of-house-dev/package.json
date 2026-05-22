@@ -25,7 +25,8 @@
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
-    "seed": "node scripts/seed.js"
+    "seed": "node scripts/seed.js",
+    "roadmap:pdf": "node scripts/build-roadmap-pdf.js"
   },
   "eslintConfig": {
     "extends": [

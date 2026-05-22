@@ -25,6 +25,15 @@ const Subprocessors      = lazy(() => import('./pages/Subprocessors'));
 const ShowcasePage       = lazy(() => import('./pages/Showcase'));
 const Changelog          = lazy(() => import('./pages/Changelog'));
 const ServicePage        = lazy(() => import('./pages/ServicePage'));
+const Coaching           = lazy(() => import('./pages/Coaching'));
+const CoachingTrack      = lazy(() => import('./pages/CoachingTrack'));
+const Courses            = lazy(() => import('./pages/Courses'));
+const CourseDetail       = lazy(() => import('./pages/CourseDetail'));
+const Saas               = lazy(() => import('./pages/Saas'));
+const LogoVault          = lazy(() => import('./pages/LogoVault'));
+const LeadGen            = lazy(() => import('./pages/LeadGen'));
+const CertificateVerify  = lazy(() => import('./pages/CertificateVerify'));
+const AISEO              = lazy(() => import('./pages/AISEO'));
 
 const AppShell      = lazy(() => import('./pages/app/AppShell'));
 const Dashboard     = lazy(() => import('./pages/app/Dashboard'));
@@ -224,6 +233,15 @@ const App = () => {
                   <Route path="/privacy-policy"      element={<PrivacyPolicy />} />
                   <Route path="/developers"          element={<Developers />} />
                   <Route path="/services/:slug"      element={<ServicePage />} />
+                  <Route path="/coaching"            element={<Coaching />} />
+                  <Route path="/coaching/:track"     element={<CoachingTrack />} />
+                  <Route path="/courses"             element={<Courses />} />
+                  <Route path="/courses/:slug"       element={<CourseDetail />} />
+                  <Route path="/saas"                element={<Saas />} />
+                  <Route path="/saas/logovault"      element={<LogoVault />} />
+                  <Route path="/lead-engine"         element={<LeadGen />} />
+                  <Route path="/aiseo"               element={<AISEO />} />
+                  <Route path="/verify/:code"        element={<CertificateVerify />} />
                   <Route path="/trust"               element={<Trust />} />
                   <Route path="/subprocessors"       element={<Subprocessors />} />
                   <Route path="/showcase"            element={<ShowcasePage />} />
@@ -896,7 +914,8 @@ const HeaderGate = (props) => {
                pathname === '/login' ||
                pathname === '/apply' ||
                pathname === '/password-reset' ||
-               pathname.startsWith('/auth/');
+               pathname.startsWith('/auth/') ||
+               pathname.startsWith('/verify/');
   if (hide) return null;
   return <Header {...props} />;
 };

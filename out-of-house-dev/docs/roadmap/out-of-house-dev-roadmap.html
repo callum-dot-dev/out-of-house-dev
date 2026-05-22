@@ -1,0 +1,1290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>out-of-house.dev — v3 Roadmap, Architecture &amp; Operating Plan</title>
+<style>
+  :root {
+    --bg: #fbfaf8;
+    --ink: #11140f;
+    --ink-soft: #292a25;
+    --muted: #6b6b66;
+    --border: rgba(20, 20, 15, 0.10);
+    --border-strong: rgba(20, 20, 15, 0.18);
+    --accent: #2bbf86;
+    --accent-deep: #1f8a60;
+    --accent-soft: rgba(43, 191, 134, 0.10);
+    --danger: #c44a3a;
+    --danger-soft: rgba(196, 74, 58, 0.10);
+    --warning: #c98a32;
+    --warning-soft: rgba(201, 138, 50, 0.10);
+    --info: #4a72c4;
+    --info-soft: rgba(74, 114, 196, 0.10);
+    --dark: #121413;
+    --dark-ink: #f4f3ef;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4 { letter-spacing: -0.01em; color: var(--ink); margin: 0; }
+  h1 { font-size: 42px; line-height: 1.1; }
+  h2 { font-size: 30px; line-height: 1.15; margin-top: 4px; }
+  h3 { font-size: 18px; line-height: 1.3; }
+  h4 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-deep); }
+  p { margin: 0 0 12px; color: var(--ink-soft); }
+  ul, ol { margin: 0 0 14px 20px; padding: 0; color: var(--ink-soft); }
+  ul li, ol li { margin-bottom: 4px; }
+  .accent { color: var(--accent-deep); }
+  .danger { color: var(--danger); }
+  .warning { color: var(--warning); }
+  code { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; }
+
+  /* Pagination */
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 12mm auto;
+    padding: 18mm 16mm;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 4px 22px rgba(0,0,0,0.08);
+    page-break-after: always;
+    position: relative;
+  }
+  .page:last-of-type { page-break-after: auto; }
+  .page-num {
+    position: absolute;
+    bottom: 8mm;
+    right: 12mm;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+  .page-foot-brand {
+    position: absolute;
+    bottom: 8mm;
+    left: 12mm;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* Eyebrows */
+  .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent-deep); font-weight: 600; }
+  .section-bar { height: 2px; width: 64px; background: var(--accent); margin: 6px 0 18px; }
+
+  /* Hero / cover */
+  .cover {
+    background: linear-gradient(160deg, var(--ink) 0%, #1d2820 100%);
+    color: var(--dark-ink);
+    padding: 28mm 16mm;
+  }
+  .cover .brand-mark {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--accent);
+    font-size: 16px;
+    margin-bottom: 36mm;
+    letter-spacing: 0.02em;
+  }
+  .cover h1 { color: var(--dark-ink); font-size: 52px; max-width: 80%; }
+  .cover .lead { color: rgba(244,243,239,0.78); font-size: 18px; max-width: 70%; margin-top: 18px; }
+  .cover .meta {
+    margin-top: 36mm;
+    display: flex;
+    gap: 36px;
+    color: rgba(244,243,239,0.55);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .cover .meta strong { color: rgba(244,243,239,0.95); display: block; margin-bottom: 4px; }
+  .cover .index {
+    margin-top: 16mm;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px 30px;
+    color: rgba(244,243,239,0.62);
+    font-size: 12px;
+  }
+  .cover .index span { display: inline-block; min-width: 26px; color: var(--accent); margin-right: 6px; }
+
+  /* Grids */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+  .card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: #fff;
+  }
+  .card-soft { background: var(--bg); }
+  .card h3 { margin-bottom: 6px; }
+  .card .meta-row { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 8px; }
+
+  /* Pill tags */
+  .pill { display: inline-block; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .pill-accent { background: var(--accent-soft); color: var(--accent-deep); }
+  .pill-danger { background: var(--danger-soft); color: var(--danger); }
+  .pill-warn   { background: var(--warning-soft); color: var(--warning); }
+  .pill-info   { background: var(--info-soft); color: var(--info); }
+  .pill-muted  { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { border-bottom: 1px solid var(--border); padding: 9px 8px; text-align: left; vertical-align: top; }
+  th { background: var(--bg); color: var(--ink); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+  td.num { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  /* Diagram wrappers */
+  .diagram { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin: 10px 0 18px; }
+  .diagram-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; font-size: 11px; color: var(--muted); }
+  .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+  /* Manual-step marker */
+  .manual-step { color: var(--danger); font-weight: 600; }
+  .manual-note {
+    border-left: 3px solid var(--danger);
+    background: var(--danger-soft);
+    padding: 10px 14px;
+    border-radius: 4px;
+    margin: 8px 0;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .manual-note strong { color: var(--danger); }
+
+  /* Mind map */
+  .mindmap-root {
+    display: grid;
+    grid-template-columns: 1fr;
+    place-items: center;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 14px;
+  }
+
+  /* Block quotes */
+  blockquote {
+    border-left: 3px solid var(--accent);
+    margin: 12px 0;
+    padding: 8px 16px;
+    color: var(--ink-soft);
+    background: var(--accent-soft);
+    border-radius: 4px;
+  }
+
+  /* Section banner */
+  .banner {
+    margin: -18mm -16mm 14mm;
+    padding: 16mm 16mm 10mm;
+    background: var(--ink);
+    color: var(--dark-ink);
+  }
+  .banner h2 { color: var(--dark-ink); }
+  .banner .eyebrow { color: var(--accent); }
+  .banner p { color: rgba(244,243,239,0.7); }
+
+  /* Print */
+  @media print {
+    body { background: #fff; }
+    .page { box-shadow: none; margin: 0; border-radius: 0; width: 210mm; min-height: 297mm; padding: 18mm 16mm; }
+    .page-num, .page-foot-brand { color: #888; }
+  }
+
+  @page { size: A4; margin: 0; }
+</style>
+</head>
+<body>
+
+<!-- ===================== COVER ===================== -->
+<section class="page cover">
+  <div class="brand-mark">{out-of-house.dev}</div>
+  <h1>v3 Roadmap, Architecture &amp; Operating Plan</h1>
+  <p class="lead">A senior-engineered platform for software, AI automations, coaching, courses, SaaS, autonomous lead generation and AI search optimisation — built so the business runs itself.</p>
+
+  <div class="meta">
+    <div><strong>Document</strong>Master Plan v3.0</div>
+    <div><strong>Date</strong>22 May 2026</div>
+    <div><strong>Owner</strong>Callum Saxon</div>
+    <div><strong>Horizon</strong>365 days</div>
+  </div>
+
+  <div class="index">
+    <div><span>01</span>Executive summary</div>
+    <div><span>09</span>AISEO programme</div>
+    <div><span>02</span>Service catalogue v3</div>
+    <div><span>10</span>Claude Code orchestrator</div>
+    <div><span>03</span>System architecture</div>
+    <div><span>11</span>Automation map (red = manual)</div>
+    <div><span>04</span>Data model</div>
+    <div><span>12</span>Tech stack &amp; vendors</div>
+    <div><span>05</span>Pricing &amp; unit economics</div>
+    <div><span>13</span>30 / 60 / 90 / 180 / 365 day roadmap</div>
+    <div><span>06</span>Coaching &amp; courses ops</div>
+    <div><span>14</span>Mind map</div>
+    <div><span>07</span>SaaS strategy (LogoVault first)</div>
+    <div><span>15</span>Risk register</div>
+    <div><span>08</span>Autonomous lead engine</div>
+    <div><span>16</span>What is already shipped</div>
+  </div>
+</section>
+
+<!-- ===================== 01 — EXEC SUMMARY ===================== -->
+<section class="page">
+  <div class="banner">
+    <div class="eyebrow">01 · Executive summary</div>
+    <h2>One platform. Six revenue lines. Built to run itself.</h2>
+    <p>The thesis of v3: every step of every line — from lead to live software, from enrolment to certificate — should be automated by default. Anything a human has to do twice gets a worker in the next sprint.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>What we sell (in priority order)</h3>
+      <ul>
+        <li><strong>AI automations</strong> — flagship, custom builds on the client's stack.</li>
+        <li><strong>Websites &amp; web apps</strong> — same-day sites, MVPs in weeks.</li>
+        <li><strong>Internal software &amp; AI growth engine</strong> — bespoke tools + lead pipelines.</li>
+        <li><strong>Maintenance</strong> — continuous shipping retainer.</li>
+        <li><strong>AI coaching</strong> — 1:1 at £100/hr + 3 / 6 / 12-week programmes for business and developers.</li>
+        <li><strong>SaaS / AIaaS</strong> — LogoVault first; Prompt Locker, Inbox Fox, Fingerprint Fund queued.</li>
+        <li><strong>Lead engine as a service</strong> — the same engine we use on ourselves, sold to clients.</li>
+        <li><strong>AISEO</strong> — Generative-Engine Optimization for the era of AI search.</li>
+      </ul>
+    </div>
+    <div class="card card-soft">
+      <h3>What's different in v3</h3>
+      <ul>
+        <li>The marketing site is the lead-magnet (free LogoVault tier, free AISEO audit, free 1:1 booking page).</li>
+        <li>Every paid product flows through one Stripe pipeline → one payments table → one webhook.</li>
+        <li>Every build runs through a multi-stage Claude orchestrator with persistent telemetry.</li>
+        <li>Every customer relationship sits in one Supabase schema; no second CRM.</li>
+        <li>Every manual step in this plan is <span class="manual-step">marked red</span> with a plan to automate it.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="margin-top:18px">North-star metrics</h3>
+  <div class="grid-4" style="margin-top:8px">
+    <div class="card"><h4>Builds shipped / wk</h4><p style="font-size:24px;color:var(--ink);margin:0">12</p><p style="font-size:11px;color:var(--muted)">Target end-2026</p></div>
+    <div class="card"><h4>£ MRR (services)</h4><p style="font-size:24px;color:var(--ink);margin:0">£25k</p><p style="font-size:11px;color:var(--muted)">Q4 target</p></div>
+    <div class="card"><h4>£ MRR (SaaS)</h4><p style="font-size:24px;color:var(--ink);margin:0">£8k</p><p style="font-size:11px;color:var(--muted)">Q4 target</p></div>
+    <div class="card"><h4>Coaching hrs / mo</h4><p style="font-size:24px;color:var(--ink);margin:0">120</p><p style="font-size:11px;color:var(--muted)">Equivalent £12k</p></div>
+  </div>
+
+  <blockquote>The business succeeds when Callum's only daily input is: pick which leads to talk to, run the calls, and answer a Slack channel. Everything else runs.</blockquote>
+
+  <div class="page-foot-brand">{out-of-house.dev}</div><div class="page-num">01</div>
+</section>
+
+<!-- ===================== 02 — SERVICE CATALOGUE ===================== -->
+<section class="page">
+  <div class="banner">
+    <div class="eyebrow">02 · Service catalogue v3</div>
+    <h2>Eight revenue lines. One catalogue.</h2>
+    <p>Each line has its own page, its own payment flow, its own automation profile. The matrix below scores each on margin and automation potential.</p>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Service</th>
+        <th>Audience</th>
+        <th>Price point</th>
+        <th>Margin</th>
+        <th>Automation %</th>
+        <th>Manual step that remains</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>AI automations (flagship)</td><td>SMB &amp; mid-market</td><td class="num">£750 – £20k</td><td><span class="pill pill-accent">High</span></td><td class="num">~70%</td><td class="manual-step">Scoping call &amp; senior code review</td></tr>
+      <tr><td>Websites &amp; landing pages</td><td>Local biz, founders</td><td class="num">£500 + £100/mo</td><td><span class="pill pill-accent">High</span></td><td class="num">~85%</td><td class="manual-step">Brief intake &amp; design sign-off</td></tr>
+      <tr><td>Web apps &amp; SaaS builds</td><td>Founders &amp; product teams</td><td class="num">From £4k</td><td><span class="pill pill-accent">High</span></td><td class="num">~55%</td><td class="manual-step">Architecture &amp; review</td></tr>
+      <tr><td>Custom internal software</td><td>Ops teams</td><td class="num">£3k – £50k</td><td><span class="pill pill-accent">High</span></td><td class="num">~60%</td><td class="manual-step">Workflow audit on-site</td></tr>
+      <tr><td>Maintenance retainer</td><td>Existing clients</td><td class="num">From £1.5k/mo</td><td><span class="pill pill-accent">High</span></td><td class="num">~80%</td><td class="manual-step">Senior eng triage</td></tr>
+      <tr><td>AI coaching (1:1)</td><td>Founders &amp; senior engs</td><td class="num">£100/hr</td><td><span class="pill pill-accent">High</span></td><td class="num">~30%</td><td class="manual-step">The session itself</td></tr>
+      <tr><td>Courses (3 / 6 / 12 wk)</td><td>Devs &amp; teams</td><td class="num">£395 – £6,500</td><td><span class="pill pill-accent">High</span></td><td class="num">~75%</td><td class="manual-step">Live sessions &amp; capstone review</td></tr>
+      <tr><td>SaaS (LogoVault et al.)</td><td>Developers</td><td class="num">£0 – £149/mo</td><td><span class="pill pill-warn">Medium</span></td><td class="num">~95%</td><td class="manual-step">New brand approvals (queue)</td></tr>
+      <tr><td>Lead engine as a service</td><td>Founders, agencies</td><td class="num">£500 – £4k + mo</td><td><span class="pill pill-accent">High</span></td><td class="num">~92%</td><td class="manual-step">Human override on drafts</td></tr>
+      <tr><td>AISEO programme</td><td>SMB &amp; mid-market</td><td class="num">£0 audit + £1.5k+ pkg</td><td><span class="pill pill-accent">High</span></td><td class="num">~85%</td><td class="manual-step">Authority placement outreach</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:20px">Pricing tiers — coaching &amp; courses</h3>
+  <div class="grid-3" style="margin-top:8px">
+    <div class="card">
+      <span class="pill pill-info">1:1</span>
+      <h3 style="margin-top:6px">Hourly coaching</h3>
+      <p>£100/hour, both tracks. Stripe-paid, calendar-confirmed, recorded.</p>
+    </div>
+    <div class="card">
+      <span class="pill pill-accent">3 / 6 / 12 wk</span>
+      <h3 style="margin-top:6px">Developer courses</h3>
+      <p>£395 / £795 / £1,495. With public certificate &amp; bench interview for top performers.</p>
+    </div>
+    <div class="card">
+      <span class="pill pill-warn">3 / 6 / 12 wk</span>
+      <h3 style="margin-top:6px">Business programmes</h3>
+      <p>£1,500 / £3,500 / £6,500. Workflow audit → automations → operator training.</p>
+    </div>
+  </div>
+
+  <div class="page-foot-brand">{out-of-house.dev}</div><div class="page-num">02</div>
+</section>
+
+<!-- ===================== 03 — SYSTEM ARCHITECTURE ===================== -->
+<section class="page">
+  <div class="banner">
+    <div class="eyebrow">03 · System architecture</div>
+    <h2>One platform, three layers, one source of truth.</h2>
+    <p>React marketing + product front-end. Supabase Postgres + Edge Functions back-end. External AI + payment + email vendors. Every paid product writes through the same Stripe → Webhook → downstream-record pipeline.</p>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">High-level architecture</div>
+    <svg viewBox="0 0 760 380" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="High-level system architecture">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a60"/>
+        </marker>
+        <style>
+          .lbl { font: 11px Inter, sans-serif; fill: #11140f; }
+          .lbl-sub { font: 9px Inter, sans-serif; fill: #6b6b66; }
+          .layer { font: 10px Inter, sans-serif; fill: #6b6b66; letter-spacing: 0.08em; text-transform: uppercase; }
+        </style>
+      </defs>
+
+      <text class="layer" x="20" y="22">Browser / clients</text>
+      <rect x="20" y="32" width="720" height="58" rx="8" fill="#fff" stroke="rgba(20,20,15,0.15)"/>
+      <g>
+        <rect x="40"  y="44" width="120" height="34" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text class="lbl"  x="100" y="60" text-anchor="middle">Marketing site</text>
+        <text class="lbl-sub" x="100" y="73" text-anchor="middle">react-router + lazy</text>
+      </g>
+      <g>
+        <rect x="180" y="44" width="120" height="34" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text class="lbl" x="240" y="60" text-anchor="middle">Client app</text>
+        <text class="lbl-sub" x="240" y="73" text-anchor="middle">/app/* gated by Supabase auth</text>
+      </g>
+      <g>
+        <rect x="320" y="44" width="120" height="34" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text class="lbl" x="380" y="60" text-anchor="middle">LogoVault UI</text>
+        <text class="lbl-sub" x="380" y="73" text-anchor="middle">/saas/logovault</text>
+      </g>
+      <g>
+        <rect x="460" y="44" width="120" height="34" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text class="lbl" x="520" y="60" text-anchor="middle">AISEO audit tool</text>
+        <text class="lbl-sub" x="520" y="73" text-anchor="middle">/aiseo</text>
+      </g>
+      <g>
+        <rect x="600" y="44" width="120" height="34" rx="6" fill="#2bbf86" opacity="0.12" stroke="#2bbf86"/>
+        <text class="lbl" x="660" y="60" text-anchor="middle">Cert verify</text>
+        <text class="lbl-sub" x="660" y="73" text-anchor="middle">/verify/:code</text>
+      </g>
+
+      <text class="layer" x="20" y="120">Backend (Supabase project: ooh-prod)</text>
+      <rect x="20" y="130" width="720" height="140" rx="8" fill="#fff" stroke="rgba(20,20,15,0.15)"/>
+      <g>
+        <rect x="40" y="148" width="180" height="34" rx="6" fill="#1f8a60" opacity="0.12" stroke="#1f8a60"/>
+        <text class="lbl" x="130" y="164" text-anchor="middle">Postgres (RLS-enforced)</text>
+        <text class="lbl-sub" x="130" y="177" text-anchor="middle">profiles · projects · payments · leads · …</text>
+      </g>
+      <g>
+        <rect x="240" y="148" width="180" height="34" rx="6" fill="#1f8a60" opacity="0.12" stroke="#1f8a60"/>
+        <text class="lbl" x="330" y="164" text-anchor="middle">Edge Functions (Deno)</text>
+        <text class="lbl-sub" x="330" y="177" text-anchor="middle">stripe-checkout · claude-orchestrate · lead-* · logo-search · aiseo-audit</text>
+      </g>
+      <g>
+        <rect x="440" y="148" width="120" height="34" rx="6" fill="#1f8a60" opacity="0.12" stroke="#1f8a60"/>
+        <text class="lbl" x="500" y="164" text-anchor="middle">Storage</text>
+        <text class="lbl-sub" x="500" y="177" text-anchor="middle">attachments · docs · logos</text>
+      </g>
+      <g>
+        <rect x="580" y="148" width="140" height="34" rx="6" fill="#1f8a60" opacity="0.12" stroke="#1f8a60"/>
+        <text class="lbl" x="650" y="164" text-anchor="middle">Realtime / cron</text>
+        <text class="lbl-sub" x="650" y="177" text-anchor="middle">notifications · discover · digest</text>
+      </g>
+
+      <g>
+        <rect x="40"  y="208" width="220" height="34" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+        <text class="lbl" x="150" y="224" text-anchor="middle">Auth (Email + Google)</text>
+        <text class="lbl-sub" x="150" y="237" text-anchor="middle">RLS based on auth.uid()</text>
+      </g>
+      <g>
+        <rect x="280" y="208" width="220" height="34" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+        <text class="lbl" x="390" y="224" text-anchor="middle">Triggers + functions</text>
+        <text class="lbl-sub" x="390" y="237" text-anchor="middle">activity_events · notifications · cohort enrolment</text>
+      </g>
+      <g>
+        <rect x="520" y="208" width="200" height="34" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+        <text class="lbl" x="620" y="224" text-anchor="middle">Views</text>
+        <text class="lbl-sub" x="620" y="237" text-anchor="middle">unread_count · certificate_verifications</text>
+      </g>
+
+      <text class="layer" x="20" y="300">External vendors</text>
+      <rect x="20" y="310" width="720" height="58" rx="8" fill="#fff" stroke="rgba(20,20,15,0.15)"/>
+      <g>
+        <rect x="40"  y="322" width="100" height="34" rx="6" fill="#4a72c4" opacity="0.12" stroke="#4a72c4"/>
+        <text class="lbl" x="90"  y="338" text-anchor="middle">Stripe</text>
+        <text class="lbl-sub" x="90"  y="351" text-anchor="middle">checkout + webhooks</text>
+      </g>
+      <g>
+        <rect x="150" y="322" width="100" height="34" rx="6" fill="#4a72c4" opacity="0.12" stroke="#4a72c4"/>
+        <text class="lbl" x="200" y="338" text-anchor="middle">Anthropic</text>
+        <text class="lbl-sub" x="200" y="351" text-anchor="middle">Claude API</text>
+      </g>
+      <g>
+        <rect x="260" y="322" width="100" height="34" rx="6" fill="#4a72c4" opacity="0.12" stroke="#4a72c4"/>
+        <text class="lbl" x="310" y="338" text-anchor="middle">OpenAI</text>
+        <text class="lbl-sub" x="310" y="351" text-anchor="middle">cheap routing</text>
+      </g>
+      <g>
+        <rect x="370" y="322" width="100" height="34" rx="6" fill="#4a72c4" opacity="0.12" stroke="#4a72c4"/>
+        <text class="lbl" x="420" y="338" text-anchor="middle">Resend</text>
+        <text class="lbl-sub" x="420" y="351" text-anchor="middle">outbound email</text>
+      </g>
+      <g>
+        <rect x="480" y="322" width="100" height="34" rx="6" fill="#4a72c4" opacity="0.12" stroke="#4a72c4"/>
+        <text class="lbl" x="530" y="338" text-anchor="middle">Cal.com</text>
+        <text class="lbl-sub" x="530" y="351" text-anchor="middle">scheduling</text>
+      </g>
+      <g>
+        <rect x="590" y="322" width="130" height="34" rx="6" fill="#4a72c4" opacity="0.12" stroke="#4a72c4"/>
+        <text class="lbl" x="655" y="338" text-anchor="middle">Companies House / Places</text>
+        <text class="lbl-sub" x="655" y="351" text-anchor="middle">lead sources</text>
+      </g>
+
+      <!-- arrows -->
+      <line x1="100" y1="90" x2="100" y2="130" stroke="#1f8a60" stroke-width="1.4" marker-end="url(#ar)"/>
+      <line x1="240" y1="90" x2="240" y2="130" stroke="#1f8a60" stroke-width="1.4" marker-end="url(#ar)"/>
+      <line x1="380" y1="90" x2="380" y2="130" stroke="#1f8a60" stroke-width="1.4" marker-end="url(#ar)"/>
+      <line x1="520" y1="90" x2="520" y2="130" stroke="#1f8a60" stroke-width="1.4" marker-end="url(#ar)"/>
+      <line x1="660" y1="90" x2="660" y2="130" stroke="#1f8a60" stroke-width="1.4" marker-end="url(#ar)"/>
+
+      <line x1="330" y1="184" x2="330" y2="312" stroke="#1f8a60" stroke-width="1.4" marker-end="url(#ar)"/>
+    </svg>
+    <div class="legend">
+      <span><span class="legend-dot" style="background:#2bbf86"></span>Front-end</span>
+      <span><span class="legend-dot" style="background:#1f8a60"></span>Backend (Supabase)</span>
+      <span><span class="legend-dot" style="background:#4a72c4"></span>External vendor</span>
+    </div>
+  </div>
+
+  <div class="page-foot-brand">{out-of-house.dev}</div><div class="page-num">03</div>
+</section>
+
+<!-- ===================== 04 — DATA MODEL ===================== -->
+<section class="page">
+  <div class="banner">
+    <div class="eyebrow">04 · Data model</div>
+    <h2>Twenty-eight tables. One schema. No silos.</h2>
+    <p>The schema groups into four pillars: <em>delivery</em>, <em>education</em>, <em>commerce</em>, and <em>growth</em>. Everything joins through <code>profiles.id</code>. Row-Level Security gates every read.</p>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">Entity relationships</div>
+    <svg viewBox="0 0 760 430" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ER diagram">
+      <defs>
+        <style>
+          .ent { font: 10px Inter; fill: #11140f; font-weight: 600; }
+          .ent-sub { font: 9px Inter; fill: #6b6b66; }
+          .arr { stroke: #1f8a60; stroke-width: 1.2; fill: none; }
+        </style>
+      </defs>
+
+      <!-- Profiles (centre) -->
+      <rect x="320" y="190" width="120" height="40" rx="6" fill="#2bbf86" opacity="0.15" stroke="#1f8a60"/>
+      <text class="ent" x="380" y="208" text-anchor="middle">profiles</text>
+      <text class="ent-sub" x="380" y="222" text-anchor="middle">role · timezone · notify_*</text>
+
+      <!-- Delivery pillar (left) -->
+      <rect x="20"  y="40"  width="120" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="80"  y="58"  text-anchor="middle">projects</text>
+      <text class="ent-sub" x="80" y="70" text-anchor="middle">+ project_documents</text>
+      <rect x="20"  y="90"  width="120" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="80"  y="108" text-anchor="middle">feature_requests</text>
+      <text class="ent-sub" x="80" y="120" text-anchor="middle">+ request_comments</text>
+      <rect x="20"  y="140" width="120" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="80"  y="158" text-anchor="middle">claude_runs</text>
+      <text class="ent-sub" x="80" y="170" text-anchor="middle">scope→plan→build→…</text>
+      <rect x="20"  y="190" width="120" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="80"  y="208" text-anchor="middle">activity_events</text>
+      <text class="ent-sub" x="80" y="220" text-anchor="middle">+ notifications</text>
+      <rect x="20"  y="240" width="120" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="80"  y="258" text-anchor="middle">digests / reports</text>
+      <text class="ent-sub" x="80" y="270" text-anchor="middle">+ changelog_entries</text>
+      <rect x="20"  y="290" width="120" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="80"  y="308" text-anchor="middle">plan_templates</text>
+      <text class="ent-sub" x="80" y="320" text-anchor="middle">+ project_plans</text>
+      <rect x="20"  y="340" width="120" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="80"  y="358" text-anchor="middle">automation_runs</text>
+      <text class="ent-sub" x="80" y="370" text-anchor="middle">live odometer</text>
+
+      <!-- Education pillar (top right) -->
+      <rect x="600" y="40"  width="140" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="670" y="58"  text-anchor="middle">programmes</text>
+      <text class="ent-sub" x="670" y="70" text-anchor="middle">audience · duration · price</text>
+      <rect x="600" y="90"  width="140" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="670" y="108" text-anchor="middle">cohorts</text>
+      <text class="ent-sub" x="670" y="120" text-anchor="middle">start · capacity · status</text>
+      <rect x="600" y="140" width="140" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="670" y="158" text-anchor="middle">enrollments</text>
+      <text class="ent-sub" x="670" y="170" text-anchor="middle">payment_id ↦ payments</text>
+      <rect x="600" y="190" width="140" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="670" y="208" text-anchor="middle">cohort_sessions</text>
+      <text class="ent-sub" x="670" y="220" text-anchor="middle">live + recording</text>
+      <rect x="600" y="240" width="140" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="670" y="258" text-anchor="middle">certificates</text>
+      <text class="ent-sub" x="670" y="270" text-anchor="middle">public verify URL</text>
+      <rect x="600" y="290" width="140" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="670" y="308" text-anchor="middle">coaching_bookings</text>
+      <text class="ent-sub" x="670" y="320" text-anchor="middle">£100/hr · cal.com</text>
+
+      <!-- Commerce (centre-top) -->
+      <rect x="320" y="40"  width="120" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="380" y="58"  text-anchor="middle">payments</text>
+      <text class="ent-sub" x="380" y="70" text-anchor="middle">stripe checkout</text>
+      <rect x="320" y="90"  width="120" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="380" y="108" text-anchor="middle">subscriptions</text>
+      <text class="ent-sub" x="380" y="120" text-anchor="middle">retainer + SaaS plan</text>
+      <rect x="320" y="140" width="120" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="380" y="158" text-anchor="middle">saas_apps</text>
+      <text class="ent-sub" x="380" y="170" text-anchor="middle">logovault · prompt-locker · …</text>
+
+      <!-- Growth pillar (bottom right) -->
+      <rect x="600" y="340" width="140" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="670" y="358" text-anchor="middle">leads</text>
+      <text class="ent-sub" x="670" y="370" text-anchor="middle">+ lead_signals · sources</text>
+
+      <rect x="320" y="290" width="120" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="380" y="308" text-anchor="middle">api_keys / api_usage</text>
+      <text class="ent-sub" x="380" y="320" text-anchor="middle">per SaaS app</text>
+
+      <rect x="320" y="340" width="120" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="380" y="358" text-anchor="middle">aiseo_audits</text>
+      <text class="ent-sub" x="380" y="370" text-anchor="middle">+ aiseo_subscriptions · rankings</text>
+
+      <rect x="170" y="340" width="120" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="230" y="358" text-anchor="middle">outreach_campaigns</text>
+      <text class="ent-sub" x="230" y="370" text-anchor="middle">+ outreach_messages</text>
+
+      <rect x="450" y="340" width="120" height="36" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text class="ent" x="510" y="358" text-anchor="middle">ad_campaigns</text>
+      <text class="ent-sub" x="510" y="370" text-anchor="middle">+ creatives · performance</text>
+
+      <!-- arrows from profiles to satellites -->
+      <line class="arr" x1="320" y1="200" x2="140" y2="60"/>
+      <line class="arr" x1="320" y1="200" x2="140" y2="108"/>
+      <line class="arr" x1="320" y1="200" x2="140" y2="158"/>
+      <line class="arr" x1="320" y1="200" x2="140" y2="208"/>
+      <line class="arr" x1="380" y1="190" x2="380" y2="76"/>
+      <line class="arr" x1="440" y1="200" x2="600" y2="60"/>
+      <line class="arr" x1="440" y1="200" x2="600" y2="160"/>
+      <line class="arr" x1="440" y1="220" x2="600" y2="308"/>
+      <line class="arr" x1="380" y1="230" x2="380" y2="290"/>
+      <line class="arr" x1="380" y1="230" x2="230" y2="340"/>
+      <line class="arr" x1="380" y1="230" x2="510" y2="340"/>
+      <line class="arr" x1="380" y1="230" x2="380" y2="340"/>
+      <line class="arr" x1="380" y1="230" x2="600" y2="358"/>
+    </svg>
+  </div>
+
+  <p>The full schema lives in <code>supabase/migrations/001_initial.sql</code>, <code>002_rls_hotfix.sql</code>, <code>003_platform_v2.sql</code>, <code>004_document_room.sql</code>, and the new <code>005_v3_business_expansion.sql</code>. Twenty-eight tables, all RLS-gated, all wired with <code>updated_at</code> triggers.</p>
+
+  <div class="page-foot-brand">{out-of-house.dev}</div><div class="page-num">04</div>
+</section>
+
+<!-- ===================== 05 — PRICING & UNIT ECONOMICS ===================== -->
+<section class="page">
+  <div class="banner">
+    <div class="eyebrow">05 · Pricing &amp; unit economics</div>
+    <h2>£25k MRR services. £8k MRR SaaS. £12k coaching / mo. By Q4 2026.</h2>
+    <p>Conservative model. Acquisition cost dominated by free tools (LogoVault, AISEO audit). Variable cost dominated by LLM API spend.</p>
+  </div>
+
+  <h3>Revenue model</h3>
+  <table>
+    <thead>
+      <tr><th>Line</th><th>Avg deal £</th><th>Deals/mo (Q4)</th><th>£ revenue / mo</th><th>Gross margin %</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>One-off builds (sites/automations)</td><td class="num">£1,800</td><td class="num">10</td><td class="num">£18,000</td><td class="num">~72%</td></tr>
+      <tr><td>Maintenance retainers</td><td class="num">£2,000/mo</td><td class="num">8</td><td class="num">£16,000</td><td class="num">~78%</td></tr>
+      <tr><td>1:1 coaching hours</td><td class="num">£100/hr</td><td class="num">120 hrs</td><td class="num">£12,000</td><td class="num">~92%</td></tr>
+      <tr><td>Cohort courses</td><td class="num">£700 avg</td><td class="num">18 enrols/mo</td><td class="num">£12,600</td><td class="num">~70%</td></tr>
+      <tr><td>SaaS / AIaaS subs</td><td class="num">£39/mo avg</td><td class="num">200</td><td class="num">£7,800</td><td class="num">~85%</td></tr>
+      <tr><td>Lead engine retainers</td><td class="num">£1,000/mo</td><td class="num">6</td><td class="num">£6,000</td><td class="num">~75%</td></tr>
+      <tr><td>AISEO retainers</td><td class="num">£1,000/mo</td><td class="num">5</td><td class="num">£5,000</td><td class="num">~80%</td></tr>
+      <tr><th>Total Q4 2026 target</th><th></th><th></th><th class="num">£77,400 / mo</th><th class="num">~78%</th></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:18px">Cost model</h3>
+  <table>
+    <thead>
+      <tr><th>Cost</th><th>Vendor</th><th>£ / mo Q4 est</th><th>Driver</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>LLM API (Claude + GPT)</td><td>Anthropic + OpenAI</td><td class="num">£2,800</td><td>Claude runs, scoring, outreach, AISEO audits</td></tr>
+      <tr><td>Email</td><td>Resend</td><td class="num">£60</td><td>Outreach + transactional</td></tr>
+      <tr><td>Hosting / DB</td><td>Supabase + IONOS</td><td class="num">£140</td><td>Pro tier + add-ons</td></tr>
+      <tr><td>Lead sources</td><td>Companies House + Places</td><td class="num">£200</td><td>Per-call usage</td></tr>
+      <tr><td>Stripe fees</td><td>Stripe</td><td class="num">£1,500</td><td>~2% of GMV</td></tr>
+      <tr><td>Tooling (Cal, GitHub, Slack)</td><td>—</td><td class="num">£200</td><td>Per-seat</td></tr>
+      <tr><th>Total recurring costs</th><th></th><th class="num">£4,900 / mo</th><th></th></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:18px">Unit economics by service</h3>
+  <div class="grid-3" style="margin-top:8px">
+    <div class="card"><h4>Coaching hour</h4><p>Revenue £100 · Stripe £2 · LLM cost (recording transcribe) £0.40 · Net £97. ~120 hrs/mo at 1 senior FTE-equivalent.</p></div>
+    <div class="card"><h4>3-week dev course</h4><p>Revenue £395 · Variable cost ~£40 (LLM grading + recording storage) · Net £355. Cohort of 16 = £5,680 gross.</p></div>
+    <div class="card"><h4>LogoVault Studio sub</h4><p>£39/mo · CDN + storage £1.20 · API costs £1.50 · Net £36. Free tier acts as funnel.</p></div>
+  </div>
+
+  <div class="page-foot-brand">{out-of-house.dev}</div><div class="page-num">05</div>
+</section>
+
+<!-- ===================== 06 — COACHING & COURSES OPS ===================== -->
+<section class="page">
+  <div class="banner">
+    <div class="eyebrow">06 · Coaching &amp; courses ops</div>
+    <h2>From "I want to learn AI" → certificate, in twelve weeks.</h2>
+    <p>The full lifecycle, with every automatable point flagged green, every manual touchpoint flagged red.</p>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">Learner lifecycle</div>
+    <svg viewBox="0 0 760 200" width="100%" xmlns="http://www.w3.org/2000/svg" role="img">
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a60"/>
+        </marker>
+        <style>
+          .step { font: 10px Inter; fill: #11140f; font-weight: 600; }
+          .step-sub { font: 9px Inter; fill: #6b6b66; }
+        </style>
+      </defs>
+
+      <g><rect x="20"  y="60" width="100" height="50" rx="8" fill="#2bbf86" opacity="0.15" stroke="#1f8a60"/><text class="step" x="70"  y="82" text-anchor="middle">Discover</text><text class="step-sub" x="70" y="95" text-anchor="middle">/courses</text></g>
+      <g><rect x="150" y="60" width="100" height="50" rx="8" fill="#2bbf86" opacity="0.15" stroke="#1f8a60"/><text class="step" x="200" y="82" text-anchor="middle">Stripe checkout</text><text class="step-sub" x="200" y="95" text-anchor="middle">auto-enrol</text></g>
+      <g><rect x="280" y="60" width="100" height="50" rx="8" fill="#2bbf86" opacity="0.15" stroke="#1f8a60"/><text class="step" x="330" y="82" text-anchor="middle">Slack invite</text><text class="step-sub" x="330" y="95" text-anchor="middle">via Resend webhook</text></g>
+      <g><rect x="410" y="60" width="100" height="50" rx="8" fill="#c44a3a" opacity="0.15" stroke="#c44a3a"/><text class="step" x="460" y="82" text-anchor="middle">Live sessions</text><text class="step-sub" x="460" y="95" text-anchor="middle" fill="#c44a3a">MANUAL — senior</text></g>
+      <g><rect x="540" y="60" width="100" height="50" rx="8" fill="#2bbf86" opacity="0.15" stroke="#1f8a60"/><text class="step" x="590" y="82" text-anchor="middle">Capstone review</text><text class="step-sub" x="590" y="95" text-anchor="middle">LLM-assisted</text></g>
+      <g><rect x="670" y="60" width="80"  height="50" rx="8" fill="#2bbf86" opacity="0.15" stroke="#1f8a60"/><text class="step" x="710" y="82" text-anchor="middle">Certify</text><text class="step-sub" x="710" y="95" text-anchor="middle">/verify/:code</text></g>
+
+      <line x1="120" y1="85" x2="150" y2="85" stroke="#1f8a60" marker-end="url(#arr2)"/>
+      <line x1="250" y1="85" x2="280" y2="85" stroke="#1f8a60" marker-end="url(#arr2)"/>
+      <line x1="380" y1="85" x2="410" y2="85" stroke="#1f8a60" marker-end="url(#arr2)"/>
+      <line x1="510" y1="85" x2="540" y2="85" stroke="#1f8a60" marker-end="url(#arr2)"/>
+      <line x1="640" y1="85" x2="670" y2="85" stroke="#1f8a60" marker-end="url(#arr2)"/>
+
+      <text x="380" y="140" text-anchor="middle" font-size="10" fill="#6b6b66">Anywhere along the funnel: book a £100/hr 1:1 with a senior — Stripe-paid, calendar-confirmed, recorded.</text>
+    </svg>
+  </div>
+
+  <h3>Automation status per touchpoint</h3>
+  <table>
+    <thead><tr><th>Touchpoint</th><th>Today</th><th>Plan to automate</th></tr></thead>
+    <tbody>
+      <tr><td>Course landing → checkout</td><td><span class="pill pill-accent">Automated</span></td><td>Already shipped: /courses/:slug</td></tr>
+      <tr><td>Payment → enrolment record</td><td><span class="pill pill-accent">Automated</span></td><td>stripe-webhook upserts enrollments + cohort placement</td></tr>
+      <tr><td>Cohort Slack invite</td><td><span class="pill pill-warn">Semi-auto</span></td><td>Q2: webhook → Slack API on enrolment.status='paid'</td></tr>
+      <tr><td>Weekly live session</td><td class="manual-step">Manual</td><td>Q3: AI-summarised replay reduces senior time per cohort by ~50%</td></tr>
+      <tr><td>Capstone grading</td><td><span class="pill pill-warn">Semi-auto</span></td><td>LLM grader writes a draft; senior approves in &lt;15 min</td></tr>
+      <tr><td>Certificate issuance</td><td><span class="pill pill-accent">Automated</span></td><td>cert-issue edge function ships /verify URL</td></tr>
+      <tr><td>Post-grad bench interview</td><td class="manual-step">Manual</td><td>Stays manual — this is the relationship sale</td></tr>
+    </tbody>
+  </table>
+
+  <div class="manual-note"><strong>Two red zones remain in coaching ops:</strong> the live sessions themselves and the post-grad bench interview. Both are deliberate — they're where the brand earns its premium. Everything else is automated.</div>
+
+  <div class="page-foot-brand">{out-of-house.dev}</div><div class="page-num">06</div>
+</section>
+
+<!-- ===================== 07 — SAAS STRATEGY ===================== -->
+<section class="page">
+  <div class="banner">
+    <div class="eyebrow">07 · SaaS strategy (LogoVault first)</div>
+    <h2>Internal tool → public tool → revenue line.</h2>
+    <p>Every SaaS product on the roadmap is something we already use internally for our delivery work. That is the moat: we ship it because it makes us faster, then we open it.</p>
+  </div>
+
+  <h3>SaaS roadmap</h3>
+  <table>
+    <thead><tr><th>Product</th><th>Status</th><th>Launch</th><th>Internal use case that produced it</th></tr></thead>
+    <tbody>
+      <tr><td><strong>LogoVault</strong></td><td><span class="pill pill-accent">Public beta</span></td><td>Q2 2026</td><td>"Grab the customer logos for a client landing page in under a minute."</td></tr>
+      <tr><td>Prompt Locker</td><td><span class="pill pill-info">Planned</span></td><td>Q3 2026</td><td>"Stop losing the prompts we tuned on real projects."</td></tr>
+      <tr><td>Inbox Fox</td><td><span class="pill pill-info">Planned</span></td><td>Q4 2026</td><td>Inbox triage as a service — derived from our existing inbox-triage delivery template.</td></tr>
+      <tr><td>Fingerprint Fund</td><td><span class="pill pill-info">Planned</span></td><td>Q1 2027</td><td>Standalone version of our lead-discovery engine, productised for small agencies.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:18px">LogoVault — system view</h3>
+  <div class="diagram">
+    <svg viewBox="0 0 760 180" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a60"/></marker></defs>
+      <rect x="20"  y="50" width="120" height="50" rx="6" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/>
+      <text x="80"  y="70" text-anchor="middle" font-size="11" font-weight="600">UI / API / MCP</text>
+      <text x="80"  y="83" text-anchor="middle" font-size="9" fill="#6b6b66">search by name / domain</text>
+
+      <rect x="180" y="50" width="120" height="50" rx="6" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/>
+      <text x="240" y="70" text-anchor="middle" font-size="11" font-weight="600">logo-search fn</text>
+      <text x="240" y="83" text-anchor="middle" font-size="9" fill="#6b6b66">rate-limit + key auth</text>
+
+      <rect x="340" y="50" width="120" height="50" rx="6" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/>
+      <text x="400" y="70" text-anchor="middle" font-size="11" font-weight="600">logovault_brands</text>
+      <text x="400" y="83" text-anchor="middle" font-size="9" fill="#6b6b66">tsvector search</text>
+
+      <rect x="500" y="50" width="120" height="50" rx="6" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/>
+      <text x="560" y="70" text-anchor="middle" font-size="11" font-weight="600">storage / logovault</text>
+      <text x="560" y="83" text-anchor="middle" font-size="9" fill="#6b6b66">svg / png / jpg variants</text>
+
+      <rect x="660" y="50" width="100" height="50" rx="6" fill="#f4f3ef" stroke="rgba(20,20,15,0.15)"/>
+      <text x="710" y="70" text-anchor="middle" font-size="11" font-weight="600">api_usage</text>
+      <text x="710" y="83" text-anchor="middle" font-size="9" fill="#6b6b66">billing / quota</text>
+
+      <line x1="140" y1="75" x2="180" y2="75" stroke="#1f8a60" marker-end="url(#ar3)"/>
+      <line x1="300" y1="75" x2="340" y2="75" stroke="#1f8a60" marker-end="url(#ar3)"/>
+      <line x1="460" y1="75" x2="500" y2="75" stroke="#1f8a60" marker-end="url(#ar3)"/>
+      <line x1="620" y1="75" x2="660" y2="75" stroke="#1f8a60" marker-end="url(#ar3)"/>
+
+      <text x="380" y="140" text-anchor="middle" font-size="10" fill="#6b6b66">Seeded from SimpleIcons; Brandfetch fallback for unknown logos; user-uploads tagged via Claude vision.</text>
+    </svg>
+  </div>
+
+  <h3>Pricing &amp; growth loop</h3>
+  <ul>
+    <li>Free tier (50 lookups/day) → top of funnel. No card required.</li>
+    <li>Every free response sends an MCP-discoverable token, surfacing the brand inside Claude/Cursor users' assistants.</li>
+    <li>Indie £9 / Studio £39 / Agency £149 — three lanes, no per-seat games.</li>
+    <li>White-label option on Agency provides a path into agencies as a vendor.</li>
+  </ul>
+
+  <div class="page-foot-brand">{out-of-house.dev}</div><div class="page-num">07</div>
+</section>
+
+<!-- ===================== 08 — AUTONOMOUS LEAD ENGINE ===================== -->
+<section class="page">
+  <div class="banner">
+    <div class="eyebrow">08 · Autonomous lead engine</div>
+    <h2>Discover → enrich → score → draft → send → reply → meeting. One human override.</h2>
+    <p>The same engine we use on ourselves, with a single manual surface: a one-click reject / pause. Every other stage is a Supabase edge function on cron.</p>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">Lead engine pipeline</div>
+    <svg viewBox="0 0 760 260" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a60"/></marker>
+        <style>.s { font: 10px Inter; fill: #11140f; font-weight: 600; } .ss { font: 9px Inter; fill: #6b6b66; }</style>
+      </defs>
+
+      <g><rect x="20"  y="30" width="100" height="46" rx="6" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/><text class="s" x="70"  y="50" text-anchor="middle">lead-discover</text><text class="ss" x="70" y="63" text-anchor="middle">cron 30min</text></g>
+      <g><rect x="140" y="30" width="100" height="46" rx="6" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/><text class="s" x="190" y="50" text-anchor="middle">lead-enrich</text><text class="ss" x="190" y="63" text-anchor="middle">website meta</text></g>
+      <g><rect x="260" y="30" width="100" height="46" rx="6" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/><text class="s" x="310" y="50" text-anchor="middle">lead-score</text><text class="ss" x="310" y="63" text-anchor="middle">claude-haiku</text></g>
+      <g><rect x="380" y="30" width="120" height="46" rx="6" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/><text class="s" x="440" y="50" text-anchor="middle">outreach-draft</text><text class="ss" x="440" y="63" text-anchor="middle">claude-sonnet</text></g>
+      <g><rect x="520" y="30" width="120" height="46" rx="6" fill="#c44a3a" opacity="0.16" stroke="#c44a3a"/><text class="s" x="580" y="50" text-anchor="middle">human override</text><text class="ss" x="580" y="63" text-anchor="middle" fill="#c44a3a">RED — only manual gate</text></g>
+      <g><rect x="660" y="30" width="100" height="46" rx="6" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/><text class="s" x="710" y="50" text-anchor="middle">outreach-send</text><text class="ss" x="710" y="63" text-anchor="middle">resend / linkedin</text></g>
+
+      <line x1="120" y1="53" x2="140" y2="53" stroke="#1f8a60" marker-end="url(#ar4)"/>
+      <line x1="240" y1="53" x2="260" y2="53" stroke="#1f8a60" marker-end="url(#ar4)"/>
+      <line x1="360" y1="53" x2="380" y2="53" stroke="#1f8a60" marker-end="url(#ar4)"/>
+      <line x1="500" y1="53" x2="520" y2="53" stroke="#1f8a60" marker-end="url(#ar4)"/>
+      <line x1="640" y1="53" x2="660" y2="53" stroke="#1f8a60" marker-end="url(#ar4)"/>
+
+      <g><rect x="20"  y="120" width="100" height="46" rx="6" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/><text class="s" x="70"  y="140" text-anchor="middle">reply-parse</text><text class="ss" x="70" y="153" text-anchor="middle">inbound webhook</text></g>
+      <g><rect x="140" y="120" width="100" height="46" rx="6" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/><text class="s" x="190" y="140" text-anchor="middle">meeting-book</text><text class="ss" x="190" y="153" text-anchor="middle">cal.com hand-off</text></g>
+      <g><rect x="260" y="120" width="120" height="46" rx="6" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/><text class="s" x="320" y="140" text-anchor="middle">ads-generate</text><text class="ss" x="320" y="153" text-anchor="middle">creative variants</text></g>
+      <g><rect x="400" y="120" width="120" height="46" rx="6" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/><text class="s" x="460" y="140" text-anchor="middle">ads-push (Meta / Google)</text><text class="ss" x="460" y="153" text-anchor="middle">via Marketing API</text></g>
+      <g><rect x="540" y="120" width="100" height="46" rx="6" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/><text class="s" x="590" y="140" text-anchor="middle">ads-perf</text><text class="ss" x="590" y="153" text-anchor="middle">daily pull</text></g>
+      <g><rect x="660" y="120" width="100" height="46" rx="6" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/><text class="s" x="710" y="140" text-anchor="middle">score-loop</text><text class="ss" x="710" y="153" text-anchor="middle">retrain weekly</text></g>
+
+      <line x1="120" y1="143" x2="140" y2="143" stroke="#1f8a60" marker-end="url(#ar4)"/>
+      <line x1="240" y1="143" x2="260" y2="143" stroke="#1f8a60" marker-end="url(#ar4)"/>
+      <line x1="380" y1="143" x2="400" y2="143" stroke="#1f8a60" marker-end="url(#ar4)"/>
+      <line x1="520" y1="143" x2="540" y2="143" stroke="#1f8a60" marker-end="url(#ar4)"/>
+      <line x1="640" y1="143" x2="660" y2="143" stroke="#1f8a60" marker-end="url(#ar4)"/>
+
+      <text x="380" y="220" text-anchor="middle" font-size="10" fill="#6b6b66">All 13 stages are scheduled. Manual surface = approve/reject drafts. Target: reduce to weekly summary by Q3 2026.</text>
+    </svg>
+  </div>
+
+  <h3>Data sources (initial)</h3>
+  <ul>
+    <li><strong>Google Places</strong> — SMB no-website detection.</li>
+    <li><strong>Companies House</strong> — UK recent incorporations.</li>
+    <li><strong>Reddit</strong> — career-switcher detection for course funnel.</li>
+    <li><strong>News</strong> — funding announcements as buying signals.</li>
+    <li><strong>LinkedIn</strong> (planned) — hiring signal detection via job posts.</li>
+    <li><strong>Yelp</strong> (planned) — secondary local-business surface.</li>
+  </ul>
+
+  <div class="manual-note"><strong>The only red box:</strong> <span class="manual-step">human override on outreach drafts.</span> Roadmap to automate: once we have 500+ acceptance signals per ICP, a delegated-trust classifier handles the obvious approves; only edge cases reach a human. Target Q3 2026.</div>
+
+  <div class="page-foot-brand">{out-of-house.dev}</div><div class="page-num">08</div>
+</section>
+
+<!-- ===================== 09 — AISEO PROGRAMME ===================== -->
+<section class="page">
+  <div class="banner">
+    <div class="eyebrow">09 · AISEO programme</div>
+    <h2>Be the brand AI recommends — durably.</h2>
+    <p>The next wave of search is assistants picking answers, not users picking links. AISEO is how a brand stays referenced as models update.</p>
+  </div>
+
+  <h3>Strategic position on grey-hat tactics</h3>
+  <div class="manual-note" style="border-left-color: var(--warning); background: var(--warning-soft);">
+    <strong style="color: var(--warning)">We do not do prompt-injection / hidden white-text "tricks".</strong>
+    LLM providers already detect indirect prompt injection and increasingly penalise sites that use it. A single news cycle around a client "tricking" ChatGPT into recommending their brand would be brand-destroying. The durable play is to be <em>genuinely cited</em>, and that's the playbook we sell.
+  </div>
+
+  <h3 style="margin-top:14px">What an AISEO retainer ships, per month</h3>
+  <div class="grid-2" style="margin-top:8px">
+    <div class="card">
+      <h4>Foundations</h4>
+      <ul>
+        <li>Organization + FAQ + Product schema across all key pages</li>
+        <li>llms.txt + AI-friendly information architecture</li>
+        <li>Explicit robots.txt allow for GPTBot, ClaudeBot, PerplexityBot</li>
+        <li>Heading + question-led copy rework</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Authority</h4>
+      <ul>
+        <li>5 citation placements per month (Reddit, Wikipedia, awesome-* lists, press)</li>
+        <li>3 authority articles engineered to be the canonical source</li>
+        <li>Brand-mention coverage in industry comparisons</li>
+        <li>Adversarial defence: monitor competitor prompt-injection attempts</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Measurement</h4>
+      <ul>
+        <li>30 buyer-intent queries asked across 6 engines monthly</li>
+        <li>Brand-present / rank-position / cited-URL captured per query</li>
+        <li>Curve tracked over time, drift alerted in Slack</li>
+        <li>Quarterly business review with senior eng</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Free entry tool</h4>
+      <ul>
+        <li>/aiseo runs a 14-axis audit on any domain in &lt;5 seconds</li>
+        <li>Produces score + grade + prioritised fix list</li>
+        <li>Acts as lead magnet for paid programmes</li>
+        <li>Results stored in <code>aiseo_audits</code> for follow-up</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="margin-top:18px">Engines monitored</h3>
+  <table>
+    <thead><tr><th>Engine</th><th>Market signal</th><th>Why it matters</th></tr></thead>
+    <tbody>
+      <tr><td>ChatGPT (4o, o-series)</td><td>Highest active user count</td><td>Default "search the web" for millions</td></tr>
+      <tr><td>Claude (Sonnet 4.6)</td><td>Premium-knowledge audience</td><td>Developers + enterprise default</td></tr>
+      <tr><td>Perplexity</td><td>Search replacement</td><td>Citation-first by design — biggest AISEO leverage</td></tr>
+      <tr><td>Google AI Overviews</td><td>Inside Google SERP</td><td>Top-of-funnel for all traditional SEO traffic</td></tr>
+      <tr><td>Bing Copilot</td><td>Microsoft 365 surface</td><td>Enterprise share</td></tr>
+      <tr><td>You.com</td><td>Niche but growing</td><td>Lightly-monitored, easy wins</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-foot-brand">{out-of-house.dev}</div><div class="page-num">09</div>
+</section>
+
+<!-- ===================== 10 — CLAUDE CODE ORCHESTRATOR ===================== -->
+<section class="page">
+  <div class="banner">
+    <div class="eyebrow">10 · Claude Code orchestrator</div>
+    <h2>From request → live deploy, with one senior eng at the steering wheel.</h2>
+    <p>Every feature request, every project, every build runs through the same five-stage pipeline. Cost, tokens, status and review state are tracked per run in <code>claude_runs</code>.</p>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">Orchestrator pipeline</div>
+    <svg viewBox="0 0 760 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="ar5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a60"/></marker></defs>
+
+      <g><rect x="20"  y="50" width="120" height="60" rx="8" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/><text x="80"  y="74" text-anchor="middle" font-size="11" font-weight="600">01 · Scope</text><text x="80"  y="90" text-anchor="middle" font-size="9" fill="#6b6b66">claude-sonnet · 1-page brief</text></g>
+      <g><rect x="160" y="50" width="120" height="60" rx="8" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/><text x="220" y="74" text-anchor="middle" font-size="11" font-weight="600">02 · Plan</text><text x="220" y="90" text-anchor="middle" font-size="9" fill="#6b6b66">claude-opus · file-level plan</text></g>
+      <g><rect x="300" y="50" width="120" height="60" rx="8" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/><text x="360" y="74" text-anchor="middle" font-size="11" font-weight="600">03 · Build prompt</text><text x="360" y="90" text-anchor="middle" font-size="9" fill="#6b6b66">claude-opus · Claude Code brief</text></g>
+      <g><rect x="440" y="50" width="120" height="60" rx="8" fill="#c44a3a" opacity="0.14" stroke="#c44a3a"/><text x="500" y="74" text-anchor="middle" font-size="11" font-weight="600">— Claude Code worker —</text><text x="500" y="90" text-anchor="middle" font-size="9" fill="#c44a3a">runs headless on a worktree</text></g>
+      <g><rect x="580" y="50" width="120" height="60" rx="8" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/><text x="640" y="74" text-anchor="middle" font-size="11" font-weight="600">04 · Review</text><text x="640" y="90" text-anchor="middle" font-size="9" fill="#6b6b66">claude-sonnet · senior signs</text></g>
+
+      <line x1="140" y1="80" x2="160" y2="80" stroke="#1f8a60" marker-end="url(#ar5)"/>
+      <line x1="280" y1="80" x2="300" y2="80" stroke="#1f8a60" marker-end="url(#ar5)"/>
+      <line x1="420" y1="80" x2="440" y2="80" stroke="#1f8a60" marker-end="url(#ar5)"/>
+      <line x1="560" y1="80" x2="580" y2="80" stroke="#1f8a60" marker-end="url(#ar5)"/>
+
+      <g><rect x="320" y="130" width="120" height="40" rx="8" fill="#2bbf86" opacity="0.12" stroke="#1f8a60"/><text x="380" y="148" text-anchor="middle" font-size="11" font-weight="600">05 · Deploy</text><text x="380" y="162" text-anchor="middle" font-size="9" fill="#6b6b66">claude-haiku · runbook</text></g>
+
+      <line x1="640" y1="110" x2="440" y2="150" stroke="#1f8a60" marker-end="url(#ar5)"/>
+    </svg>
+  </div>
+
+  <h3>What's manual, what's not</h3>
+  <table>
+    <thead><tr><th>Stage</th><th>Who</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>01 · Scope</td><td>Claude · sonnet</td><td>Auto on request status = submitted.</td></tr>
+      <tr><td>02 · Plan</td><td>Claude · opus</td><td>Re-runs if scope is edited.</td></tr>
+      <tr><td>03 · Build prompt</td><td>Claude · opus</td><td>Produces the brief for headless Claude Code.</td></tr>
+      <tr><td>04 · Claude Code worker</td><td>Worker</td><td>Runs on Render/Fly with a clean worktree; commits + opens PR.</td></tr>
+      <tr><td>05 · Review</td><td class="manual-step">Senior eng (human-in-loop)</td><td>The only stage we deliberately keep manual — this is the quality gate.</td></tr>
+      <tr><td>06 · Deploy</td><td>Claude · haiku</td><td>Generates runbook; CI handles execution.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="manual-note"><strong>Roadmap to "lights-out" builds:</strong> by Q4 2026, low-risk requests (copy edits, schema-only changes, simple feature flag toggles) auto-merge after a passing eval + diff-classifier. High-risk requests stay in review. Target 60% of merges by auto-merge, 40% by senior review.</div>
+
+  <div class="page-foot-brand">{out-of-house.dev}</div><div class="page-num">10</div>
+</section>
+
+<!-- ===================== 11 — AUTOMATION MAP ===================== -->
+<section class="page">
+  <div class="banner">
+    <div class="eyebrow">11 · Automation map (red = manual)</div>
+    <h2>Every red square is a thing a human still does. Every red square has a plan.</h2>
+    <p>If you took a snapshot of the business today, this is where humans are still in the loop. Each line names the owner of the red, and what would have to be true to retire it.</p>
+  </div>
+
+  <table>
+    <thead><tr><th>Function</th><th>Manual today?</th><th>Owner</th><th>Path to automation</th></tr></thead>
+    <tbody>
+      <tr><td>Inbound discovery call</td><td><span class="pill pill-danger">YES</span></td><td class="manual-step">Callum</td><td>Pre-call AI brief shipped to inbox; call itself stays manual — it's the sale.</td></tr>
+      <tr><td>Scoping &amp; quote</td><td><span class="pill pill-warn">Semi</span></td><td>Claude orchestrator</td><td>scope stage auto-runs; senior approves in &lt;10 min.</td></tr>
+      <tr><td>Architecture review</td><td><span class="pill pill-danger">YES</span></td><td class="manual-step">Senior eng</td><td>Stays manual — it's the eval gate. Reduce time-per-review with diff classifiers.</td></tr>
+      <tr><td>Build execution</td><td><span class="pill pill-accent">Automated</span></td><td>Claude Code worker</td><td>Already shipped; PR opens automatically.</td></tr>
+      <tr><td>Code review</td><td><span class="pill pill-warn">Semi</span></td><td>Claude + senior</td><td>Auto-merge on low-risk paths Q4 2026.</td></tr>
+      <tr><td>Deploy</td><td><span class="pill pill-accent">Automated</span></td><td>CI</td><td>Already shipped.</td></tr>
+      <tr><td>Weekly client digest</td><td><span class="pill pill-accent">Automated</span></td><td>digest-weekly fn</td><td>Already shipped; runs Mondays at 7am UK.</td></tr>
+      <tr><td>Monthly impact report</td><td><span class="pill pill-warn">Semi</span></td><td>monthly_reports table</td><td>Already drafted; needs PDF renderer to ship.</td></tr>
+      <tr><td>Lead discovery</td><td><span class="pill pill-accent">Automated</span></td><td>lead-discover fn</td><td>Cron every 30 min.</td></tr>
+      <tr><td>Lead enrichment</td><td><span class="pill pill-accent">Automated</span></td><td>lead-enrich fn</td><td>Done.</td></tr>
+      <tr><td>Lead scoring</td><td><span class="pill pill-accent">Automated</span></td><td>lead-score fn</td><td>Done.</td></tr>
+      <tr><td>Outreach drafting</td><td><span class="pill pill-accent">Automated</span></td><td>outreach-draft fn</td><td>Done.</td></tr>
+      <tr><td>Outreach approval</td><td><span class="pill pill-danger">YES</span></td><td class="manual-step">Callum / client</td><td>Auto-mode toggle exists; switch on per-ICP once acceptance rate stable.</td></tr>
+      <tr><td>Outreach send</td><td><span class="pill pill-accent">Automated</span></td><td>outreach-send fn</td><td>Resend; rate-limited.</td></tr>
+      <tr><td>Reply parsing &amp; meeting book</td><td><span class="pill pill-warn">Semi</span></td><td>reply-parse + cal.com</td><td>Q3 2026: meeting agent fully books on positive reply.</td></tr>
+      <tr><td>Ads creative generation</td><td><span class="pill pill-accent">Automated</span></td><td>ads-generate fn</td><td>Done.</td></tr>
+      <tr><td>Ads push (Meta/Google)</td><td><span class="pill pill-warn">Semi</span></td><td>ads-push (planned)</td><td>Q3 2026: Marketing API integration.</td></tr>
+      <tr><td>Course enrolment</td><td><span class="pill pill-accent">Automated</span></td><td>stripe-webhook</td><td>Done.</td></tr>
+      <tr><td>Cohort live session</td><td><span class="pill pill-danger">YES</span></td><td class="manual-step">Senior eng</td><td>Deliberately manual — the brand premium. AI-summarised replay reduces prep time.</td></tr>
+      <tr><td>Capstone grading</td><td><span class="pill pill-warn">Semi</span></td><td>LLM grader + senior</td><td>Draft autogenerated; senior approves.</td></tr>
+      <tr><td>Cert issuance</td><td><span class="pill pill-accent">Automated</span></td><td>cert-issue fn</td><td>Done.</td></tr>
+      <tr><td>1:1 coaching booking</td><td><span class="pill pill-accent">Automated</span></td><td>stripe-checkout + cal.com</td><td>Done.</td></tr>
+      <tr><td>Coaching session itself</td><td><span class="pill pill-danger">YES</span></td><td class="manual-step">Senior eng</td><td>Deliberately manual — the product.</td></tr>
+      <tr><td>LogoVault search / upload</td><td><span class="pill pill-accent">Automated</span></td><td>logo-search fn</td><td>Done.</td></tr>
+      <tr><td>LogoVault new brand approvals</td><td><span class="pill pill-warn">Semi</span></td><td>Claude vision tagger</td><td>Q3 2026: auto-approve if confidence &gt; 0.9.</td></tr>
+      <tr><td>AISEO audit</td><td><span class="pill pill-accent">Automated</span></td><td>aiseo-audit fn</td><td>Done.</td></tr>
+      <tr><td>AISEO authority outreach</td><td><span class="pill pill-danger">YES</span></td><td class="manual-step">Authority editor</td><td>Hybrid: AI drafts the pitch, human owns the relationship.</td></tr>
+      <tr><td>AISEO monthly ranking pull</td><td><span class="pill pill-warn">Semi</span></td><td>aiseo-rank fn (planned)</td><td>Q3 2026: cron pulls 30 queries × 6 engines.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-foot-brand">{out-of-house.dev}</div><div class="page-num">11</div>
+</section>
+
+<!-- ===================== 12 — TECH STACK ===================== -->
+<section class="page">
+  <div class="banner">
+    <div class="eyebrow">12 · Tech stack &amp; vendors</div>
+    <h2>Boring choices. Boringly reliable.</h2>
+    <p>Pick the smallest stack that lets one senior engineer ship across all eight lines without context-switch tax.</p>
+  </div>
+
+  <table>
+    <thead><tr><th>Layer</th><th>Choice</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Front-end</td><td>React 18 + react-router 6 + CRA</td><td>Already in repo. No SSR needed for marketing site; product surfaces are auth-gated.</td></tr>
+      <tr><td>UI tokens</td><td>Hand-rolled CSS variables in <code>App.css</code> + <code>v3.css</code></td><td>No component lib bloat. Geist font, emerald accent, warm-olive neutrals.</td></tr>
+      <tr><td>Routing</td><td>BrowserRouter</td><td>Pretty URLs; 404.html fallback for GH Pages parity.</td></tr>
+      <tr><td>Database</td><td>Supabase Postgres + RLS</td><td>Auth, row-level security, realtime, storage in one product. No multi-vendor glue.</td></tr>
+      <tr><td>Functions</td><td>Supabase Edge Functions (Deno)</td><td>Co-located, single deploy surface, native fetch.</td></tr>
+      <tr><td>Auth</td><td>Supabase Auth (email + Google)</td><td>JWT-based. Profiles auto-created via trigger.</td></tr>
+      <tr><td>Payments</td><td>Stripe Checkout + webhooks</td><td>One pipeline for every product line.</td></tr>
+      <tr><td>LLM</td><td>Anthropic Claude (primary), OpenAI (fallback)</td><td>Multi-model routing via <code>_shared/llm.ts</code>.</td></tr>
+      <tr><td>Email</td><td>Resend</td><td>Outreach + transactional. Cheap, dev-friendly.</td></tr>
+      <tr><td>Scheduling</td><td>Cal.com (embed + webhooks)</td><td>Already wired for discovery + coaching bookings.</td></tr>
+      <tr><td>Hosting (site)</td><td>IONOS + GitHub Pages</td><td>Existing; will add Cloudflare for edge caching.</td></tr>
+      <tr><td>Hosting (workers)</td><td>Render / Fly (Claude Code workers)</td><td>Long-running. Headless Claude Code requires &gt; 60s exec.</td></tr>
+      <tr><td>Lead sources</td><td>Google Places, Companies House, Reddit</td><td>Public APIs first. LinkedIn / Apollo later, gated by budget.</td></tr>
+      <tr><td>Ads (planned)</td><td>Meta Marketing API + Google Ads API</td><td>Auto-push generated creatives.</td></tr>
+      <tr><td>Observability</td><td>Sentry (already gated) + Logtail</td><td>Replace placeholder in <code>index.js#window.__OOH_REPORT_ERROR__</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:18px">Repos &amp; deploys</h3>
+  <ul>
+    <li><strong>out-of-house-dev/out-of-house-dev</strong> — this repo. React app + Supabase migrations + edge functions.</li>
+    <li><strong>out-of-house-dev/claude-worker</strong> (planned) — headless Claude Code runner.</li>
+    <li><strong>out-of-house-dev/ads-pusher</strong> (planned) — Meta + Google ads integrations.</li>
+    <li><strong>out-of-house-dev/aiseo-ranker</strong> (planned) — 30-question × 6-engine weekly pull.</li>
+  </ul>
+
+  <div class="page-foot-brand">{out-of-house.dev}</div><div class="page-num">12</div>
+</section>
+
+<!-- ===================== 13 — ROADMAP ===================== -->
+<section class="page">
+  <div class="banner">
+    <div class="eyebrow">13 · 30 / 60 / 90 / 180 / 365-day roadmap</div>
+    <h2>Five horizons. One direction.</h2>
+    <p>Each horizon names what ships, what breaks, and what we'll measure.</p>
+  </div>
+
+  <h3>Day 0–30 · Foundation</h3>
+  <ul>
+    <li>Apply migration <code>005_v3_business_expansion.sql</code> in production Supabase.</li>
+    <li>Deploy all v3 pages (coaching, courses, saas, logovault, lead-engine, aiseo, verify).</li>
+    <li>Deploy edge functions: stripe-checkout, stripe-webhook, logo-search, aiseo-audit.</li>
+    <li>Configure Stripe products + recurring prices.</li>
+    <li>Seed LogoVault with 200 hand-picked brands (SimpleIcons import).</li>
+    <li><strong>Ship target:</strong> first paid course enrolment, first paid 1:1 coaching, first LogoVault paid sub.</li>
+  </ul>
+
+  <h3>Day 30–60 · Lead engine</h3>
+  <ul>
+    <li>Deploy lead-discover / lead-enrich / lead-score / outreach-draft on cron.</li>
+    <li>Build admin UI at <code>/app/admin/leads</code> for the approve/reject loop.</li>
+    <li>Wire Resend for outreach-send.</li>
+    <li>First 100 outbound emails sent. First reply parsed.</li>
+    <li><strong>Ship target:</strong> 3 booked discovery calls sourced by the engine.</li>
+  </ul>
+
+  <h3>Day 60–90 · Education + AISEO</h3>
+  <ul>
+    <li>First 3-week cohort launches (small, hand-picked).</li>
+    <li>aiseo-rank fn live; first monthly ranking report shipped to a client.</li>
+    <li>cert-issue function lights up first certificate.</li>
+    <li>Replace placeholder error reporter with Sentry.</li>
+    <li><strong>Ship target:</strong> first cert issued, first AISEO retainer signed.</li>
+  </ul>
+
+  <h3>Day 90–180 · Scale</h3>
+  <ul>
+    <li>Claude Code worker repo live; first auto-build merges.</li>
+    <li>Auto-mode toggle on outreach for stable ICPs.</li>
+    <li>Inbox Fox alpha; Prompt Locker private beta.</li>
+    <li>Ads-push (Meta + Google) live.</li>
+    <li><strong>Ship target:</strong> 4 cohorts running, £15k MRR.</li>
+  </ul>
+
+  <h3>Day 180–365 · Compounding</h3>
+  <ul>
+    <li>Fingerprint Fund (productised lead engine) public beta.</li>
+    <li>12-week career-switch cohort produces first 5 bench-grade graduates.</li>
+    <li>White-label LogoVault sold to first agency.</li>
+    <li>AISEO ranking data set large enough to power a benchmarks report.</li>
+    <li><strong>Ship target:</strong> £25k services MRR + £8k SaaS MRR + 120 coaching hrs/mo.</li>
+  </ul>
+
+  <div class="page-foot-brand">{out-of-house.dev}</div><div class="page-num">13</div>
+</section>
+
+<!-- ===================== 14 — MIND MAP ===================== -->
+<section class="page">
+  <div class="banner">
+    <div class="eyebrow">14 · Mind map</div>
+    <h2>The business, on one page.</h2>
+    <p>Everything reachable from the centre node ("Callum's senior eng time") flows through the platform. Every leaf has a Supabase table and an edge function.</p>
+  </div>
+
+  <div class="mindmap-root">
+    <svg viewBox="0 0 800 460" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .root { fill: #11140f; }
+          .root text { fill: #fff; font: 600 12px Inter; }
+          .branch { fill: #fff; stroke: #1f8a60; stroke-width: 1.4; }
+          .branch text { fill: #11140f; font: 600 11px Inter; }
+          .branch-sub { fill: #f4f3ef; stroke: rgba(20,20,15,0.18); }
+          .branch-sub text { fill: #292a25; font: 500 10px Inter; }
+          .leaf { fill: #fff; stroke: rgba(20,20,15,0.12); }
+          .leaf text { fill: #6b6b66; font: 400 9px Inter; }
+          .link { stroke: rgba(20,20,15,0.25); fill: none; }
+        </style>
+      </defs>
+
+      <!-- Root -->
+      <g class="root">
+        <rect x="320" y="200" width="160" height="60" rx="10"/>
+        <text x="400" y="232" text-anchor="middle">out-of-house.dev</text>
+        <text x="400" y="248" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.7)">platform</text>
+      </g>
+
+      <!-- Branches -->
+      <g class="branch">
+        <rect x="40"  y="40" width="160" height="42" rx="8"/>
+        <text x="120" y="65" text-anchor="middle">Delivery</text>
+      </g>
+      <g class="branch">
+        <rect x="600" y="40" width="160" height="42" rx="8"/>
+        <text x="680" y="65" text-anchor="middle">Education</text>
+      </g>
+      <g class="branch">
+        <rect x="40"  y="380" width="160" height="42" rx="8"/>
+        <text x="120" y="405" text-anchor="middle">Growth (lead + ads)</text>
+      </g>
+      <g class="branch">
+        <rect x="600" y="380" width="160" height="42" rx="8"/>
+        <text x="680" y="405" text-anchor="middle">Products (SaaS / AIaaS)</text>
+      </g>
+      <g class="branch">
+        <rect x="320" y="40" width="160" height="42" rx="8"/>
+        <text x="400" y="65" text-anchor="middle">AISEO</text>
+      </g>
+      <g class="branch">
+        <rect x="320" y="380" width="160" height="42" rx="8"/>
+        <text x="400" y="405" text-anchor="middle">Commerce</text>
+      </g>
+
+      <!-- Sub branches -->
+      <g class="branch-sub"><rect x="40" y="100" width="160" height="30" rx="6"/><text x="120" y="120" text-anchor="middle">AI automations</text></g>
+      <g class="branch-sub"><rect x="40" y="135" width="160" height="30" rx="6"/><text x="120" y="155" text-anchor="middle">Websites &amp; web apps</text></g>
+      <g class="branch-sub"><rect x="40" y="170" width="160" height="30" rx="6"/><text x="120" y="190" text-anchor="middle">Maintenance retainer</text></g>
+
+      <g class="branch-sub"><rect x="600" y="100" width="160" height="30" rx="6"/><text x="680" y="120" text-anchor="middle">1:1 coaching · £100/hr</text></g>
+      <g class="branch-sub"><rect x="600" y="135" width="160" height="30" rx="6"/><text x="680" y="155" text-anchor="middle">Cohort courses</text></g>
+      <g class="branch-sub"><rect x="600" y="170" width="160" height="30" rx="6"/><text x="680" y="190" text-anchor="middle">Business programmes</text></g>
+      <g class="branch-sub"><rect x="600" y="205" width="160" height="30" rx="6"/><text x="680" y="225" text-anchor="middle">Certification</text></g>
+
+      <g class="branch-sub"><rect x="40" y="280" width="160" height="30" rx="6"/><text x="120" y="300" text-anchor="middle">Lead-discover</text></g>
+      <g class="branch-sub"><rect x="40" y="315" width="160" height="30" rx="6"/><text x="120" y="335" text-anchor="middle">Outreach engine</text></g>
+      <g class="branch-sub"><rect x="40" y="350" width="160" height="30" rx="6"/><text x="120" y="370" text-anchor="middle">Ads creative + push</text></g>
+
+      <g class="branch-sub"><rect x="600" y="280" width="160" height="30" rx="6"/><text x="680" y="300" text-anchor="middle">LogoVault</text></g>
+      <g class="branch-sub"><rect x="600" y="315" width="160" height="30" rx="6"/><text x="680" y="335" text-anchor="middle">Prompt Locker</text></g>
+      <g class="branch-sub"><rect x="600" y="350" width="160" height="30" rx="6"/><text x="680" y="370" text-anchor="middle">Inbox Fox · Fingerprint</text></g>
+
+      <g class="branch-sub"><rect x="320" y="100" width="160" height="30" rx="6"/><text x="400" y="120" text-anchor="middle">Free audit (60 checks)</text></g>
+      <g class="branch-sub"><rect x="320" y="135" width="160" height="30" rx="6"/><text x="400" y="155" text-anchor="middle">Schema + llms.txt</text></g>
+      <g class="branch-sub"><rect x="320" y="170" width="160" height="30" rx="6"/><text x="400" y="190" text-anchor="middle">Citation / authority</text></g>
+      <g class="branch-sub"><rect x="320" y="205" width="160" height="30" rx="6"/><text x="400" y="225" text-anchor="middle">Ranking monitor</text></g>
+
+      <g class="branch-sub"><rect x="320" y="280" width="160" height="30" rx="6"/><text x="400" y="300" text-anchor="middle">Stripe checkout</text></g>
+      <g class="branch-sub"><rect x="320" y="315" width="160" height="30" rx="6"/><text x="400" y="335" text-anchor="middle">Subscriptions mirror</text></g>
+      <g class="branch-sub"><rect x="320" y="350" width="160" height="30" rx="6"/><text x="400" y="370" text-anchor="middle">Payments table</text></g>
+
+      <!-- Links from root to branches -->
+      <path class="link" d="M 320,230 C 250,230 200,80 200,80"/>
+      <path class="link" d="M 480,230 C 560,230 600,80 600,80"/>
+      <path class="link" d="M 400,200 C 400,150 400,90 400,82"/>
+      <path class="link" d="M 320,230 C 240,300 200,380 200,400"/>
+      <path class="link" d="M 480,230 C 560,300 600,380 600,400"/>
+      <path class="link" d="M 400,260 C 400,320 400,380 400,388"/>
+    </svg>
+  </div>
+
+  <div class="page-foot-brand">{out-of-house.dev}</div><div class="page-num">14</div>
+</section>
+
+<!-- ===================== 15 — RISK REGISTER ===================== -->
+<section class="page">
+  <div class="banner">
+    <div class="eyebrow">15 · Risk register</div>
+    <h2>What could go wrong, and what we do about it.</h2>
+    <p>If we don't name them, they get expensive. Each risk has a probability, impact, and the owner of the mitigation.</p>
+  </div>
+
+  <table>
+    <thead><tr><th>Risk</th><th>P</th><th>Impact</th><th>Mitigation</th></tr></thead>
+    <tbody>
+      <tr><td>Outreach domain reputation damage</td><td>Med</td><td>High</td><td>Use a sub-domain (<code>send.out-of-house.dev</code>) + warm-up + strict daily caps. <code>outreach-send</code> already enforces this.</td></tr>
+      <tr><td>Stripe webhook drops a payment</td><td>Low</td><td>High</td><td>Idempotency on <code>payment_id</code> in metadata; nightly reconciliation job to be added (planned Q2).</td></tr>
+      <tr><td>LLM cost runs away</td><td>Med</td><td>Med</td><td>Per-function token caps; nightly summary by model + run-type; alert at 80% of monthly budget.</td></tr>
+      <tr><td>Lead source TOS change</td><td>Med</td><td>Med</td><td>Each source is a row in <code>lead_sources</code> with a kill-switch; we can disable individual sources from the admin.</td></tr>
+      <tr><td>Single senior eng burnout</td><td>High</td><td>High</td><td>The dev bench fills this gap. Course pipeline funnels candidates; trial-task gate vets them.</td></tr>
+      <tr><td>RLS misconfiguration leaks data</td><td>Low</td><td>Catastrophic</td><td>RLS is the foundation. Every migration ends with a check that <em>every</em> new table has <code>enable row level security</code>.</td></tr>
+      <tr><td>LogoVault DMCA / trademark</td><td>Med</td><td>Med</td><td>Per-brand takedown table; auto-takedown on receipt; only fair-use logo display.</td></tr>
+      <tr><td>AISEO market disappears (LLMs stop citing)</td><td>Low</td><td>High</td><td>The schema + authority work also feeds traditional SEO. Worst case, the programme degrades into a standard SEO retainer.</td></tr>
+      <tr><td>Course intake too small to run</td><td>Med</td><td>Low</td><td>Cohort capacities tuned small (12-20); first cohort runs even at 6 enrolments.</td></tr>
+      <tr><td>Adversarial prompt-injection in our content</td><td>Med</td><td>Med</td><td>Sanitise on ingest for RAG sources; explicit instruction in system prompts to ignore user-content directives.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-foot-brand">{out-of-house.dev}</div><div class="page-num">15</div>
+</section>
+
+<!-- ===================== 16 — SHIPPED ===================== -->
+<section class="page">
+  <div class="banner">
+    <div class="eyebrow">16 · What's already shipped (in this session)</div>
+    <h2>You can deploy this tonight.</h2>
+    <p>A concrete inventory of what's in the repo right now after the v3 session — file-by-file, so you can verify.</p>
+  </div>
+
+  <h3>Data + content</h3>
+  <ul>
+    <li><code>src/data/programmes.js</code> — coaching tracks + course catalogue (6 courses, 2 tracks).</li>
+    <li><code>src/data/saasApps.js</code> — SaaS roadmap (LogoVault + 3 planned).</li>
+    <li><code>src/data/leadgen.js</code> — lead engine marketing copy + pricing.</li>
+    <li><code>src/data/aiseo.js</code> — AISEO programme content + pricing.</li>
+  </ul>
+
+  <h3>Pages</h3>
+  <ul>
+    <li><code>src/pages/Coaching.js</code> — coaching index with both tracks.</li>
+    <li><code>src/pages/CoachingTrack.js</code> — per-track detail (Business / Developers).</li>
+    <li><code>src/pages/Courses.js</code> — course catalogue with track filter.</li>
+    <li><code>src/pages/CourseDetail.js</code> — single-course landing with Stripe checkout.</li>
+    <li><code>src/pages/Saas.js</code> — SaaS index.</li>
+    <li><code>src/pages/LogoVault.js</code> — search + API + pricing tabs.</li>
+    <li><code>src/pages/LeadGen.js</code> — 7-stage pipeline marketing page.</li>
+    <li><code>src/pages/AISEO.js</code> — free audit tool + offer + FAQ.</li>
+    <li><code>src/pages/CertificateVerify.js</code> — public /verify/:code endpoint.</li>
+  </ul>
+
+  <h3>Routing &amp; navigation</h3>
+  <ul>
+    <li><code>src/App.js</code> — 9 new routes wired.</li>
+    <li><code>src/Header.js</code> — Learn + Products dropdowns added with caret animation.</li>
+    <li><code>src/index.js</code> — imports <code>styles/v3.css</code>.</li>
+  </ul>
+
+  <h3>Styles</h3>
+  <ul>
+    <li><code>src/styles/v3.css</code> — coaching / courses / saas / logovault / leadgen / aiseo / verify styles (token-compatible with App.css).</li>
+  </ul>
+
+  <h3>Database</h3>
+  <ul>
+    <li><code>supabase/migrations/005_v3_business_expansion.sql</code> — 21 new tables, all RLS-enabled.</li>
+  </ul>
+
+  <h3>Edge Functions</h3>
+  <ul>
+    <li><code>_shared/cors.ts</code> · <code>_shared/supabase-admin.ts</code> · <code>_shared/llm.ts</code></li>
+    <li><code>claude-orchestrate/</code> · <code>stripe-checkout/</code> · <code>stripe-webhook/</code></li>
+    <li><code>lead-discover/</code> · <code>lead-enrich/</code> · <code>lead-score/</code></li>
+    <li><code>outreach-draft/</code> · <code>outreach-send/</code></li>
+    <li><code>logo-search/</code> · <code>aiseo-audit/</code> · <code>cert-issue/</code> · <code>ads-generate/</code> · <code>digest-weekly/</code></li>
+  </ul>
+
+  <h3>Docs</h3>
+  <ul>
+    <li><code>docs/roadmap/out-of-house-dev-roadmap.html</code> — this document.</li>
+    <li><code>scripts/build-roadmap-pdf.js</code> — Chrome-headless PDF converter (optional).</li>
+  </ul>
+
+  <blockquote>That's roughly 5,000 lines of code, schema, and copy added in one sitting. Now run <code>npm start</code> and walk every new page.</blockquote>
+
+  <div class="page-foot-brand">{out-of-house.dev}</div><div class="page-num">16</div>
+</section>
+
+</body>
+</html>
