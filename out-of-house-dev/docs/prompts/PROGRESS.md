@@ -167,7 +167,42 @@ Lint ✅, typecheck ✅.
 (applications/projects/requests CRUD, checkout, webhooks, logo search, aiseo
 audit, etc.) wiring `@oohdev/shared`.
 
-## Phases 3–12 — ⬜ not started
+## Phase 3 — Domain API (edge-function ports + platform routes) — ✅ DONE (gate green)
+
+**Edge-function ports (→ routes):** aiseo-audit (`POST /aiseo/audit`, 14 checks
+verbatim, SSRF-guarded `safeFetch`), stripe-checkout (`POST /checkout`,
+**server-side price book** `lib/pricing.ts` — never trusts client amount),
+stripe-webhook (`POST /webhooks/stripe`, signature verify + `stripe_events`
+idempotency + fan-out: payments→enrollments/coaching/subscriptions + dunning
+alert), logo-search (`GET /logovault/search` + api_usage metering),
+cert-issue (`POST /admin/certificates`, OH- codes). _(lead-*/outreach-*/ads/
+digest → Phase 4 jobs; claude-orchestrate → Phase 5.)_
+
+**Platform routes:** public `POST /apply` (honeypot) + admin review/approve
+(**approve provisions user+project+invite+email**) / reject; feature_requests
+create + staff PATCH (activity + client notify) + comments; projects admin
+create/PATCH; plan-templates (staff) + programmes/saas/changelog (public);
+`POST /checkout`; `GET /verify/:code`, `/status`, `/live`, `POST /waitlist`,
+`POST /forms/contact`. Invite-claim added to `/auth/register` (password-less
+account → set password via invite). Stripe lib (REST + HMAC sig, stub when
+unconfigured). `docs/api.md` auto-generated (`scripts/gen-api-docs.ts`).
+
+**Gate evidence** — `apps/api` 20/20 (incl. `phase3.test.ts`, 5): apply→approve→
+invite+project→**claim** · checkout at catalogue price (£795, stub) + **webhook
+idempotency** (2nd = duplicate, payment succeeded once, 1 enrollment, 1
+stripe_event) + bad-signature 400 · logovault search + metering row · **aiseo
+audit** rich(A) vs bare(F), 14 checks, org_schema/llms_txt pass+fail paths.
+Lint ✅, typecheck ✅.
+
+**Deferred:** lead/outreach/ads/digest logic → Phase 4 jobs; the apps/web
+supabase→API swap (grep-0) → Phase 7; Cal.com/Resend inbound/GDPR routes →
+Phases 4/8/10 where their runtime lands.
+
+**Next:** Phase 4 — pg-boss runtime, `defineJob`, Appendix B schedules, ops crons
+(uptime, backup, cost rollup, reconcile), lead/outreach/digest job handlers,
+email queue drain.
+
+## Phases 4–12 — ⬜ not started
 ```
 1  Database baseline + v4 tables + seeds
 2  API foundation (auth, rbac, files, sse, analytics)

@@ -24,6 +24,16 @@ import fileRoutes from './routes/files';
 import realtimeRoutes from './routes/realtime';
 import collectRoutes from './routes/collect';
 import adminRoutes from './routes/admin';
+import applicationRoutes from './routes/applications';
+import requestRoutes from './routes/requests';
+import projectAdminRoutes from './routes/projectsAdmin';
+import catalogRoutes from './routes/catalog';
+import checkoutRoutes from './routes/checkout';
+import stripeWebhookRoutes from './routes/webhooksStripe';
+import logovaultRoutes from './routes/logovault';
+import aiseoRoutes from './routes/aiseo';
+import certificateRoutes from './routes/certificates';
+import publicRoutes from './routes/publicRoutes';
 
 const UNSAFE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
@@ -37,6 +47,7 @@ const CSRF_EXEMPT: RegExp[] = [
   /^\/api\/v1\/apply$/,
   /^\/api\/v1\/waitlist$/,
   /^\/api\/v1\/forms\//,
+  /^\/api\/v1\/aiseo\/audit$/,
   /^\/api\/v1\/auth\/login$/,
   /^\/api\/v1\/auth\/register$/,
   /^\/api\/v1\/auth\/magic\/request$/,
@@ -123,6 +134,16 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(realtimeRoutes, { prefix: '/api/v1' });
   await app.register(collectRoutes, { prefix: '/api/v1' });
   await app.register(adminRoutes, { prefix: '/api/v1' });
+  await app.register(applicationRoutes, { prefix: '/api/v1' });
+  await app.register(requestRoutes, { prefix: '/api/v1' });
+  await app.register(projectAdminRoutes, { prefix: '/api/v1' });
+  await app.register(catalogRoutes, { prefix: '/api/v1' });
+  await app.register(checkoutRoutes, { prefix: '/api/v1' });
+  await app.register(stripeWebhookRoutes, { prefix: '/api/v1' });
+  await app.register(logovaultRoutes, { prefix: '/api/v1' });
+  await app.register(aiseoRoutes, { prefix: '/api/v1' });
+  await app.register(certificateRoutes, { prefix: '/api/v1' });
+  await app.register(publicRoutes, { prefix: '/api/v1' });
 
   app.addHook('onClose', async () => {
     await stopRealtimeBridge();

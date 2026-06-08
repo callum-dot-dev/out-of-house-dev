@@ -56,7 +56,20 @@ export default async function authRoutes(app: FastifyInstance): Promise<void> {
       })
       .parse(req.body);
 
-    if (await getUserByEmail(b.email)) throw conflict('Email already registered', 'email_taken');
+    const existing = await getUserByEmail(b.email);
+    if (existing?.password_hash) throw conflict('Email already registered', 'email_taken');
+
+    // Claim an invited, password-less account (created at application approval).
+    if (existing) {
+      if (!b.inviteToken) throw forbidden('Invite required to claim this account', 'invite_required');
+      const tok = await consumeAuthToken('invite', b.inviteToken);
+      if (!tok || (tok.email && tok.email.toLowerCase() !== b.email.toLowerCase()))
+        throw badRequest('Invalid or expired invite', 'invalid_invite');
+      await setPassword(existing.id, await hashPassword(b.password));
+      const claimed = (await getUserById(existing.id))!;
+      await startSession(req, reply, claimed);
+      return reply.code(200).send({ user: publicUser(claimed) });
+    }
 
     let role: Role = 'client';
     if ((await countUsers()) === 0) {
