@@ -1,0 +1,136 @@
+# Render Blueprint — one push deploys the whole platform.
+# NOTE: the platform lives in the out-of-house-dev/ subfolder of this repo
+# (see out-of-house-dev/docs/adr/0001-render-migration.md), so every service
+# sets rootDir: out-of-house-dev (the npm workspace root).
+previews:
+  generation: automatic
+
+databases:
+  - name: ooh-db
+    plan: basic-1gb # adjust on sign-up; PITR on paid plans
+    postgresMajorVersion: "16"
+
+services:
+  # ---------- Static frontend (CRA) ----------
+  - type: web
+    name: ooh-web
+    runtime: static
+    rootDir: out-of-house-dev
+    buildCommand: npm install && npm run build:web
+    staticPublishPath: apps/web/build
+    domains:
+      - out-of-house.dev
+      - www.out-of-house.dev
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://api.out-of-house.dev
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # ---------- API (Fastify) ----------
+  - type: web
+    name: ooh-api
+    runtime: node
+    rootDir: out-of-house-dev
+    plan: starter
+    buildCommand: npm install && npm run build -w packages/shared -w apps/api
+    startCommand: npm run start -w apps/api
+    preDeployCommand: npm run migrate
+    healthCheckPath: /api/v1/health
+    domains:
+      - api.out-of-house.dev
+    disk:
+      name: ooh-data
+      mountPath: /var/data
+      sizeGB: 10
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase: { name: ooh-db, property: connectionString }
+      - key: PUBLIC_SITE_URL
+        value: https://out-of-house.dev
+      - key: PUBLIC_API_URL
+        value: https://api.out-of-house.dev
+      - key: FILE_STORE
+        value: disk
+      - key: FILE_STORE_ROOT
+        value: /var/data
+      - key: EMAIL_DRY_RUN
+        value: "true" # flip to false at go-live
+      - key: SESSION_JWT_SECRET
+        generateValue: true
+      - key: REFRESH_TOKEN_PEPPER
+        generateValue: true
+      - key: CSRF_SECRET
+        generateValue: true
+      # Secrets set once in the dashboard (sync:false keeps them out of git):
+      - { key: ANTHROPIC_API_KEY, sync: false }
+      - { key: OPENAI_API_KEY, sync: false }
+      - { key: STRIPE_SECRET_KEY, sync: false }
+      - { key: STRIPE_WEBHOOK_SECRET, sync: false }
+      - { key: RESEND_API_KEY, sync: false }
+      - { key: RESEND_WEBHOOK_SECRET, sync: false }
+      - { key: CALCOM_API_KEY, sync: false }
+      - { key: CALCOM_WEBHOOK_SECRET, sync: false }
+      - { key: GOOGLE_PLACES_API_KEY, sync: false }
+      - { key: COMPANIES_HOUSE_API_KEY, sync: false }
+      - { key: SLACK_BOT_TOKEN, sync: false }
+      - { key: PERPLEXITY_API_KEY, sync: false }
+      - { key: SENTRY_DSN_API, sync: false }
+      - { key: ADMIN_ALERT_EMAIL, sync: false }
+
+  # ---------- Background jobs (pg-boss + cron) ----------
+  - type: worker
+    name: ooh-jobs
+    runtime: node
+    rootDir: out-of-house-dev
+    plan: starter
+    buildCommand: npm install && npm run build -w packages/shared -w apps/jobs
+    startCommand: npm run start -w apps/jobs
+    disk:
+      name: ooh-jobs-data
+      mountPath: /var/data
+      sizeGB: 5
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase: { name: ooh-db, property: connectionString }
+      - key: FILE_STORE_ROOT
+        value: /var/data
+      - key: EMAIL_DRY_RUN
+        value: "true"
+      - key: LLM_DAILY_CAP_GBP
+        value: "50"
+      - { key: ANTHROPIC_API_KEY, sync: false }
+      - { key: OPENAI_API_KEY, sync: false }
+      - { key: RESEND_API_KEY, sync: false }
+      - { key: GOOGLE_PLACES_API_KEY, sync: false }
+      - { key: COMPANIES_HOUSE_API_KEY, sync: false }
+      - { key: STRIPE_SECRET_KEY, sync: false }
+      - { key: SLACK_WEBHOOK_ALERTS, sync: false }
+
+  # ---------- Builder worker (Docker: node + git + chromium) ----------
+  - type: worker
+    name: ooh-builder
+    runtime: docker
+    rootDir: out-of-house-dev
+    dockerfilePath: apps/builder/Dockerfile
+    plan: standard
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase: { name: ooh-db, property: connectionString }
+      - key: BUILDER_CONCURRENCY
+        value: "2"
+      - key: BUILDER_DRY_RUN
+        value: "false"
+      - { key: ANTHROPIC_API_KEY, sync: false }
+      - { key: GITHUB_TOKEN, sync: false }
+      - { key: GITHUB_ORG, sync: false }
+      - { key: RENDER_API_KEY, sync: false }
+      - { key: RENDER_OWNER_ID, sync: false }

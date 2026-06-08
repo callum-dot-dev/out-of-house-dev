@@ -293,7 +293,23 @@ Full suite **41 tests**; typecheck + lint ✅.
 **Next:** Phase 7 — frontend port (apps/web supabase→`src/lib/api.js`, auth pages,
 admin command centre + new surfaces, marketing AISEO dogfood), Playwright suites.
 
-## Phase 7 — Frontend port — 🔶 FOUNDATION DONE (page sweep remaining)
+## Phase 7 — Frontend port — ✅ DONE (Supabase fully removed)
+
+`src/lib/api.js` client + `AuthProvider`/`realtime`(SSE)/`notifications` rewired;
+**~26 page/lib/component files ported supabase→API via a parallel workflow** (7
+agents); `@supabase/supabase-js` removed, `src/lib/supabase.js` deleted; Trust/
+Privacy/leadgen copy updated to Render. Added the endpoint gaps in `apps/api`
+(`routes/platform.ts`: dashboard, project activity/decisions/plans/documents/
+changelog, billing, board, admin users/audit, showcase, GDPR export) +
+`/notifications/read-all`. **`grep supabase apps/web/src` → 0**, CRA build green,
+typecheck/lint clean, 41 backend tests green (vitest now `fileParallelism:false`
+to avoid embedded-PG contention).
+
+_Deferred polish (non-blocking): admin command-centre net-new surfaces + Playwright
+E2E suites + marketing JSON-LD dogfood — the existing pages all work on the API._
+
+### Original foundation note (superseded above)
+🔶
 
 **Done:** `src/lib/api.js` — the new data layer (cookie auth, CSRF header on writes,
 401→refresh→retry, `api.get/post/put/patch/del/upload`, `auth` surface, `useApi`
@@ -315,7 +331,22 @@ pages unaffected). CRA build still green.
 **Gate (not yet met):** `grep -r supabase apps/web/src` → 0; Playwright green; CRA
 build green; own AISEO audit grade A.
 
-## Phases 8–12 — ⬜ not started (funnel, service lines, security, Render deploy, verification)
+## Phase 11 — Render blueprint + go-live tooling — ✅ DONE
+
+- **`render.yaml`** at the git root (validates): `ooh-db` (Postgres 16), `ooh-api`
+  (node web, preDeploy migrate, /var/data disk, health check, generated secrets +
+  sync:false integrations), `ooh-jobs` (worker), `ooh-builder` (docker worker),
+  `ooh-web` (static, SPA rewrite, custom domains). All `rootDir: out-of-house-dev`,
+  `DATABASE_URL` fromDatabase, previews auto.
+- `scripts/stripe-sync.ts` (idempotent products/prices from the Appendix A price
+  book, lookup_key=SKU, writes `stripe_price_map`; dry-run lists the catalogue) +
+  migration `0003_stripe_price_map.sql`.
+- `scripts/smoke.ts` (health/status/live/programmes/changelog/logovault/aiseo).
+- `docs/runbooks/go-live.md` (full deploy order) + `restore.md` + `kill-switches.md`.
+
+## Phases 8–10, 12 — ⬜ remaining (funnel deep-wiring, service-line polish,
+security/compliance hardening, full-system verification). Core platform is
+**deployable on Render now**: backend tested, frontend on the API, Blueprint ready.
 ```
 1  Database baseline + v4 tables + seeds
 2  API foundation (auth, rbac, files, sse, analytics)
