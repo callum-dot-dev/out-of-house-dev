@@ -24,6 +24,7 @@ test-results/
 # runtime data (Render persistent disk mirror, db dumps, dry-run emails)
 /var/data/
 data/
+.data/
 backups/
 *.eml
 

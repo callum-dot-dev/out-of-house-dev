@@ -125,7 +125,49 @@ idempotency tests.
 Viewer repos, CSRF, FileStore, SSE, notifications, audit, admin/health, analytics
 collector) + the isolation red-team suite (run against embedded-postgres).
 
-## Phases 2–12 — ⬜ not started
+## Phase 2 — API foundation — ✅ DONE (gate green)
+
+**Built (`apps/api`)** — Fastify 4 + TS:
+- Bootstrap: cookie, CORS (locked to PUBLIC_SITE_URL + localhost, credentials),
+  helmet, rate-limit (skipped in test), multipart, pino req_id, global error
+  handler (Zod→400, AppError→coded), CSRF double-submit (XSRF cookie + header on
+  unsafe non-exempt routes).
+- Auth `/api/v1/auth/*`: register (invite-only + first-admin bootstrap), login
+  (argon2id + in-memory lockout 10/15m), logout, refresh (rotating opaque tokens
+  in `sessions` + **reuse-detection revokes the family**), magic request/consume,
+  password forgot/reset, all setting `ooh_at`/`ooh_rt` cookies (`__Host-` in prod).
+  HS256 access tokens hand-rolled on node:crypto (dropped `jose` — ESM-only would
+  break the CJS build on Node 20).
+- `/me` get/patch + `/me/password`; `/guest/consume`.
+- RBAC: `Viewer` + `requireAuth`/`requireRole`; repository layer scopes every
+  query (projects/featureRequests/documents/notifications) — replaces RLS.
+- FileStore disk driver (traversal-guarded) + `POST/GET /files` with scope auth.
+- SSE `GET /realtime` (LISTEN/NOTIFY bridge → in-process emitter, heartbeat) +
+  `notify()` service (row + SSE + queued email) + `audit()` + email capture.
+- `GET /admin/health` (db, integrations configured|missing, dry-run, storage).
+- First-party analytics collector `POST /collect`.
+
+**Gate evidence** — `npm test` ✅ 18/18; `apps/api/test/integration.test.ts`
+(14, against embedded-postgres + real `app.listen`):
+register→me→refresh→logout · invite-only rejection · password login · magic-link
+round-trip (captured) · **isolation red-team** (client B 404 on A's project/
+requests/list; doc visibility; staff sees all) · CSRF reject+accept · file
+upload→owner download 200 / other client 403 · **SSE delivers notify()** ·
+admin/health integrations=missing + 403 for non-admin · guest token · lockout→429.
+Lint ✅, typecheck ✅.
+
+**Decisions / ASSUMED**
+- Dropped `jose` → node:crypto HS256 (CJS/Node-20 safe).
+- Cookie names: `__Host-ooh_at/rt` in prod, plain in dev/test (http localhost).
+- Lockout is in-memory (per-process) for now — note for multi-instance.
+- Scoped read routes for projects/requests/docs/notifications added now (Phase 3
+  adds full CRUD + the rest of the domain surface).
+
+**Next:** Phase 3 — port the 13 edge functions + all platform routes
+(applications/projects/requests CRUD, checkout, webhooks, logo search, aiseo
+audit, etc.) wiring `@oohdev/shared`.
+
+## Phases 3–12 — ⬜ not started
 ```
 1  Database baseline + v4 tables + seeds
 2  API foundation (auth, rbac, files, sse, analytics)
