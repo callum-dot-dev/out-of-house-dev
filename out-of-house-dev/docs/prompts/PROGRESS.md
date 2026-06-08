@@ -293,7 +293,29 @@ Full suite **41 tests**; typecheck + lint ✅.
 **Next:** Phase 7 — frontend port (apps/web supabase→`src/lib/api.js`, auth pages,
 admin command centre + new surfaces, marketing AISEO dogfood), Playwright suites.
 
-## Phases 7–12 — ⬜ not started
+## Phase 7 — Frontend port — 🔶 FOUNDATION DONE (page sweep remaining)
+
+**Done:** `src/lib/api.js` — the new data layer (cookie auth, CSRF header on writes,
+401→refresh→retry, `api.get/post/put/patch/del/upload`, `auth` surface, `useApi`
+hook). `AuthProvider.js` rewritten onto the API (contract preserved → consuming
+pages unaffected). CRA build still green.
+
+**Remaining (mechanical but large — 88 supabase calls / 29 files):**
+1. Rewrite libs `realtime.js` (→ SSE `EventSource` on `/realtime`),
+   `notifications.js`, `documents.js`, `uploads.js`, `mentions.js`,
+   `CommentComposer.js` onto `api.js`.
+2. Sweep ~22 pages (`pages/**`) replacing every `supabase.*` call with `api.*` /
+   `auth.*`; remove `@supabase/supabase-js`; delete `src/lib/supabase.js`.
+3. **Endpoint gaps to add in apps/api** (some pages read tables without a route
+   yet): admin users list, subscriptions/billing summary, settings update,
+   board/kanban data, decisions, changelog admin — grep-audit each `supabase.from`
+   and add the matching viewer-scoped route.
+4. New admin command-centre + client/public surfaces; marketing JSON-LD/llms.txt
+   dogfood; Playwright suites.
+**Gate (not yet met):** `grep -r supabase apps/web/src` → 0; Playwright green; CRA
+build green; own AISEO audit grade A.
+
+## Phases 8–12 — ⬜ not started (funnel, service lines, security, Render deploy, verification)
 ```
 1  Database baseline + v4 tables + seeds
 2  API foundation (auth, rbac, files, sse, analytics)
