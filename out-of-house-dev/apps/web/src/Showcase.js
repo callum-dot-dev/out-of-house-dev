@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from './lib/supabase';
+import { api } from './lib/api';
 
 const STATIC = [
   { id: 's1', title: 'Local agency landing site',  tag: 'Website',        meta: 'Live in 1 day',  hue: 156, accent: '#2bbf86' },
@@ -46,23 +46,23 @@ const Showcase = () => {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from('projects')
-        .select('id, name, slug, project_type, preview_url, description')
-        .eq('showcase_opt_in', true)
-        .order('created_at', { ascending: false })
-        .limit(5);
-      if (data && data.length > 0) {
-        setLive(data.map((p, i) => ({
-          id: p.id,
-          title: p.name,
-          tag: p.project_type.replace('_', ' '),
-          meta: p.description?.slice(0, 60) || 'Shipped',
-          hue: (i * 67) % 360,
-          slug: p.slug,
-          preview_url: p.preview_url,
-          span: i === 0 ? 'wide' : i === 1 ? 'tall' : 'small',
-        })));
+      try {
+        const { projects } = await api.get('/showcase');
+        const data = (projects ?? []).slice(0, 5);
+        if (data.length > 0) {
+          setLive(data.map((p, i) => ({
+            id: p.id,
+            title: p.name,
+            tag: p.project_type.replace('_', ' '),
+            meta: p.description?.slice(0, 60) || 'Shipped',
+            hue: (i * 67) % 360,
+            slug: p.slug,
+            preview_url: p.preview_url,
+            span: i === 0 ? 'wide' : i === 1 ? 'tall' : 'small',
+          })));
+        }
+      } catch (e) {
+        setLive([]);
       }
     })();
   }, []);

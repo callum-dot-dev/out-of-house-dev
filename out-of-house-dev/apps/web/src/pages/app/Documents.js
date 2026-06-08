@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthProvider';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { useRealtimeTable } from '../../lib/realtime';
 import { STAGES, categoryLabel, stageLabel } from '../../lib/documents';
 import { Skeleton, SkeletonBlock } from '../../components/Skeleton';
@@ -17,24 +17,37 @@ const Documents = () => {
   const load = useCallback(async () => {
     if (!profile?.id) return;
     setLoading(true);
-    const projectQuery = isDeveloper
-      ? supabase.from('projects').select('id, name, client_id')
-      : supabase.from('projects').select('id, name, client_id').eq('client_id', profile.id);
-    const { data: ps } = await projectQuery;
+    let ps = [];
+    try {
+      const res = await api.get('/projects');
+      ps = res?.projects ?? [];
+    } catch {
+      ps = [];
+    }
     const projMap = {};
-    (ps ?? []).forEach((p) => { projMap[p.id] = p; });
+    ps.forEach((p) => { projMap[p.id] = p; });
     setProjects(projMap);
 
-    const ids = (ps ?? []).map((p) => p.id);
-    if (!ids.length) { setDocs([]); setLoading(false); return; }
+    if (!ps.length) { setDocs([]); setLoading(false); return; }
 
-    const { data: docList } = await supabase
-      .from('project_documents')
-      .select('*')
-      .in('project_id', ids)
-      .order('pinned', { ascending: false })
-      .order('created_at', { ascending: false });
-    setDocs(docList ?? []);
+    let docList = [];
+    try {
+      const results = await Promise.all(
+        ps.map((p) =>
+          api.get('/projects/' + p.id + '/documents')
+            .then((r) => r?.documents ?? [])
+            .catch(() => [])
+        )
+      );
+      docList = results.flat();
+    } catch {
+      docList = [];
+    }
+    docList.sort((a, b) => {
+      if (!!b.pinned !== !!a.pinned) return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
+    setDocs(docList);
     setLoading(false);
   }, [profile?.id, isDeveloper]);
 

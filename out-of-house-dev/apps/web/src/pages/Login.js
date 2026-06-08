@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { Link, useNavigate } from 'react-router-dom';
+import { api, auth } from '../lib/api';
+import { useAuth } from '../lib/AuthProvider';
 
 const Login = () => {
+  const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [mode, setMode] = useState('password');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,27 +20,27 @@ const Login = () => {
     setSubmitting(true);
 
     if (mode === 'password') {
-      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-      if (err) setError(err.message);
+      try {
+        await signIn(email, password);
+        navigate('/app', { replace: true });
+      } catch (err) {
+        setError(err.message || 'Unable to sign in.');
+      }
     } else {
-      const redirectTo = `${window.location.origin}/auth/callback`;
-      const { error: err } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: redirectTo },
-      });
-      if (err) setError(err.message);
-      else setInfo(`Magic link sent. Check ${email} and click the link to sign in.`);
+      try {
+        await auth.magicRequest(email);
+        setInfo(`Magic link sent. Check ${email} and click the link to sign in.`);
+      } catch (err) {
+        setError(err.message || 'Unable to send magic link.');
+      }
     }
     setSubmitting(false);
   };
 
   const signInGoogle = async () => {
     setError(null);
-    const { error: err } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-    if (err) setError(err.message);
+    setInfo(null);
+    window.location.href = `${api.base}/api/v1/auth/google?redirect=${encodeURIComponent(`${window.location.origin}/auth/callback`)}`;
   };
 
   return (
@@ -49,12 +52,6 @@ const Login = () => {
         <p className="auth-lead">
           Sign in to follow your project, submit feature requests, or pick up dev work.
         </p>
-
-        {!isSupabaseConfigured && (
-          <div className="auth-banner">
-            Supabase isn't configured. Add credentials to <code>.env.local</code>. See README.
-          </div>
-        )}
 
         <div className="auth-demo">
           <div className="auth-demo-label">Try the demo</div>

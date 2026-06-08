@@ -1,38 +1,28 @@
-import { supabase } from './supabase';
+// Notifications, backed by the platform API.
+import { api } from './api';
 
-export const fetchNotifications = async (userId, { limit = 20, unreadOnly = false } = {}) => {
-  if (!userId) return [];
-  let q = supabase.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(limit);
-  if (unreadOnly) q = q.is('read_at', null);
-  const { data, error } = await q;
-  if (error) return [];
-  return data ?? [];
+export const fetchNotifications = async (_userId, { limit = 20, unreadOnly = false } = {}) => {
+  try {
+    const { notifications } = await api.get('/notifications');
+    let list = notifications ?? [];
+    if (unreadOnly) list = list.filter((n) => !n.read_at);
+    return list.slice(0, limit);
+  } catch {
+    return [];
+  }
 };
 
-export const countUnread = async (userId) => {
-  if (!userId) return 0;
-  const { count } = await supabase
-    .from('notifications')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .is('read_at', null);
-  return count ?? 0;
+export const countUnread = async () => {
+  try {
+    const { notifications } = await api.get('/notifications');
+    return (notifications ?? []).filter((n) => !n.read_at).length;
+  } catch {
+    return 0;
+  }
 };
 
-export const markRead = async (id) => {
-  return supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', id);
-};
+export const markRead = (id) => api.post(`/notifications/${id}/read`, {});
+export const markAllRead = () => api.post('/notifications/read-all', {});
 
-export const markAllRead = async (userId) => {
-  if (!userId) return;
-  return supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('user_id', userId).is('read_at', null);
-};
-
-export const notify = async ({ userId, kind, title, body, link, payload = {} }) => {
-  if (!userId) return null;
-  const { data, error } = await supabase.from('notifications').insert([{
-    user_id: userId, kind, title, body, link, payload,
-  }]).select().maybeSingle();
-  if (error) return null;
-  return data;
-};
+// Notifications are created server-side now (notify() service); kept for callers.
+export const notify = async () => null;

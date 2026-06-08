@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 const Changelog = () => {
   const { slug } = useParams();
@@ -9,26 +9,35 @@ const Changelog = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      let projectId = null;
+      let matchedProject = null;
       if (slug) {
-        const { data: p } = await supabase.from('projects').select('id, name, description').eq('slug', slug).maybeSingle();
-        if (p) {
-          setProject(p);
-          projectId = p.id;
+        try {
+          const { projects } = await api.get('/showcase');
+          matchedProject = (projects || []).find((p) => p.slug === slug) || null;
+        } catch {
+          matchedProject = null;
         }
+        if (matchedProject && !cancelled) setProject(matchedProject);
       }
-      let q = supabase
-        .from('changelog_entries')
-        .select('*')
-        .eq('is_public', true)
-        .order('published_at', { ascending: false })
-        .limit(60);
-      if (projectId) q = q.eq('project_id', projectId);
-      const { data } = await q;
-      setEntries(data ?? []);
-      setLoading(false);
+
+      let list = [];
+      try {
+        const projectId = matchedProject?.id;
+        const res = projectId
+          ? await api.get('/projects/' + projectId + '/changelog')
+          : await api.get('/changelog');
+        list = res.entries || [];
+      } catch {
+        list = [];
+      }
+      if (!cancelled) {
+        setEntries(list);
+        setLoading(false);
+      }
     })();
+    return () => { cancelled = true; };
   }, [slug]);
 
   return (

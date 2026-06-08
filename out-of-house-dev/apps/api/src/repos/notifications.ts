@@ -24,3 +24,7 @@ export async function markRead(v: Viewer, id: string): Promise<NotificationRow |
     [id, v.id],
   );
 }
+
+export async function markAllRead(v: Viewer): Promise<void> {
+  await query('update notifications set read_at=now() where user_id=$1 and read_at is null', [v.id]);
+}

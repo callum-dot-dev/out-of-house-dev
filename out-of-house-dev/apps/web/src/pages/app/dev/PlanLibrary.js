@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { supabase } from '../../../lib/supabase';
+import { api } from '../../../lib/api';
 
 const TYPE_LABEL = {
   website: 'Website',
@@ -18,8 +18,13 @@ const PlanLibrary = () => {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from('plan_templates').select('*').order('type');
-      setTemplates(data ?? []);
+      try {
+        const { templates: data } = await api.get('/plan-templates');
+        const list = (data ?? []).slice().sort((a, b) => (a.type || '').localeCompare(b.type || ''));
+        setTemplates(list);
+      } catch (e) {
+        setTemplates([]);
+      }
     })();
   }, []);
 
@@ -55,7 +60,7 @@ const PlanLibrary = () => {
                 className="template-card"
               >
                 <div className="template-card-meta">
-                  <span className="badge badge-template">{t.phases.length} phases</span>
+                  <span className="badge badge-template">{(t.phases || []).length} phases</span>
                 </div>
                 <h3>{t.name}</h3>
                 <p>{t.summary}</p>

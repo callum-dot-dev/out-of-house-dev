@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthProvider';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { useRealtimeTable } from '../../lib/realtime';
 import { toast } from '../../lib/toast';
 import { renderMentions } from '../../lib/mentions';
@@ -25,36 +25,54 @@ const RequestDetail = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data: r } = await supabase.from('feature_requests').select('*').eq('id', id).single();
+    let r = null;
+    try {
+      const res = await api.get('/requests/' + id);
+      r = res?.request ?? null;
+    } catch {
+      r = null;
+    }
     setRequest(r);
     if (r) {
-      const { data: p } = await supabase.from('projects').select('*').eq('id', r.project_id).single();
+      let p = null;
+      if (r.project_id) {
+        try {
+          const res = await api.get('/projects/' + r.project_id);
+          p = res?.project ?? null;
+        } catch {
+          p = null;
+        }
+      }
       setProject(p);
-      const { data: c } = await supabase
-        .from('request_comments')
-        .select('*')
-        .eq('request_id', id)
-        .order('created_at', { ascending: true });
-      setComments(c ?? []);
-      const ids = Array.from(new Set([
-        ...(c ?? []).map((x) => x.author_id),
-        r.claimed_by,
-        r.created_by,
-        p?.client_id,
-      ].filter(Boolean)));
-      const { data: pp } = ids.length
-        ? await supabase.from('profiles').select('id, full_name, email, role').in('id', ids)
-        : { data: [] };
+
+      let c = [];
+      try {
+        const res = await api.get('/requests/' + id + '/comments');
+        c = res?.comments ?? [];
+      } catch {
+        c = [];
+      }
+      setComments(c);
+
+      // Build an author lookup from any user objects embedded in the payloads.
       const map = {};
-      (pp ?? []).forEach((x) => { map[x.id] = x; });
+      const collect = (person) => {
+        if (person && person.id) map[person.id] = person;
+      };
+      c.forEach((x) => { collect(x.author); });
+      collect(r.created_by_user);
+      collect(r.claimed_by_user);
+      collect(p?.client);
       setAuthors(map);
 
-      const { data: atts } = await supabase
-        .from('attachments')
-        .select('*')
-        .eq('request_id', id)
-        .order('created_at', { ascending: true });
-      setAttachments(atts ?? []);
+      let atts = [];
+      try {
+        const res = await api.get('/requests/' + id + '/attachments');
+        atts = res?.attachments ?? [];
+      } catch {
+        atts = [];
+      }
+      setAttachments(atts);
     }
     setLoading(false);
   }, [id]);
@@ -80,42 +98,34 @@ const RequestDetail = () => {
     const patch = { status };
     if (status === 'rejected' && rejectReason) patch.rejection_reason = rejectReason;
     if (status === 'shipped') patch.shipped_at = new Date().toISOString();
-    const { error } = await supabase.from('feature_requests').update(patch).eq('id', id);
-    if (error) {
-      setRequest((r) => ({ ...r, status: previous }));
-      toast.error(`Could not update: ${error.message}`);
-    } else {
+    try {
+      await api.patch('/requests/' + id, patch);
       toast.success(`Status: ${status}`);
       setShowReject(false);
-      if (status === 'shipped') {
-        // Auto-draft a changelog entry the dev can edit
-        await supabase.from('changelog_entries').insert([{
-          project_id: request.project_id,
-          request_id: id,
-          title: request.title,
-          body_md: request.description?.slice(0, 600) || '',
-          is_public: false,
-        }]).then(() => toast.info('Changelog entry drafted.'));
-      }
+    } catch (err) {
+      setRequest((r) => ({ ...r, status: previous }));
+      toast.error(`Could not update: ${err.message}`);
     }
   };
 
   const claim = async () => {
     const nextStatus = request.status === 'submitted' ? 'scoped' : request.status;
     setRequest((r) => ({ ...r, claimed_by: profile?.id, status: nextStatus }));
-    const { error } = await supabase.from('feature_requests').update({ claimed_by: profile?.id, status: nextStatus }).eq('id', id);
-    if (error) {
+    try {
+      await api.patch('/requests/' + id, { claimed_by: profile?.id, status: nextStatus });
+    } catch (err) {
       setRequest((r) => ({ ...r, claimed_by: null, status: request.status }));
-      toast.error(error.message);
+      toast.error(err.message);
     }
   };
 
   const release = async () => {
     setRequest((r) => ({ ...r, claimed_by: null }));
-    const { error } = await supabase.from('feature_requests').update({ claimed_by: null }).eq('id', id);
-    if (error) {
+    try {
+      await api.patch('/requests/' + id, { claimed_by: null });
+    } catch (err) {
       setRequest((r) => ({ ...r, claimed_by: profile?.id }));
-      toast.error(error.message);
+      toast.error(err.message);
     }
   };
 

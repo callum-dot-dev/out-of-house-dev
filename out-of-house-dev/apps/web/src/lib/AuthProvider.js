@@ -3,7 +3,7 @@ import { auth } from './api';
 
 const AuthContext = createContext(null);
 
-// Backed by the platform API (httpOnly cookie session) instead of supabase-js.
+// Backed by the platform API (httpOnly cookie session).
 // Exposes the same surface the pages already use: { user, profile, role,
 // isAuthenticated, isAdmin, isDeveloper, isClient, loading, signIn, signOut,
 // refreshProfile }.

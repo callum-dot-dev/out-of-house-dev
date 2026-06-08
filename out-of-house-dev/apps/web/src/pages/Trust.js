@@ -18,15 +18,15 @@ const Trust = () => {
 
           <h2>Hosting and architecture</h2>
           <ul>
-            <li>Production app and database hosted by Supabase in EU regions, with row-level security on every table.</li>
-            <li>Marketing site hosted on Cloudflare Pages or GitHub Pages with HTTPS-only and HSTS preloaded.</li>
-            <li>Backups are daily with 7-day point-in-time recovery on production.</li>
+            <li>Production app, API, workers and database hosted on Render in EU regions, with API-layer authorization scoping every resource.</li>
+            <li>Marketing site served as a Render static site with HTTPS-only and HSTS preloaded.</li>
+            <li>Backups: nightly logical dumps plus Render Postgres point-in-time recovery on production.</li>
           </ul>
 
           <h2>Encryption</h2>
           <ul>
             <li>Data in transit: TLS 1.2 or higher, HSTS enforced.</li>
-            <li>Data at rest: AES-256 via Supabase storage and Postgres encryption at rest.</li>
+            <li>Data at rest: AES-256 via Render Postgres and persistent-disk encryption at rest.</li>
             <li>Secrets: stored in environment variables on the host; never in code, never sent to the browser.</li>
           </ul>
 

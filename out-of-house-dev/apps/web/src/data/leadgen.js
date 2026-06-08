@@ -1,7 +1,6 @@
 // Lead-gen-as-a-Service marketing page data.
 // This is the customer-facing copy. The actual engine runs inside
-// /app/admin/leads with a Supabase edge-function pipeline (see
-// /supabase/functions/lead-* + supabase/migrations/005_v3_business_expansion.sql).
+// /app/admin/leads via the platform job pipeline (apps/jobs leads.*).
 
 export const LEADGEN_PAGE = {
   slug: 'lead-engine',

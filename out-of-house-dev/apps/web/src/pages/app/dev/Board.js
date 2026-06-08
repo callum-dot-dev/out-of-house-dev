@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../lib/AuthProvider';
-import { supabase } from '../../../lib/supabase';
+import { api } from '../../../lib/api';
 import { useRealtimeTable } from '../../../lib/realtime';
 import { toast } from '../../../lib/toast';
 import { Skeleton, SkeletonBlock } from '../../../components/Skeleton';
@@ -34,35 +34,25 @@ const Board = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data: rs } = await supabase
-      .from('feature_requests')
-      .select('*')
-      .neq('status', 'rejected')
-      .order('updated_at', { ascending: false });
-    setRequests(rs ?? []);
+    try {
+      const { requests: rs } = await api.get('/board');
+      const list = (rs ?? []).filter((r) => r.status !== 'rejected');
+      setRequests(list);
 
-    const projectIds = Array.from(new Set((rs ?? []).map((r) => r.project_id)));
-    if (projectIds.length) {
-      const { data: ps } = await supabase
-        .from('projects')
-        .select('id, name, client_id, project_type')
-        .in('id', projectIds);
       const pMap = {};
-      (ps ?? []).forEach((p) => { pMap[p.id] = p; });
+      const aMap = {};
+      list.forEach((r) => {
+        if (r.project && r.project.id) pMap[r.project.id] = r.project;
+        if (r.project_id && r.project && r.project.id == null) pMap[r.project_id] = r.project;
+        if (r.author && r.author.id) aMap[r.author.id] = r.author;
+        if (r.claimed_by_profile && r.claimed_by_profile.id) aMap[r.claimed_by_profile.id] = r.claimed_by_profile;
+      });
       setProjects(pMap);
-
-      const clientIds = Array.from(new Set((ps ?? []).map((p) => p.client_id)));
-      const claimedIds = Array.from(new Set((rs ?? []).map((r) => r.claimed_by).filter(Boolean)));
-      const ids = Array.from(new Set([...clientIds, ...claimedIds]));
-      if (ids.length) {
-        const { data: pp } = await supabase
-          .from('profiles')
-          .select('id, full_name, email, company')
-          .in('id', ids);
-        const aMap = {};
-        (pp ?? []).forEach((p) => { aMap[p.id] = p; });
-        setAuthors(aMap);
-      }
+      setAuthors(aMap);
+    } catch (e) {
+      setRequests([]);
+      setProjects({});
+      setAuthors({});
     }
     setLoading(false);
   }, []);
@@ -76,7 +66,7 @@ const Board = () => {
       const { eventType, new: row, old } = payload;
       setRequests((rs) => {
         if (eventType === 'INSERT') return [row, ...rs.filter((r) => r.id !== row.id)];
-        if (eventType === 'UPDATE') return rs.map((r) => (r.id === row.id ? row : r));
+        if (eventType === 'UPDATE') return rs.map((r) => (r.id === row.id ? { ...r, ...row } : r));
         if (eventType === 'DELETE') return rs.filter((r) => r.id !== (old?.id || row?.id));
         return rs;
       });
@@ -89,35 +79,31 @@ const Board = () => {
     if (!target) return;
     lastFlipRef.current = request.id;
     setRequests((rs) => rs.map((r) => (r.id === request.id ? { ...r, status: target } : r)));
-    const { error } = await supabase
-      .from('feature_requests')
-      .update({ status: target })
-      .eq('id', request.id);
-    if (error) {
-      setRequests((rs) => rs.map((r) => (r.id === request.id ? { ...r, status: request.status } : r)));
-      toast.error(`Could not move: ${error.message}`);
-    } else {
+    try {
+      await api.patch('/requests/' + request.id, { status: target });
       toast.success(`Moved to ${target}`);
+    } catch (e) {
+      setRequests((rs) => rs.map((r) => (r.id === request.id ? { ...r, status: request.status } : r)));
+      toast.error(`Could not move: ${e.message}`);
     }
   };
 
   const claim = async (request) => {
     const nextStatus = request.status === 'submitted' ? 'scoped' : request.status;
     setRequests((rs) => rs.map((r) => (r.id === request.id ? { ...r, claimed_by: profile?.id, status: nextStatus } : r)));
-    const { error } = await supabase
-      .from('feature_requests')
-      .update({ claimed_by: profile?.id, status: nextStatus })
-      .eq('id', request.id);
-    if (error) {
+    try {
+      await api.patch('/requests/' + request.id, { claimed_by: profile?.id, status: nextStatus });
+    } catch (e) {
       setRequests((rs) => rs.map((r) => (r.id === request.id ? { ...r, claimed_by: null, status: request.status } : r)));
-      toast.error(`Could not claim: ${error.message}`);
+      toast.error(`Could not claim: ${e.message}`);
     }
   };
 
   const release = async (request) => {
     setRequests((rs) => rs.map((r) => (r.id === request.id ? { ...r, claimed_by: null } : r)));
-    const { error } = await supabase.from('feature_requests').update({ claimed_by: null }).eq('id', request.id);
-    if (error) {
+    try {
+      await api.patch('/requests/' + request.id, { claimed_by: null });
+    } catch (e) {
       setRequests((rs) => rs.map((r) => (r.id === request.id ? { ...r, claimed_by: profile?.id } : r)));
       toast.error('Could not release');
     }

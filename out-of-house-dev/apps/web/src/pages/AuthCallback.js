@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { auth } from '../lib/api';
+import { useAuth } from '../lib/AuthProvider';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
+  const { refreshProfile } = useAuth();
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -11,23 +13,56 @@ const AuthCallback = () => {
     let attempts = 0;
     const maxAttempts = 6;
 
-    const probe = async () => {
-      attempts += 1;
-      const { data, error: err } = await supabase.auth.getSession();
-      if (cancelled) return;
-      if (err) { setError(err.message); return; }
-      if (data.session) {
-        navigate('/app', { replace: true });
-      } else if (attempts < maxAttempts) {
-        setTimeout(probe, 350);
-      } else {
-        navigate('/login', { replace: true });
+    const readToken = () => {
+      try {
+        const params = new URLSearchParams(window.location.search.replace('?', ''));
+        const hash = new URLSearchParams((window.location.hash || '').replace('#', ''));
+        return params.get('token') || hash.get('token') || null;
+      } catch {
+        return null;
       }
     };
 
-    probe();
+    const finish = async () => {
+      await refreshProfile();
+      if (!cancelled) navigate('/app', { replace: true });
+    };
+
+    const probe = async () => {
+      attempts += 1;
+      try {
+        await auth.me();
+        if (cancelled) return;
+        await finish();
+      } catch (err) {
+        if (cancelled) return;
+        if (attempts < maxAttempts) {
+          setTimeout(probe, 350);
+        } else {
+          navigate('/login', { replace: true });
+        }
+      }
+    };
+
+    (async () => {
+      const token = readToken();
+      if (token) {
+        try {
+          await auth.magicConsume(token);
+          if (cancelled) return;
+          await finish();
+          return;
+        } catch (err) {
+          if (cancelled) return;
+          setError(err.message || 'This sign-in link is invalid or has expired.');
+          return;
+        }
+      }
+      probe();
+    })();
+
     return () => { cancelled = true; };
-  }, [navigate]);
+  }, [navigate, refreshProfile]);
 
   return (
     <div className="auth-page">

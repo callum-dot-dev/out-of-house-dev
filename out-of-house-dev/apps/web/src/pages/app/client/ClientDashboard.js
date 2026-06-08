@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../lib/AuthProvider';
-import { supabase } from '../../../lib/supabase';
+import { api } from '../../../lib/api';
 import { useRealtimeTable } from '../../../lib/realtime';
 import { SkeletonGrid, Skeleton } from '../../../components/Skeleton';
 
@@ -19,20 +19,37 @@ const ClientDashboard = () => {
   const load = useCallback(async () => {
     if (!profile?.id) return;
     setLoading(true);
-    const { data: p } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('client_id', profile.id)
-      .order('created_at', { ascending: false });
-    setProjects(p ?? []);
-    if (p && p.length > 0) {
-      const projectIds = p.map((x) => x.id);
-      const [{ data: r }, { data: ev }] = await Promise.all([
-        supabase.from('feature_requests').select('*').in('project_id', projectIds).order('created_at', { ascending: false }).limit(8),
-        supabase.from('activity_events').select('*').in('project_id', projectIds).order('created_at', { ascending: false }).limit(6),
-      ]);
-      setRequests(r ?? []);
-      setActivity(ev ?? []);
+    let p = [];
+    try {
+      const res = await api.get('/projects');
+      p = res?.projects ?? [];
+    } catch {
+      p = [];
+    }
+    setProjects(p);
+    if (p.length > 0) {
+      try {
+        const results = await Promise.all(
+          p.map((proj) =>
+            Promise.all([
+              api.get('/projects/' + proj.id + '/requests').then((r) => r?.requests ?? []).catch(() => []),
+              api.get('/projects/' + proj.id + '/activity').then((a) => a?.activity ?? []).catch(() => []),
+            ])
+          )
+        );
+        const allRequests = results.flatMap((r) => r[0]);
+        const allActivity = results.flatMap((r) => r[1]);
+        allRequests.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        allActivity.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        setRequests(allRequests.slice(0, 8));
+        setActivity(allActivity.slice(0, 6));
+      } catch {
+        setRequests([]);
+        setActivity([]);
+      }
+    } else {
+      setRequests([]);
+      setActivity([]);
     }
     setLoading(false);
   }, [profile?.id]);

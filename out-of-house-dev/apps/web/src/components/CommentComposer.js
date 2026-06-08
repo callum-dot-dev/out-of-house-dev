@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import AttachmentDropzone, { AttachmentList } from './AttachmentDropzone';
 import { parseMentions } from '../lib/mentions';
 import { useAuth } from '../lib/AuthProvider';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { toast } from '../lib/toast';
 
 const CommentComposer = ({ requestId, mentionCandidates = [], onPosted, placeholder = 'Write a comment. Type @ to mention.' }) => {
@@ -55,25 +55,19 @@ const CommentComposer = ({ requestId, mentionCandidates = [], onPosted, placehol
     if (!body.trim() || !profile?.id) return;
     setWorking(true);
     const mentions = parseMentions(body, mentionCandidates);
-    const { data, error } = await supabase
-      .from('request_comments')
-      .insert([{ request_id: requestId, author_id: profile.id, body: body.trim(), mentions }])
-      .select()
-      .maybeSingle();
-    if (error) {
-      toast.error(`Could not post: ${error.message}`);
+    try {
+      const { comment } = await api.post('/requests/' + requestId + '/comments', {
+        body: body.trim(),
+        mentions,
+      });
+      setBody('');
+      setAttachments([]);
       setWorking(false);
-      return;
+      onPosted?.(comment);
+    } catch (err) {
+      toast.error(`Could not post: ${err?.message || 'Unknown error'}`);
+      setWorking(false);
     }
-    if (attachments.length && data?.id) {
-      await supabase.from('attachments')
-        .update({ comment_id: data.id })
-        .in('id', attachments.map((a) => a.id));
-    }
-    setBody('');
-    setAttachments([]);
-    setWorking(false);
-    onPosted?.(data);
   };
 
   const onKey = (e) => {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../lib/AuthProvider';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { toast } from '../../lib/toast';
 
 const Settings = () => {
@@ -19,10 +19,15 @@ const Settings = () => {
   const save = async (e) => {
     e.preventDefault();
     setWorking(true);
-    const { error } = await supabase.from('profiles').update(form).eq('id', profile?.id);
-    setWorking(false);
-    if (error) toast.error(`Save failed: ${error.message}`);
-    else { toast.success('Profile saved.'); refreshProfile(); }
+    try {
+      await api.patch('/me', form);
+      toast.success('Profile saved.');
+      refreshProfile();
+    } catch (err) {
+      toast.error(`Save failed: ${err.message}`);
+    } finally {
+      setWorking(false);
+    }
   };
 
   const setNewPassword = async (e) => {
@@ -30,24 +35,30 @@ const Settings = () => {
     if (password !== confirm) { toast.error('Passwords do not match.'); return; }
     if (password.length < 8) { toast.error('Use at least 8 characters.'); return; }
     setWorking(true);
-    const { error } = await supabase.auth.updateUser({ password });
-    setWorking(false);
-    if (error) toast.error(`Password error: ${error.message}`);
-    else { toast.success('Password updated.'); setPassword(''); setConfirm(''); }
+    try {
+      await api.post('/me/password', { next: password });
+      toast.success('Password updated.');
+      setPassword('');
+      setConfirm('');
+    } catch (err) {
+      toast.error(`Password error: ${err.message}`);
+    } finally {
+      setWorking(false);
+    }
   };
 
   const exportData = async () => {
     if (!profile?.id) return;
     toast.info('Generating export…');
-    const [{ data: projects }, { data: requests }, { data: comments }, { data: attachments }, { data: notifs }] = await Promise.all([
-      supabase.from('projects').select('*').eq('client_id', profile.id),
-      supabase.from('feature_requests').select('*').eq('created_by', profile.id),
-      supabase.from('request_comments').select('*').eq('author_id', profile.id),
-      supabase.from('attachments').select('*').eq('uploader_id', profile.id),
-      supabase.from('notifications').select('*').eq('user_id', profile.id),
-    ]);
+    let payload;
+    try {
+      payload = await api.get('/me/export');
+    } catch (err) {
+      toast.error(`Export failed: ${err.message}`);
+      return;
+    }
     const blob = new Blob([JSON.stringify({
-      profile, projects, requests, comments, attachments, notifications: notifs,
+      ...payload,
       exported_at: new Date().toISOString(),
     }, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);

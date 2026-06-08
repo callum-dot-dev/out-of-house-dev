@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthProvider';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { useRealtimeTable } from '../../lib/realtime';
 import { toast } from '../../lib/toast';
 import VoiceCapture from '../../components/VoiceCapture';
@@ -46,39 +46,47 @@ const ProjectDetail = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data: p } = await supabase.from('projects').select('*').eq('id', id).single();
+    let p = null;
+    try {
+      const res = await api.get('/projects/' + id);
+      p = res?.project ?? null;
+    } catch {
+      p = null;
+    }
     setProject(p);
     if (p) {
-      const { data: c } = await supabase.from('profiles').select('*').eq('id', p.client_id).single();
-      setClient(c);
-      const { data: r } = await supabase
-        .from('feature_requests')
-        .select('*')
-        .eq('project_id', id)
-        .order('client_priority_rank', { ascending: true, nullsFirst: false })
-        .order('created_at', { ascending: false });
-      setRequests(r ?? []);
-      const { data: pl } = await supabase.from('project_plans').select('*').eq('project_id', id).maybeSingle();
-      setPlan(pl);
-      const { data: ev } = await supabase
-        .from('activity_events')
-        .select('*')
-        .eq('project_id', id)
-        .order('created_at', { ascending: false })
-        .limit(40);
-      setActivity(ev ?? []);
-      const { data: dec } = await supabase
-        .from('decisions')
-        .select('*')
-        .eq('project_id', id)
-        .order('created_at', { ascending: false });
-      setDecisions(dec ?? []);
-      const { data: ch } = await supabase
-        .from('changelog_entries')
-        .select('*')
-        .eq('project_id', id)
-        .order('created_at', { ascending: false });
-      setChangelog(ch ?? []);
+      setClient(p.client ?? null);
+      try {
+        const res = await api.get('/projects/' + id + '/requests');
+        setRequests(res?.requests ?? []);
+      } catch {
+        setRequests([]);
+      }
+      try {
+        const res = await api.get('/projects/' + id + '/plans');
+        const plans = res?.plans ?? [];
+        setPlan(plans.length ? plans[0] : null);
+      } catch {
+        setPlan(null);
+      }
+      try {
+        const res = await api.get('/projects/' + id + '/activity');
+        setActivity((res?.activity ?? []).slice(0, 40));
+      } catch {
+        setActivity([]);
+      }
+      try {
+        const res = await api.get('/projects/' + id + '/decisions');
+        setDecisions(res?.decisions ?? []);
+      } catch {
+        setDecisions([]);
+      }
+      try {
+        const res = await api.get('/projects/' + id + '/changelog');
+        setChangelog(res?.entries ?? []);
+      } catch {
+        setChangelog([]);
+      }
     }
     setLoading(false);
   }, [id]);
@@ -104,31 +112,33 @@ const ProjectDetail = () => {
   const submitRequest = async (e) => {
     e.preventDefault();
     setWorking(true);
-    const { data, error } = await supabase
-      .from('feature_requests')
-      .insert([{ ...newReq, project_id: id, created_by: profile?.id }])
-      .select()
-      .maybeSingle();
-    setWorking(false);
-    if (error) {
-      toast.error(`Could not submit: ${error.message}`);
-    } else {
+    try {
+      const res = await api.post('/projects/' + id + '/requests', {
+        title: newReq.title,
+        description: newReq.description,
+        priority: newReq.priority,
+      });
+      const data = res?.request ?? null;
       toast.success('Request submitted.');
       setNewReq({ title: '', description: '', priority: 'medium' });
       setShowNew(false);
       if (data) setRequests((rs) => [data, ...rs]);
+    } catch (err) {
+      toast.error(`Could not submit: ${err.message}`);
+    } finally {
+      setWorking(false);
     }
   };
 
   const updateProjectStatus = async (status) => {
     const prev = project.status;
     setProject((p) => ({ ...p, status }));
-    const { error } = await supabase.from('projects').update({ status }).eq('id', id);
-    if (error) {
-      setProject((p) => ({ ...p, status: prev }));
-      toast.error(error.message);
-    } else {
+    try {
+      await api.patch('/projects/' + id, { status });
       toast.success(`Project status: ${status}`);
+    } catch (err) {
+      setProject((p) => ({ ...p, status: prev }));
+      toast.error(err.message);
     }
   };
 
@@ -137,15 +147,23 @@ const ProjectDetail = () => {
     if (next == null) return;
     const trimmed = next.trim();
     setProject((p) => ({ ...p, preview_url: trimmed || null }));
-    await supabase.from('projects').update({ preview_url: trimmed || null }).eq('id', id);
-    toast.success('Preview URL saved.');
+    try {
+      await api.patch('/projects/' + id, { preview_url: trimmed || null });
+      toast.success('Preview URL saved.');
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
   const toggleShowcase = async () => {
     const next = !project.showcase_opt_in;
     setProject((p) => ({ ...p, showcase_opt_in: next }));
-    await supabase.from('projects').update({ showcase_opt_in: next }).eq('id', id);
-    toast.success(next ? 'Listed on public showcase.' : 'Removed from showcase.');
+    try {
+      await api.patch('/projects/' + id, { showcase_opt_in: next });
+      toast.success(next ? 'Listed on public showcase.' : 'Removed from showcase.');
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
   // Drag-to-prioritize
@@ -173,15 +191,14 @@ const ProjectDetail = () => {
     if (!reordering) return;
     setReordering(false);
     const updates = requests.map((r, i) => ({ id: r.id, rank: i }));
-    const { error } = await supabase.rpc('reorder_requests', { items: updates }).catch(async () => {
-      // Fallback: do individual updates
+    try {
       for (const u of updates) {
-        await supabase.from('feature_requests').update({ client_priority_rank: u.rank }).eq('id', u.id);
+        await api.patch('/requests/' + u.id, { client_priority_rank: u.rank });
       }
-      return { error: null };
-    });
-    if (error) toast.error('Could not save order.');
-    else toast.success('Priority saved.');
+      toast.success('Priority saved.');
+    } catch {
+      toast.error('Could not save order.');
+    }
   };
 
   const onVoiceCaptured = ({ placeholder }) => {
@@ -352,8 +369,12 @@ const ProjectDetail = () => {
           <div className="app-card">
             <PlanProgress plan={plan} canEdit={isDeveloper} onAdvance={async (nextIdx) => {
               setPlan((pl) => ({ ...pl, current_phase_index: nextIdx }));
-              await supabase.from('project_plans').update({ current_phase_index: nextIdx }).eq('id', plan.id);
-              toast.success('Plan advanced.');
+              try {
+                await api.patch('/plans/' + plan.id, { current_phase_index: nextIdx });
+                toast.success('Plan advanced.');
+              } catch (err) {
+                toast.error(err.message);
+              }
             }} />
           </div>
         </section>
@@ -448,19 +469,21 @@ const PlanProgress = ({ plan, canEdit, onAdvance }) => {
 const DecisionsTab = ({ project, decisions, canEdit, onChange }) => {
   const [summary, setSummary] = useState('');
   const [detail, setDetail] = useState('');
-  const { profile } = useAuth();
 
   const add = async (e) => {
     e.preventDefault();
     if (!summary.trim()) return;
-    const { error } = await supabase.from('decisions').insert([{
-      project_id: project.id, summary: summary.trim(), detail: detail.trim() || null, created_by: profile?.id, confirmed: true,
-    }]);
-    if (error) toast.error(error.message);
-    else {
+    try {
+      await api.post('/projects/' + project.id + '/decisions', {
+        summary: summary.trim(),
+        detail: detail.trim() || null,
+        confirmed: true,
+      });
       toast.success('Decision logged.');
       setSummary(''); setDetail('');
       onChange?.();
+    } catch (err) {
+      toast.error(err.message);
     }
   };
 
@@ -504,12 +527,16 @@ const DecisionsTab = ({ project, decisions, canEdit, onChange }) => {
 
 const ChangelogTab = ({ project, changelog, canEdit, onChange }) => {
   const togglePublic = async (entry) => {
-    await supabase.from('changelog_entries').update({
-      is_public: !entry.is_public,
-      published_at: !entry.is_public ? new Date().toISOString() : entry.published_at,
-    }).eq('id', entry.id);
-    toast.success(!entry.is_public ? 'Published.' : 'Hidden.');
-    onChange?.();
+    try {
+      await api.patch('/changelog/' + entry.id, {
+        is_public: !entry.is_public,
+        published_at: !entry.is_public ? new Date().toISOString() : entry.published_at,
+      });
+      toast.success(!entry.is_public ? 'Published.' : 'Hidden.');
+      onChange?.();
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
   return (
@@ -556,13 +583,13 @@ const BrainTab = ({ project }) => {
     const question = q.trim();
     setQ('');
     setHistory((h) => [...h, { role: 'user', text: question }]);
-    // Placeholder — when AI worker is configured, route through an Edge Function.
+    // Placeholder — when the AI worker is configured, route through a platform endpoint.
     setTimeout(() => {
       setHistory((h) => [...h, {
         role: 'assistant',
         text:
           'Project Brain answers questions across every request, comment, and decision on this project. ' +
-          'Wire up an OpenAI / Anthropic key + Supabase Edge Function and pgvector, and I will answer ' +
+          'Wire up an AI provider key plus a server-side retrieval endpoint and a vector index, and I will answer ' +
           'with citations from your project history.',
       }]);
       setThinking(false);

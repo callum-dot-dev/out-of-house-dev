@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { auth } from '../lib/api';
 
 const PasswordReset = () => {
   const [stage, setStage] = useState('request');
+  const [token, setToken] = useState(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -12,26 +13,30 @@ const PasswordReset = () => {
   const [info, setInfo] = useState(null);
 
   useEffect(() => {
-    // Supabase parks a recovery session on the page when the link is clicked.
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) setStage('set');
-    })();
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') setStage('set');
-    });
-    return () => sub.subscription.unsubscribe();
+    // The reset link points back here with a ?token=... param.
+    try {
+      const params = new URLSearchParams(window.location.search.replace('?', ''));
+      const t = params.get('token');
+      if (t) {
+        setToken(t);
+        setStage('set');
+      }
+    } catch {
+      /* no token, stay on request stage */
+    }
   }, []);
 
   const requestReset = async (e) => {
     e.preventDefault();
     setError(null); setInfo(null);
     setSubmitting(true);
-    const redirectTo = `${window.location.origin}/password-reset`;
-    const { error: err } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    try {
+      await auth.forgot(email);
+      setInfo(`Reset link sent. Check ${email} and click the link to set a new password.`);
+    } catch (err) {
+      setError(err.message || 'Unable to send reset link.');
+    }
     setSubmitting(false);
-    if (err) setError(err.message);
-    else setInfo(`Reset link sent. Check ${email} and click the link to set a new password.`);
   };
 
   const setNewPassword = async (e) => {
@@ -40,10 +45,14 @@ const PasswordReset = () => {
     if (password !== confirm) { setError('Passwords do not match.'); return; }
     if (password.length < 8) { setError('Use at least 8 characters.'); return; }
     setSubmitting(true);
-    const { error: err } = await supabase.auth.updateUser({ password });
+    try {
+      await auth.reset(token, password);
+      setInfo('Password updated. Redirecting…');
+      setTimeout(() => { window.location.href = '/app'; }, 700);
+    } catch (err) {
+      setError(err.message || 'Unable to update password.');
+    }
     setSubmitting(false);
-    if (err) setError(err.message);
-    else { setInfo('Password updated. Redirecting…'); setTimeout(() => { window.location.href = '/app'; }, 700); }
   };
 
   return (
@@ -57,10 +66,6 @@ const PasswordReset = () => {
             ? 'Pick something at least 8 characters. The form replaces your current password.'
             : "Enter your email and we'll send you a link to reset it."}
         </p>
-
-        {!isSupabaseConfigured && (
-          <div className="auth-banner">Supabase isn't configured. See README for setup.</div>
-        )}
 
         {error && <div className="auth-error">{error}</div>}
         {info && <div className="auth-info">{info}</div>}

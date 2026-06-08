@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../lib/AuthProvider';
-import { supabase } from '../../../lib/supabase';
+import { api } from '../../../lib/api';
 
 const StatTile = ({ label, value, hint, to }) => {
   const inner = (
@@ -21,15 +21,31 @@ const DevDashboard = () => {
 
   useEffect(() => {
     (async () => {
-      const [{ count: assigned }, { count: submitted }, { count: building }, { count: review }, { data: mineData }] = await Promise.all([
-        supabase.from('feature_requests').select('*', { count: 'exact', head: true }).eq('claimed_by', profile?.id).in('status', ['scoped','building','review']),
-        supabase.from('feature_requests').select('*', { count: 'exact', head: true }).eq('status', 'submitted'),
-        supabase.from('feature_requests').select('*', { count: 'exact', head: true }).eq('status', 'building'),
-        supabase.from('feature_requests').select('*', { count: 'exact', head: true }).eq('status', 'review'),
-        supabase.from('feature_requests').select('*').eq('claimed_by', profile?.id).order('updated_at', { ascending: false }).limit(6),
-      ]);
-      setCounts({ assigned: assigned ?? 0, submitted: submitted ?? 0, building: building ?? 0, review: review ?? 0 });
-      setMine(mineData ?? []);
+      let board = [];
+      try {
+        const { requests } = await api.get('/board');
+        board = requests ?? [];
+      } catch (e) {
+        board = [];
+      }
+
+      const assigned = board.filter((r) => r.claimed_by === profile?.id && ['scoped', 'building', 'review'].includes(r.status));
+      const submitted = board.filter((r) => r.status === 'submitted');
+      const building = board.filter((r) => r.status === 'building');
+      const review = board.filter((r) => r.status === 'review');
+
+      setCounts({
+        assigned: assigned.length,
+        submitted: submitted.length,
+        building: building.length,
+        review: review.length,
+      });
+
+      const mineData = board
+        .filter((r) => r.claimed_by === profile?.id)
+        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+        .slice(0, 6);
+      setMine(mineData);
     })();
   }, [profile?.id]);
 

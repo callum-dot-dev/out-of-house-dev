@@ -1,19 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../../lib/supabase';
+import { api } from '../../../lib/api';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState('all');
 
   const load = async () => {
-    const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-    setUsers(data ?? []);
+    try {
+      const res = await api.get('/admin/users');
+      setUsers(res.users || []);
+    } catch {
+      setUsers([]);
+    }
   };
 
   useEffect(() => { load(); }, []);
 
   const setRole = async (id, role) => {
-    await supabase.from('profiles').update({ role }).eq('id', id);
+    try {
+      await api.patch('/admin/users/' + id, { role });
+    } catch {
+      // ignore; reload reflects server state
+    }
     load();
   };
 

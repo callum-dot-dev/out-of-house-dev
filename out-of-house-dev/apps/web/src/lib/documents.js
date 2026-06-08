@@ -1,5 +1,4 @@
-import { supabase } from './supabase';
-import { uploadAttachment } from './uploads';
+import { api } from './api';
 
 export const STAGES = [
   { id: 'discovery', label: 'Discovery',     blurb: 'Brief, scope, initial calls, audience research.' },
@@ -27,14 +26,12 @@ export const categoryLabel = (id) => CATEGORIES.find((c) => c.id === id)?.label 
 
 export const fetchProjectDocuments = async (projectId) => {
   if (!projectId) return [];
-  const { data, error } = await supabase
-    .from('project_documents')
-    .select('*')
-    .eq('project_id', projectId)
-    .order('pinned', { ascending: false })
-    .order('created_at', { ascending: false });
-  if (error) return [];
-  return data ?? [];
+  try {
+    const { documents } = await api.get('/projects/' + projectId + '/documents');
+    return documents ?? [];
+  } catch (e) {
+    return [];
+  }
 };
 
 export const createDocument = async ({ projectId, uploaderId, title, description, stage, category, externalUrl, file, aiGenerated, aiModel, visibleToClient = true }) => {
@@ -43,19 +40,18 @@ export const createDocument = async ({ projectId, uploaderId, title, description
   let mimeType = null;
 
   if (file) {
-    const result = await uploadAttachment({
-      file, uploaderId, projectId, bucket: 'documents', kindOverride: 'file',
-    });
-    if (result.error) return { error: result.error };
-    storagePath = result.data?.storage_path;
-    sizeBytes = file.size;
-    mimeType = file.type;
+    try {
+      const { file: uploaded } = await api.upload(file, 'documents');
+      storagePath = uploaded?.path;
+      sizeBytes = uploaded?.size ?? file.size;
+      mimeType = uploaded?.mime || file.type;
+    } catch (e) {
+      return { error: { message: e?.message || 'Upload failed' } };
+    }
   }
 
-  const { data, error } = await supabase
-    .from('project_documents')
-    .insert([{
-      project_id: projectId,
+  try {
+    const { document } = await api.post('/projects/' + projectId + '/documents', {
       uploaded_by: uploaderId,
       title,
       description,
@@ -68,16 +64,27 @@ export const createDocument = async ({ projectId, uploaderId, title, description
       visible_to_client: !!visibleToClient,
       size_bytes: sizeBytes,
       mime_type: mimeType,
-    }])
-    .select()
-    .maybeSingle();
-  return { data, error };
+    });
+    return { data: document };
+  } catch (e) {
+    return { error: { message: e?.message || 'Could not create document' } };
+  }
 };
 
 export const updateDocument = async (id, patch) => {
-  return supabase.from('project_documents').update(patch).eq('id', id);
+  try {
+    const { document } = await api.patch('/documents/' + id, patch);
+    return { data: document };
+  } catch (e) {
+    return { error: { message: e?.message || 'Could not update document' } };
+  }
 };
 
 export const deleteDocument = async (id) => {
-  return supabase.from('project_documents').delete().eq('id', id);
+  try {
+    await api.del('/documents/' + id);
+    return { data: { id } };
+  } catch (e) {
+    return { error: { message: e?.message || 'Could not delete document' } };
+  }
 };

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const SUBPROCESSORS = [
-  { name: 'Supabase', purpose: 'Auth, database, storage, realtime', location: 'EU (Frankfurt)', url: 'https://supabase.com' },
+  { name: 'out-of-house.dev Platform', purpose: 'Auth, database, storage, realtime', location: 'EU (Frankfurt)', url: 'https://out-of-house.dev' },
   { name: 'Cloudflare', purpose: 'CDN, DNS, edge hosting', location: 'Global', url: 'https://www.cloudflare.com' },
   { name: 'IONOS', purpose: 'Hosting (clients on the £100/month care plan)', location: 'EU', url: 'https://www.ionos.co.uk' },
   { name: 'Stripe', purpose: 'Payments and subscription billing', location: 'EU/US', url: 'https://stripe.com' },

@@ -17,6 +17,11 @@ export default defineConfig({
     exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', 'apps/web/**'],
     environment: 'node',
     passWithNoTests: true,
+    // Each DB-backed test file boots its own embedded-postgres; run files
+    // sequentially so we never spin up 8 clusters at once (port/resource contention).
+    fileParallelism: false,
+    testTimeout: 30_000,
+    hookTimeout: 200_000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

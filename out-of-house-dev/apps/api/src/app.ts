@@ -35,6 +35,7 @@ import logovaultRoutes from './routes/logovault';
 import aiseoRoutes from './routes/aiseo';
 import certificateRoutes from './routes/certificates';
 import publicRoutes from './routes/publicRoutes';
+import platformRoutes from './routes/platform';
 
 const UNSAFE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
@@ -145,6 +146,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(aiseoRoutes, { prefix: '/api/v1' });
   await app.register(certificateRoutes, { prefix: '/api/v1' });
   await app.register(publicRoutes, { prefix: '/api/v1' });
+  await app.register(platformRoutes, { prefix: '/api/v1' });
 
   app.addHook('onClose', async () => {
     await stopRealtimeBridge();

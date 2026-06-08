@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../../../lib/supabase';
+import { api } from '../../../lib/api';
 
 const PlanTemplate = () => {
   const { id } = useParams();
@@ -15,8 +15,12 @@ const PlanTemplate = () => {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from('plan_templates').select('*').eq('id', id).single();
-      setTemplate(data);
+      try {
+        const { template: data } = await api.get('/plan-templates/' + id);
+        setTemplate(data ?? null);
+      } catch (e) {
+        setTemplate(null);
+      }
     })();
   }, [id]);
 
@@ -30,18 +34,17 @@ const PlanTemplate = () => {
   const spawnPlan = async () => {
     if (!attachTo) return;
     setWorking(true);
-    // remove existing plan if any (one plan per project for now)
-    await supabase.from('project_plans').delete().eq('project_id', attachTo);
-    const { error } = await supabase.from('project_plans').insert([{
-      project_id: attachTo,
-      template_id: template.id,
-      phases: template.phases,
-      current_phase_index: 0,
-      current_step_index: 0,
-    }]);
-    setWorking(false);
-    if (error) { setMsg(error.message); return; }
-    navigate(`/app/projects/${attachTo}`);
+    try {
+      await api.post('/projects/' + attachTo + '/plans', {
+        template_id: template.id,
+        style: template.type,
+      });
+      setWorking(false);
+      navigate(`/app/projects/${attachTo}`);
+    } catch (e) {
+      setWorking(false);
+      setMsg(e.message);
+    }
   };
 
   if (!template) return <div className="app-empty">Loading…</div>;

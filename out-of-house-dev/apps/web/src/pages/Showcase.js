@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 const ShowcasePage = () => {
   const [projects, setProjects] = useState([]);
@@ -8,14 +8,14 @@ const ShowcasePage = () => {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from('projects')
-        .select('id, name, slug, description, project_type, preview_url')
-        .eq('showcase_opt_in', true)
-        .order('created_at', { ascending: false })
-        .limit(24);
-      setProjects(data ?? []);
-      setLoading(false);
+      try {
+        const { projects: list } = await api.get('/showcase');
+        setProjects((list ?? []).slice(0, 24));
+      } catch (e) {
+        setProjects([]);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
 

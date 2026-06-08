@@ -1,4 +1,4 @@
-// Platform API client. Replaces supabase-js as the app's data layer.
+// Platform API client. The app's data layer (Render API, cookie auth).
 // - cookie auth (credentials: 'include'); CSRF double-submit header on writes
 // - one transparent 401 -> /auth/refresh -> retry
 // - typed-ish helpers (get/post/put/patch/del/upload) + an auth surface + useApi

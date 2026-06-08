@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { api } from '../lib/api';
 import Captcha from '../components/Captcha';
 
 const PROJECT_TYPES = [
@@ -51,10 +51,13 @@ const Apply = () => {
       captcha_token: captchaToken,
       user_agent: navigator.userAgent,
     };
-    const { error: err } = await supabase.from('applications').insert([payload]);
+    try {
+      await api.post('/apply', payload);
+      setSubmitted(true);
+    } catch (err) {
+      setError(err.message || 'Unable to submit your application. Please try again.');
+    }
     setSubmitting(false);
-    if (err) { setError(err.message); return; }
-    setSubmitted(true);
   };
 
   if (submitted) {
@@ -84,13 +87,6 @@ const Apply = () => {
         <p className="auth-lead">
           A quick form. We review, book a call, and if it's a fit we spin up your client account so you can follow the build inside this site.
         </p>
-
-        {!isSupabaseConfigured && (
-          <div className="auth-banner">
-            Supabase isn't configured yet. Add your <code>REACT_APP_SUPABASE_URL</code> and{' '}
-            <code>REACT_APP_SUPABASE_ANON_KEY</code> to <code>.env.local</code>. See README.
-          </div>
-        )}
 
         <form className="auth-form" onSubmit={submit}>
           <div className="auth-row">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../../lib/supabase';
+import { api } from '../../../lib/api';
 import { SkeletonGrid } from '../../../components/Skeleton';
 
 const Audit = () => {
@@ -9,13 +9,18 @@ const Audit = () => {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from('audit_events')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(200);
-      setEvents(data ?? []);
-      setLoading(false);
+      try {
+        const res = await api.get('/admin/audit');
+        const list = res.events || [];
+        const sorted = [...list].sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
+        setEvents(sorted.slice(0, 200));
+      } catch {
+        setEvents([]);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
 

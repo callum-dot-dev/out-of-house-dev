@@ -1,49 +1,56 @@
+// Realtime, backed by the platform SSE endpoint (/api/v1/realtime).
+// A single EventSource fans out to subscribers; on any event
+// the consuming hook's onChange fires so the page re-fetches. Degrades to no-op
+// where EventSource is unavailable (pages still have manual refresh).
 import { useEffect, useRef } from 'react';
-import { supabase } from './supabase';
+import { api } from './api';
 
-/**
- * Subscribe to a Supabase Postgres-changes channel.
- *
- *   useRealtimeTable({
- *     channel: 'board',
- *     table:   'feature_requests',
- *     event:   '*',   // 'INSERT' | 'UPDATE' | 'DELETE' | '*'
- *     filter:  'project_id=eq.' + projectId,
- *     onChange: (payload) => { ... },
- *   });
- */
-export const useRealtimeTable = ({ channel, table, event = '*', filter, schema = 'public', onChange }) => {
-  const cbRef = useRef(onChange);
-  cbRef.current = onChange;
+let source = null;
+const listeners = new Set();
 
-  useEffect(() => {
-    if (!channel || !table) return undefined;
-    const ch = supabase.channel(channel)
-      .on('postgres_changes',
-        { event, schema, table, ...(filter ? { filter } : {}) },
-        (payload) => cbRef.current?.(payload))
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [channel, table, event, filter, schema]);
+function ensureSource() {
+  if (source || typeof window === 'undefined' || typeof EventSource === 'undefined') return;
+  try {
+    source = new EventSource(`${api.base}/api/v1/realtime`, { withCredentials: true });
+    const fire = (e) => {
+      let data = {};
+      try {
+        data = JSON.parse(e.data);
+      } catch {
+        /* heartbeat / non-json */
+      }
+      listeners.forEach((l) => l(data, e.type));
+    };
+    source.addEventListener('notification', fire);
+    source.onmessage = fire;
+    source.onerror = () => {
+      /* EventSource auto-reconnects */
+    };
+  } catch {
+    source = null;
+  }
+}
+
+function subscribe(cb) {
+  ensureSource();
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+}
+
+export const useRealtimeTable = ({ onChange }) => {
+  const cb = useRef(onChange);
+  cb.current = onChange;
+  useEffect(() => subscribe(() => cb.current?.({ eventType: 'CHANGE' })), []);
 };
 
-/**
- * Subscribe to changes on a list of tables under a shared channel name.
- */
-export const useRealtimeMulti = ({ channel, subscriptions = [] }) => {
-  const cbRef = useRef(subscriptions);
-  cbRef.current = subscriptions;
-
-  useEffect(() => {
-    if (!channel) return undefined;
-    let ch = supabase.channel(channel);
-    cbRef.current.forEach(({ table, event = '*', filter, schema = 'public', onChange }) => {
-      ch = ch.on('postgres_changes',
-        { event, schema, table, ...(filter ? { filter } : {}) },
-        (payload) => onChange?.(payload));
-    });
-    ch.subscribe();
-    return () => { supabase.removeChannel(ch); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channel]);
+export const useRealtimeMulti = ({ subscriptions = [] }) => {
+  const subs = useRef(subscriptions);
+  subs.current = subscriptions;
+  useEffect(
+    () =>
+      subscribe(() => {
+        subs.current.forEach((s) => s.onChange?.({ eventType: 'CHANGE' }));
+      }),
+    [],
+  );
 };

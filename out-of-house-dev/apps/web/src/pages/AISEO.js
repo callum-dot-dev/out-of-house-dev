@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AISEO } from '../data/aiseo';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 const AISEOPage = () => {
   const data = AISEO;
@@ -29,10 +29,7 @@ const AISEOPage = () => {
     if (!clean) return;
     setAuditState({ status: 'running', domain: clean });
     try {
-      const { data: out, error } = await supabase.functions.invoke('aiseo-audit', {
-        body: { domain: clean },
-      });
-      if (error) throw error;
+      const out = await api.post('/aiseo/audit', { domain: clean });
       setAuditState({ status: 'done', domain: clean, result: out });
     } catch (err) {
       // graceful degradation: synthesize a sample score so the lead magnet still works

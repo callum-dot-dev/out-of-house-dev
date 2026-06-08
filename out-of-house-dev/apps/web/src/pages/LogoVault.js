@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { getSaasAppBySlug } from '../data/saasApps';
 
 const TABS = [
@@ -15,7 +15,7 @@ const VARIANTS = ['original', 'black', 'white', 'transparent'];
 const sampleResults = [
   { slug: 'stripe',    display_name: 'Stripe',    primary_domain: 'stripe.com',    hex_primary: '#635bff' },
   { slug: 'notion',    display_name: 'Notion',    primary_domain: 'notion.so',     hex_primary: '#000000' },
-  { slug: 'supabase',  display_name: 'Supabase',  primary_domain: 'supabase.com',  hex_primary: '#3ecf8e' },
+  { slug: 'linear',    display_name: 'Linear',    primary_domain: 'linear.app',    hex_primary: '#5e6ad2' },
   { slug: 'anthropic', display_name: 'Anthropic', primary_domain: 'anthropic.com', hex_primary: '#d97757' },
   { slug: 'github',    display_name: 'GitHub',    primary_domain: 'github.com',    hex_primary: '#181717' },
   { slug: 'vercel',    display_name: 'Vercel',    primary_domain: 'vercel.com',    hex_primary: '#000000' },
@@ -50,20 +50,17 @@ const LogoVault = () => {
     setLoading(true);
     setSearchError(null);
     try {
-      const { data, error } = await supabase.functions.invoke('logo-search', {
-        body: { q, format, variant, limit: 24 },
-      });
-      if (error) throw error;
+      const data = await api.get('/logovault/search?q=' + encodeURIComponent(q));
       const hits = data?.results || [];
       setResults(hits.length > 0 ? hits : sampleResults);
     } catch (e) {
-      // graceful degradation while the edge fn is being deployed
+      // graceful degradation while the API is being deployed
       setResults(filterSamples(q));
       setSearchError('Live API unavailable — showing the bundled sample set.');
     } finally {
       setLoading(false);
     }
-  }, [format, variant]);
+  }, []);
 
   useEffect(() => {
     const handle = setTimeout(() => {

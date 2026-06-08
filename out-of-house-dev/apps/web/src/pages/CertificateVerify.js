@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 const CertificateVerify = () => {
   const { code } = useParams();
@@ -10,24 +10,22 @@ const CertificateVerify = () => {
     let cancelled = false;
     (async () => {
       try {
-        const { data, error } = await supabase
-          .from('certificate_verifications')
-          .select('*')
-          .eq('certificate_code', code)
-          .maybeSingle();
+        const { certificate, valid } = await api.get('/verify/' + code);
         if (cancelled) return;
-        if (error) throw error;
-        if (!data) {
+        if (!certificate) {
           setState({ status: 'unknown' });
           return;
         }
-        if (data.revoked_at) {
-          setState({ status: 'revoked', cert: data });
+        if (certificate.revoked_at || valid === false) {
+          setState({ status: 'revoked', cert: certificate });
           return;
         }
-        setState({ status: 'valid', cert: data });
+        setState({ status: 'valid', cert: certificate });
       } catch (e) {
-        if (!cancelled) setState({ status: 'error', message: e.message });
+        if (!cancelled) {
+          if (e && e.status === 404) setState({ status: 'unknown' });
+          else setState({ status: 'error', message: e?.message || 'Verification failed.' });
+        }
       }
     })();
     return () => { cancelled = true; };

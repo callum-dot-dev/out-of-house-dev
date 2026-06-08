@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { COURSES, getCourseBySlug } from '../data/programmes';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { useAuth } from '../lib/AuthProvider';
 
 const CourseDetail = () => {
@@ -35,17 +35,11 @@ const CourseDetail = () => {
     setEnrolling(true);
     setError(null);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('stripe-checkout', {
-        body: {
-          product_type: 'course',
-          product_ref: `course:${course.slug}`,
-          amount_gbp: course.price_gbp,
-          name: course.name,
-          success_url: `${window.location.origin}/app?enrolled=${course.slug}`,
-          cancel_url: window.location.href,
-        },
+      const data = await api.post('/checkout', {
+        product_ref: `course:${course.slug}`,
+        success_url: `${window.location.origin}/app?enrolled=${course.slug}`,
+        cancel_url: window.location.href,
       });
-      if (fnError) throw fnError;
       if (data?.url) window.location.href = data.url;
       else throw new Error('Checkout session did not return a URL.');
     } catch (e) {

@@ -7,7 +7,7 @@ import { uuidParam } from '../lib/http';
 import { getProjectScoped, listProjectsScoped } from '../repos/projects';
 import { getRequestScoped, listRequestsForProject } from '../repos/featureRequests';
 import { getDocumentScoped } from '../repos/documents';
-import { getNotificationScoped, listNotifications, markRead } from '../repos/notifications';
+import { getNotificationScoped, listNotifications, markAllRead, markRead } from '../repos/notifications';
 import { notFound } from '../lib/errors';
 
 export default async function resourceRoutes(app: FastifyInstance): Promise<void> {
@@ -53,5 +53,10 @@ export default async function resourceRoutes(app: FastifyInstance): Promise<void
     const row = await markRead(viewerOf(req), uuidParam(req));
     if (!row) throw notFound();
     return { notification: row };
+  });
+
+  app.post('/notifications/read-all', { preHandler: requireAuth }, async (req) => {
+    await markAllRead(viewerOf(req));
+    return { ok: true };
   });
 }

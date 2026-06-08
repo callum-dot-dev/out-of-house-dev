@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { supabase } from '../../../lib/supabase';
+import { api } from '../../../lib/api';
 import { useAuth } from '../../../lib/AuthProvider';
 
 const TYPE_LABELS = {
@@ -12,7 +12,7 @@ const TYPE_LABELS = {
 };
 
 const Applications = () => {
-  const { profile } = useAuth();
+  useAuth();
   const [apps, setApps] = useState([]);
   const [filter, setFilter] = useState('pending');
   const [active, setActive] = useState(null);
@@ -21,10 +21,16 @@ const Applications = () => {
   const [message, setMessage] = useState(null);
 
   const load = useCallback(async () => {
-    let q = supabase.from('applications').select('*').order('created_at', { ascending: false });
-    if (filter !== 'all') q = q.eq('status', filter);
-    const { data } = await q;
-    setApps(data ?? []);
+    let list = [];
+    try {
+      const res = await api.get('/admin/applications');
+      list = res.applications || [];
+    } catch {
+      list = [];
+    }
+    list = [...list].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    if (filter !== 'all') list = list.filter((a) => a.status === filter);
+    setApps(list);
   }, [filter]);
 
   useEffect(() => { load(); }, [load]);
@@ -40,88 +46,44 @@ const Applications = () => {
     setWorking(true);
     setMessage(null);
 
-    // 1. Mark application approved
-    const { error: updErr } = await supabase
-      .from('applications')
-      .update({
-        status: 'approved',
-        admin_notes: adminNotes,
-        reviewed_by: profile?.id,
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq('id', active.id);
-    if (updErr) { setMessage(`Error: ${updErr.message}`); setWorking(false); return; }
-
-    // 2. Find an existing profile by email
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', active.email)
-      .maybeSingle();
-
-    let clientId = existingProfile?.id;
-
-    // 3. If no profile yet, send a magic-link invite. Supabase will auto-create the user, the trigger creates the profile.
-    if (!clientId) {
-      const { error: otpErr } = await supabase.auth.signInWithOtp({
-        email: active.email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-          shouldCreateUser: true,
-          data: { full_name: active.full_name, role: 'client' },
-        },
-      });
-      if (otpErr) {
-        setMessage(`Application approved, but invite email failed: ${otpErr.message}. Send manually.`);
-      } else {
-        setMessage(`Approved. Magic-link invite sent to ${active.email}. They'll be created on first sign-in. Refresh after they accept to link the project.`);
-      }
-      setWorking(false);
+    try {
+      await api.post(`/admin/applications/${active.id}/approve`, {});
+      setMessage(`Approved. Project created for ${active.full_name}.`);
       await load();
       setActive(null);
-      return;
+    } catch (err) {
+      setMessage(`Error: ${err.message}`);
+    } finally {
+      setWorking(false);
     }
-
-    // 4. Create the project
-    const { error: projErr } = await supabase.from('projects').insert([{
-      client_id: clientId,
-      name: active.company ? `${active.company} · ${TYPE_LABELS[active.project_type]}` : `${active.full_name}'s ${TYPE_LABELS[active.project_type]}`,
-      project_type: active.project_type,
-      description: active.project_description,
-      created_from_application_id: active.id,
-      status: 'discovery',
-    }]);
-    if (projErr) { setMessage(`Approved + user exists, but project insert failed: ${projErr.message}`); setWorking(false); return; }
-
-    setMessage(`Approved. Project created for ${active.full_name}.`);
-    setWorking(false);
-    await load();
-    setActive(null);
   };
 
   const reject = async () => {
     if (!active) return;
     setWorking(true);
-    const { error } = await supabase.from('applications').update({
-      status: 'rejected',
-      admin_notes: adminNotes,
-      reviewed_by: profile?.id,
-      reviewed_at: new Date().toISOString(),
-    }).eq('id', active.id);
-    setWorking(false);
-    if (error) { setMessage(`Error: ${error.message}`); return; }
-    await load();
-    setActive(null);
+    try {
+      await api.post(`/admin/applications/${active.id}/reject`, { reason: adminNotes });
+      await load();
+      setActive(null);
+    } catch (err) {
+      setMessage(`Error: ${err.message}`);
+    } finally {
+      setWorking(false);
+    }
   };
 
   const trash = async () => {
     if (!active) return;
     setWorking(true);
-    const { error } = await supabase.from('applications').update({ status: 'trash' }).eq('id', active.id);
-    setWorking(false);
-    if (error) { setMessage(`Error: ${error.message}`); return; }
-    await load();
-    setActive(null);
+    try {
+      await api.post(`/admin/applications/${active.id}/reject`, { reason: adminNotes || 'trash' });
+      await load();
+      setActive(null);
+    } catch (err) {
+      setMessage(`Error: ${err.message}`);
+    } finally {
+      setWorking(false);
+    }
   };
 
   return (
@@ -202,15 +164,6 @@ const Applications = () => {
                   <button className="primary-btn" onClick={approve} disabled={working}><span>Approve &amp; invite</span></button>
                   <button className="secondary-btn" onClick={reject} disabled={working}><span>Reject</span></button>
                   <button className="ghost-btn" onClick={trash} disabled={working}>Move to trash</button>
-                </div>
-              )}
-              {active.status !== 'pending' && (
-                <div className="app-actions">
-                  <button className="secondary-btn" onClick={async () => {
-                    await supabase.from('applications').update({ status: 'pending', reviewed_by: null, reviewed_at: null }).eq('id', active.id);
-                    await load();
-                    setActive(null);
-                  }}><span>Reopen</span></button>
                 </div>
               )}
             </div>

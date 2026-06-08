@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthProvider';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 
 const STATUS_LABELS = {
   discovery: 'Discovery', building: 'Building', live: 'Live', paused: 'Paused', completed: 'Completed',
@@ -14,10 +14,12 @@ const Projects = () => {
 
   useEffect(() => {
     (async () => {
-      let q = supabase.from('projects').select('*, profiles!projects_client_id_fkey(full_name, email, company)').order('created_at', { ascending: false });
-      if (isClient) q = q.eq('client_id', profile?.id);
-      const { data } = await q;
-      setProjects(data ?? []);
+      try {
+        const res = await api.get('/projects');
+        setProjects(res?.projects ?? []);
+      } catch {
+        setProjects([]);
+      }
     })();
   }, [isClient, profile?.id]);
 

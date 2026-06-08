@@ -1,30 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../../lib/AuthProvider';
-import { supabase } from '../../../lib/supabase';
+import { api } from '../../../lib/api';
 import { toast } from '../../../lib/toast';
 
 const Billing = () => {
   const { profile } = useAuth();
   const [sub, setSub] = useState(null);
+  const [portalUrl, setPortalUrl] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!profile?.id) return;
     (async () => {
-      const { data } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('client_id', profile.id)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      setSub(data);
+      try {
+        const data = await api.get('/billing');
+        const subs = data?.subscriptions ?? [];
+        setSub(subs.length > 0 ? subs[0] : null);
+        setPortalUrl(data?.portal_url ?? null);
+      } catch {
+        setSub(null);
+        setPortalUrl(null);
+      }
       setLoading(false);
     })();
   }, [profile?.id]);
 
   const openPortal = () => {
-    // Wire to a Supabase Edge Function returning a Stripe Customer Portal URL.
+    if (portalUrl) {
+      window.location.href = portalUrl;
+      return;
+    }
     toast.info('Customer portal opens once Stripe is configured. Email us at support@out-of-house.dev for now.');
   };
 

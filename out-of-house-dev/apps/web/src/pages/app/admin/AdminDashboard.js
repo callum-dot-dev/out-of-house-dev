@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../../../lib/supabase';
+import { api } from '../../../lib/api';
 
 const StatTile = ({ label, value, hint, to }) => {
   const inner = (
@@ -19,15 +19,29 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     (async () => {
-      const [{ count: pending }, { count: projects }, { count: openRequests }, { count: users }, { data: apps }] = await Promise.all([
-        supabase.from('applications').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-        supabase.from('projects').select('*', { count: 'exact', head: true }),
-        supabase.from('feature_requests').select('*', { count: 'exact', head: true }).in('status', ['submitted','scoped','building','review']),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('applications').select('*').order('created_at', { ascending: false }).limit(5),
+      const [applications, projects, board, users] = await Promise.all([
+        api.get('/admin/applications').then((r) => r.applications || []).catch(() => []),
+        api.get('/projects').then((r) => r.projects || []).catch(() => []),
+        api.get('/board').then((r) => r.requests || []).catch(() => []),
+        api.get('/admin/users').then((r) => r.users || []).catch(() => []),
       ]);
-      setStats({ pending: pending ?? 0, projects: projects ?? 0, openRequests: openRequests ?? 0, users: users ?? 0 });
-      setLatest(apps ?? []);
+
+      const pending = applications.filter((a) => a.status === 'pending').length;
+      const openRequests = board.filter((r) =>
+        ['submitted', 'scoped', 'building', 'review'].includes(r.status)
+      ).length;
+
+      const sorted = [...applications].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+
+      setStats({
+        pending,
+        projects: projects.length,
+        openRequests,
+        users: users.length,
+      });
+      setLatest(sorted.slice(0, 5));
     })();
   }, []);
 

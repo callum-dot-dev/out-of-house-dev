@@ -18,7 +18,7 @@ const PrivacyPolicy = () => {
             <li>We only collect data you give us (apply form, login, project work) plus minimal analytics.</li>
             <li>We never sell your data. Ever.</li>
             <li>You can email <a href="mailto:privacy@out-of-house.dev">privacy@out-of-house.dev</a> to access, correct, export, or delete your data, and we respond within 30 days.</li>
-            <li>We use a small, audited list of sub-processors (Supabase, Stripe, Cloudflare, Resend or Postmark, Cal.com). Full list on the <Link to="/subprocessors">sub-processors page</Link>.</li>
+            <li>We use a small, audited list of sub-processors (Render, Stripe, Resend, Cal.com, Anthropic, OpenAI). Full list on the <Link to="/subprocessors">sub-processors page</Link>.</li>
           </ul>
 
           <h2>Who we are</h2>
