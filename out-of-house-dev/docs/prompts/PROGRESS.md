@@ -231,7 +231,33 @@ restore (users=3, plan_templates=8)**. Lint ✅, typecheck ✅. Full suite 25 te
 review→deploy), risk classifier, auto-merge policy, cost caps, eval harness,
 composing prompts via `buildHandoff()`.
 
-## Phases 5–12 — ⬜ not started
+## Phase 5 — Orchestrator v2 — ✅ DONE (gate green)
+
+**Built (`apps/jobs/src/orchestrator`)** — state machine on `feature_requests.status`:
+- `runStage(requestId, kind, {force, pr})` — idempotent per (request_id, kind) via
+  claude_runs; LLM stages respect the **daily cost cap** (breach → claude_run
+  cancelled + admin_alert + no transition); writes activity + client notify.
+- Stages (ported prompts + deterministic no-key template fallbacks): scope→scoped,
+  quote→quoted (drafts a `quotes` row; skipped for retainer), plan→planned,
+  **build_prompt** (composes via `buildHandoff(type, metadata.style, ctx)` →
+  contains the AUTOMATION_CONTRACT + active style adapter) →building, review
+  (risk + verdict + auto-merge decision) →approved|review, deploy→shipped.
+- `risk.ts` classifier (auth/billing/migration/email/.sql → high; content-only small
+  → low), `mergePolicy.ts` (`isAutoMergeEligible`), `transitions.ts` (legal map +
+  `canTransition`), `settings.auto_merge_enabled` kill switch.
+- `orchestrate.stage` job (optional payload → cron no-op; real runs pass request/kind).
+- Eval harness `packages/shared/src/evals/run.ts` (15 golden fixtures, structural
+  validators) — `npm run evals` green in CI.
+
+**Gate evidence** — orchestrator 6/6 + evals 15/15: legal/illegal transitions ·
+risk + merge gating · **full pipeline** scope→plan→build_prompt(style+contract)→
+review(low-risk)→**approved** · high-risk→not eligible→review · **idempotent reuse**
+· **cost-cap breach → cancelled + alert**. Full suite **34 tests** green; lint ✅.
+
+**Next:** Phase 6 — builder worker (Agent SDK runner, BUILDER_DRY_RUN, repo factory
++ templates, Render deployer, puppeteer PDF) consuming `builder.run`/`builder.merge`.
+
+## Phases 6–12 — ⬜ not started
 ```
 1  Database baseline + v4 tables + seeds
 2  API foundation (auth, rbac, files, sse, analytics)
