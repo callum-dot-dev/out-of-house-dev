@@ -80,11 +80,50 @@ idempotency tests.
 
 ---
 
-## Phase 1 — Database baseline + v4 tables + seeds — 🔜 next
+## Phase 1 — Database baseline + v4 tables + seeds — ✅ DONE (gate green)
 
-Plan locked: read `supabase/migrations/001..006.sql` verbatim (faithful port),
-compose the squashed baseline, then the v4 additions, then seeds. Verify with
-embedded-postgres (migrate clean + re-run no-op + seed idempotency + smoke SQL).
+**Built**
+- `db/migrate.ts` — forward-only runner; `db/migrations/*.sql` in order, each in a
+  txn, sha256 recorded in `schema_migrations`; re-run no-op; checksum drift = hard error.
+- `db/migrations/0001_baseline.sql` — faithful consolidated port of 001..006
+  (~46 tables, all checks/indexes, `certificate_verifications` + `user_unread_count`
+  views, pure triggers). `profiles`→`users` (+auth cols), RLS/`auth.uid()` removed,
+  006 type-widening + `projects.metadata` baked in. See ADR 0002.
+- `db/migrations/0002_v4_platform.sql` — 25 new tables (sessions, auth_tokens,
+  oauth_identities, quotes, stripe_events, client_sites, uptime_*, status_incidents,
+  suppression_list, inbound_emails, meeting_bookings, testimonials, case_studies,
+  referral_credits, capstone_submissions, admin_alerts, llm_calls, analytics_events,
+  email_events, files, backups_log, feedback, content_posts, settings) + views
+  (v_llm_costs_daily, v_revenue_monthly, v_funnel_weekly) + orchestrator ALTERs
+  (feature_requests status superset + risk_class; projects.retainer_tier).
+- `db/seeds/seed.ts` — idempotent; 3 users (argon2id hashes via @node-rs/argon2),
+  8 plan templates (require planTemplates.js), 6 programmes + cohorts, 4 saas_apps,
+  10 logovault brands, 6 lead sources, 2 ICPs, default campaign, own-site uptime
+  check, demo project + 5 requests + plan + 3 applications.
+- `db/testing/pg.ts` — embedded-postgres harness (real PG, no Docker; creates the
+  test DB as UTF8 to dodge the Windows WIN1252 initdb default).
+
+**Gate evidence**
+- `npm test` ✅ 4/4: api health · migrate apply+no-op · **checksum-drift rejected** ·
+  **seed idempotent** (2nd run == 1st) + smoke counts (users 3, plan_templates **8**,
+  programmes 6, cohorts 6, saas_apps 4, lead_icps 2, uptime 1, project 1, requests 5,
+  applications 3) + `v_funnel_weekly`/`v_revenue_monthly`/`v_llm_costs_daily`/
+  `certificate_verifications` queryable.
+- `npm run typecheck` ✅ (now also covers `db/` + `scripts/` via root tsconfig, node16
+  resolution) · `npm run lint` ✅.
+
+**Decisions / ASSUMED**
+- ADR 0002 written (profiles→users, RLS→repo layer, dropped auth.uid() triggers,
+  money: existing numeric `_gbp` kept / new money in integer pence).
+- `embedded-postgres` is beta-only on npm → pinned exact `18.4.0-beta.17`. Works in
+  CI (ubuntu) too via its linux binary, so **no postgres service needed in CI**.
+- `@node-rs/argon2` chosen over `argon2` (prebuilt binaries, no native compile).
+- feature_requests status widened now to the Phase-5 orchestrator superset to avoid
+  a near-term migration.
+
+**Next:** Phase 2 — API foundation (Fastify plugins, full auth lifecycle, RBAC +
+Viewer repos, CSRF, FileStore, SSE, notifications, audit, admin/health, analytics
+collector) + the isolation red-team suite (run against embedded-postgres).
 
 ## Phases 2–12 — ⬜ not started
 ```

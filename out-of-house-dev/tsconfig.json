@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "incremental": false,
+    "module": "node16",
+    "moduleResolution": "node16"
+  },
+  "include": ["db/**/*.ts", "scripts/**/*.ts"],
+  "exclude": ["node_modules", "**/dist", "apps", "packages"]
+}
