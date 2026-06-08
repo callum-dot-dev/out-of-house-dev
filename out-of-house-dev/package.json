@@ -1,49 +1,46 @@
 {
-  "homepage": "https://out-of-house.dev",
-  "name": "out-of-house-dev",
-  "version": "0.1.0",
+  "name": "out-of-house-platform",
+  "version": "4.0.0",
   "private": true,
-  "dependencies": {
-    "@supabase/supabase-js": "^2.45.4",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
-    "react": "^18.3.1",
-    "react-calendly": "^4.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.26.1",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+  "description": "out-of-house.dev — fully-automated agency platform (Render migration, v4).",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,jobs,web -c blue,magenta,green \"npm run dev -w apps/api\" \"npm run dev -w apps/jobs\" \"npm run start -w apps/web\"",
+    "build": "npm run build -w packages/shared && npm run build -w apps/api && npm run build -w apps/jobs && npm run build -w apps/builder",
+    "build:web": "npm run build -w apps/web",
+    "build:all": "npm run build && npm run build:web",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "migrate": "tsx db/migrate.ts",
+    "seed": "tsx db/seeds/seed.ts",
+    "stripe:sync": "tsx scripts/stripe-sync.ts",
+    "smoke": "tsx scripts/smoke.ts",
+    "evals": "tsx packages/shared/src/evals/run.ts"
   },
   "devDependencies": {
-    "dotenv": "^16.4.5"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build",
-    "seed": "node scripts/seed.js",
-    "roadmap:pdf": "node scripts/build-roadmap-pdf.js"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^22.10.2",
+    "@vitest/coverage-v8": "^2.1.8",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.1",
+    "vitest": "^2.1.8"
   }
 }

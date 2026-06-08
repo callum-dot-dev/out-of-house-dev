@@ -1,0 +1,47 @@
+name: CI
+
+# The git repo root is one level above the platform project, which lives in the
+# `out-of-house-dev/` subfolder (the npm workspace root). All steps run there.
+on:
+  push:
+    branches: [main, 'feat/**']
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: out-of-house-dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: out-of-house-dev/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build backend (shared, api, jobs, builder)
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build frontend (CRA)
+        run: npm run build:web
+        env:
+          CI: false

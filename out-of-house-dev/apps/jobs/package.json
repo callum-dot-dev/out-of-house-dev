@@ -1,0 +1,13 @@
+{
+  "name": "@oohdev/jobs",
+  "version": "4.0.0",
+  "private": true,
+  "description": "Background worker: pg-boss consumers + all cron schedules (Phase 4).",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  }
+}
