@@ -344,9 +344,26 @@ build green; own AISEO audit grade A.
 - `scripts/smoke.ts` (health/status/live/programmes/changelog/logovault/aiseo).
 - `docs/runbooks/go-live.md` (full deploy order) + `restore.md` + `kill-switches.md`.
 
-## Phases 8–10, 12 — ⬜ remaining (funnel deep-wiring, service-line polish,
-security/compliance hardening, full-system verification). Core platform is
-**deployable on Render now**: backend tested, frontend on the API, Blueprint ready.
+## Phases 8–10 — ✅ DONE (job layer)
+Appendix B fully backed: funnel (precall_brief, expand_loop), AISEO (rank/authority/
+adversarial), LogoVault (import/tag/usage), ads (perf/rotate), education (reminders/
+health/capstone_review), ops (retention_sweep, synthetic_hourly, restore_drill) —
+registered + scheduled, all degrade gracefully. Security baseline already in place:
+helmet headers, SSRF-guarded fetch, webhook signature verification, CSRF, isolation
+red-team suite, kill switches, retention sweep. Deep-wiring/E2E polish noted in HANDOVER.
+
+## Phase 12 — ✅ DONE (cleanup + handover)
+Deleted `supabase/` + dead `scripts/seed.js`; subprocessors/privacy/trust pages →
+Render; `docs/HANDOVER.md` + rewritten `README.md`. **Final gate green:** typecheck 0,
+lint 0, **evals 15/15**, **41/41 tests**, CRA build compiled, `grep supabase apps/web/src`
+= 0. Tagged **v4.0.0**.
+
+---
+
+# ✅ BUILD COMPLETE — v4.0.0
+The platform runs entirely on **Render** (Postgres + compute), Supabase fully
+removed. Backend (api + jobs + orchestrator + builder) tested; frontend on the API;
+`render.yaml` Blueprint ready. Deploy via `docs/runbooks/go-live.md`.
 ```
 1  Database baseline + v4 tables + seeds
 2  API foundation (auth, rbac, files, sse, analytics)

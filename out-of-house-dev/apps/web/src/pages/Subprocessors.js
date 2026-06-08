@@ -2,14 +2,17 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const SUBPROCESSORS = [
-  { name: 'out-of-house.dev Platform', purpose: 'Auth, database, storage, realtime', location: 'EU (Frankfurt)', url: 'https://out-of-house.dev' },
-  { name: 'Cloudflare', purpose: 'CDN, DNS, edge hosting', location: 'Global', url: 'https://www.cloudflare.com' },
-  { name: 'IONOS', purpose: 'Hosting (clients on the £100/month care plan)', location: 'EU', url: 'https://www.ionos.co.uk' },
+  { name: 'Render', purpose: 'Hosting for the app, API, workers, Postgres database and file storage', location: 'EU (Frankfurt)', url: 'https://render.com' },
   { name: 'Stripe', purpose: 'Payments and subscription billing', location: 'EU/US', url: 'https://stripe.com' },
-  { name: 'Cal.com', purpose: 'Discovery call scheduling', location: 'EU', url: 'https://cal.com' },
-  { name: 'Resend or Postmark', purpose: 'Transactional email (magic links, notifications)', location: 'EU/US', url: 'https://resend.com' },
-  { name: 'Plausible', purpose: 'Privacy-respecting analytics on the marketing site', location: 'EU', url: 'https://plausible.io' },
-  { name: 'Sentry (optional)', purpose: 'Error monitoring on the app', location: 'EU/US', url: 'https://sentry.io' },
+  { name: 'Resend', purpose: 'Transactional + inbound email (magic links, notifications)', location: 'EU/US', url: 'https://resend.com' },
+  { name: 'Anthropic', purpose: 'AI (Claude) for scoping, drafting, review and the build agent', location: 'EU/US', url: 'https://anthropic.com' },
+  { name: 'OpenAI', purpose: 'AI fallback model', location: 'US', url: 'https://openai.com' },
+  { name: 'Cal.com', purpose: 'Discovery/coaching call scheduling', location: 'EU', url: 'https://cal.com' },
+  { name: 'GitHub', purpose: 'Code repositories + client-site source hosting', location: 'US', url: 'https://github.com' },
+  { name: 'Google', purpose: 'Places API for lead discovery; optional sign-in (OAuth)', location: 'EU/US', url: 'https://cloud.google.com' },
+  { name: 'Companies House', purpose: 'UK company data for lead discovery', location: 'UK', url: 'https://www.gov.uk/government/organisations/companies-house' },
+  { name: 'IONOS', purpose: 'DNS for client custom domains', location: 'EU', url: 'https://www.ionos.co.uk' },
+  { name: 'Sentry (optional)', purpose: 'Error monitoring', location: 'EU/US', url: 'https://sentry.io' },
 ];
 
 const Subprocessors = () => {
