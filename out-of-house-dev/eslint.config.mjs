@@ -14,6 +14,8 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/coverage/**',
       'apps/web/**',
+      // standalone client-repo starters — linted within their own repos.
+      'templates/**',
       // legacy supabase artifacts (Deno) — ported & removed by Phase 12.
       'supabase/**',
       // pre-monorepo scripts with stale relative paths — ported in Phase 1.

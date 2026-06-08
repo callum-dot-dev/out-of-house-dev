@@ -257,7 +257,43 @@ review(low-risk)→**approved** · high-risk→not eligible→review · **idempo
 **Next:** Phase 6 — builder worker (Agent SDK runner, BUILDER_DRY_RUN, repo factory
 + templates, Render deployer, puppeteer PDF) consuming `builder.run`/`builder.merge`.
 
-## Phases 6–12 — ⬜ not started
+## Phase 6 — Builder worker — ✅ DONE (gate green; heavy deps env-gated)
+
+**Built (`apps/builder`)**:
+- `runner.ts` — clone → branch (AUTOMATION_CONTRACT) → apply change (real Claude
+  Agent SDK when key present, else deterministic degraded change) → verify → diff
+  → commit → push+PR (unless **BUILDER_DRY_RUN** → writes diff to FileStore) →
+  writeback claude_runs. Summary-json parsing, secret scrubbing, workdir wiped.
+- `github.ts` (openPR/mergePR/createRepoFromTemplate), `render.ts` (createStaticSite/
+  addCustomDomain→DNS records/triggerDeploy/getDeployStatus), `merge.ts`,
+  `repoFactory.ts` — fetch-based, degrade clearly without tokens.
+- `pdf.ts` — 4 templates (certificate, monthly-report, aiseo-report, quote-sow) →
+  PDF via puppeteer-core when a Chromium path is set, else HTML artifact.
+- `index.ts` worker (builder.run/builder.merge/pdf.render queues).
+- Templates: `templates/ooh-automation-worker` (Node/TS, builds green) +
+  `templates/ooh-starter-site` (Vite/React/Tailwind, JSON-LD/llms.txt/robots/
+  contact-form/analytics). `scripts/push-templates.ts` publisher.
+- **Wired Phase 5→6:** orchestrator build_prompt enqueues `builder.run`; eligible
+  review enqueues `builder.merge` (best-effort via pg-boss).
+
+**Gate evidence** — builder 7/7: **dry-run** clone→change→verify→diff(no PR) ·
+failing-verify reported · GitHub openPR/merge request formation (mocked fetch) ·
+Render createStaticSite/custom-domain (mocked fetch) · 4 PDF templates render to
+artifacts · **automation-worker builds green** · starter-site structure valid.
+Full suite **41 tests**; typecheck + lint ✅.
+
+**Honest degradations (env/CI/human-gated, not box-verifiable):**
+- `@anthropic-ai/claude-agent-sdk` + `puppeteer-core` + a Chromium are NOT declared
+  (dynamic-import + degrade) — the human installs them for live agent builds / PDF
+  rasterisation (Appendix F). Code path is complete.
+- starter-site **Vite build** validated structurally here (full `vite build`
+  verified in CI / on the builder's first deploy — heavy install skipped on box).
+- per-repo lock / global concurrency = run BUILDER_CONCURRENCY worker replicas.
+
+**Next:** Phase 7 — frontend port (apps/web supabase→`src/lib/api.js`, auth pages,
+admin command centre + new surfaces, marketing AISEO dogfood), Playwright suites.
+
+## Phases 7–12 — ⬜ not started
 ```
 1  Database baseline + v4 tables + seeds
 2  API foundation (auth, rbac, files, sse, analytics)

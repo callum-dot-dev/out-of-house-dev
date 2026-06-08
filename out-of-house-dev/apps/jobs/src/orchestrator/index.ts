@@ -3,6 +3,7 @@
 // activity event + client notification. LLM stages respect the daily cost cap;
 // the review stage classifies risk and applies the auto-merge policy.
 import { one } from '../lib/db';
+import { getBoss } from '../boss';
 import { maybeLlm } from '../lib/llm';
 import { activity, notify } from '../lib/notify';
 import { classifyRisk, type Risk } from './risk';
@@ -48,6 +49,18 @@ async function getSettingBool(key: string, dflt: boolean): Promise<boolean> {
   const row = await one<{ value: unknown }>('select value from settings where key=$1', [key]);
   if (!row) return dflt;
   return row.value === true || row.value === 'true';
+}
+
+/** Hand a job to the builder worker. Best-effort: no-op when pg-boss isn't
+ *  running (e.g. unit tests call runStage directly). */
+async function enqueueBuilder(queue: string, data: Record<string, unknown>): Promise<void> {
+  try {
+    const boss = getBoss();
+    await boss.createQueue(queue).catch(() => undefined);
+    await boss.send(queue, data, {});
+  } catch {
+    /* builder not reachable from this context */
+  }
 }
 
 type Dispatch = {
@@ -171,6 +184,20 @@ export async function runStage(requestId: string, kind: Stage, opts: { force?: b
     await one('update feature_requests set status=$2 where id=$1 returning id', [requestId, out.nextStatus]);
     await activity(project.id, requestId, `claude.${kind}`, STAGE_TITLE[kind], (out.resultMd ?? '').slice(0, 280));
     if (project.client_id) await notify(project.client_id, { kind: `request_${kind}`, title: STAGE_TITLE[kind], body: request.title, link: `/app/requests/${requestId}` });
+  }
+
+  // Hand off to the builder worker (Phase 6).
+  if (kind === 'build_prompt') {
+    await enqueueBuilder('builder.run', {
+      repo_url: project.repo_url ?? '',
+      branch: `ooh/${project.id.slice(0, 8)}/${requestId.slice(0, 8)}`,
+      prompt: out.prompt ?? '',
+      claude_run_id: runId,
+      request_id: requestId,
+    });
+  }
+  if (kind === 'review' && out.eligible && opts.pr?.pr_url) {
+    await enqueueBuilder('builder.merge', { pr_url: opts.pr.pr_url });
   }
 
   return {

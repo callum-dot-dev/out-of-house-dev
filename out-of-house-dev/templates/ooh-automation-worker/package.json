@@ -1,0 +1,20 @@
+{
+  "name": "ooh-automation-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "out-of-house.dev automation worker starter (ingest → reason → act → notify).",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "start": "node dist/index.js",
+    "evals": "node dist/evals.js"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "@types/node": "^22.10.2"
+  }
+}

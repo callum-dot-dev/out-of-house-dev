@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Business — built by out-of-house.dev</title>
+    <meta name="description" content="A fast, modern site shipped same-day by out-of-house.dev." />
+    <link rel="canonical" href="https://example.com/" />
+    <meta property="og:title" content="Your Business" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json">
+      { "@context": "https://schema.org", "@type": "Organization", "name": "Your Business", "logo": "/logo.png", "sameAs": [] }
+    </script>
+    <!-- First-party analytics (points at the platform collector). -->
+    <script>
+      window.__track = function (name, props) {
+        navigator.sendBeacon &&
+          navigator.sendBeacon('https://api.out-of-house.dev/api/v1/collect', JSON.stringify({ name: name, path: location.pathname, props: props || {} }));
+      };
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+# Your Business
+
+A one-paragraph canonical brief that an LLM can fetch in a single round-trip:
+who you are, what you do, who you serve, and how to contact you. Keep it factual
+and current.
+
+## Key pages
+- / — home
+- /#contact — contact
+
+## Contact
+Replace with your real contact details.
