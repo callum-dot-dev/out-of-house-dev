@@ -1,0 +1,16 @@
+# Normalize line endings: store LF in the repo for all text files.
+* text=auto eol=lf
+
+# Shell scripts and container files MUST be LF (CRLF breaks shebangs / Docker RUN).
+*.sh text eol=lf
+Dockerfile text eol=lf
+
+# Binaries — never normalize.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
