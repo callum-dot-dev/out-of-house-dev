@@ -10,7 +10,28 @@ live at the git root and target that subfolder (see ADR 0001).
 
 ---
 
-## Phase 0 — Monorepo restructure + tooling — ⏳ in progress (verifying gate)
+## Environment notes (this build machine)
+
+- Windows 11 + PowerShell; Node **v24.15.0**, tsc 5.9.3.
+- **No Docker, no psql, no pg_dump on PATH.** Phases that verify against a real
+  Postgres (1 gate, 2 isolation suite, 3/4/8 integration) use the
+  **`embedded-postgres`** npm package (downloads a real portable PG binary — no
+  Docker) for local verification. `ops.backup_nightly` (Phase 4) will shell to
+  the `pg_dump` shipped inside that embedded install. CI (GitHub Actions) uses a
+  `services: postgres:16` container instead. Decided per Autonomy Charter; ADR to
+  be added in Phase 1.
+
+---
+
+## Phase 0 — Monorepo restructure + tooling — ✅ DONE (gate green, commits 408e3b5 + c9930f7)
+
+**Gate evidence**
+- `npm install` (workspaces resolve; `node_modules/@oohdev/{api,jobs,builder,shared,web}` symlinked) ✅
+- `npm run build:web` → CRA build green, "hosted at /" (homepage removed) ✅
+- compiled API live HTTP `GET /api/v1/health` → `{"ok":true}` ✅ (+ vitest inject test)
+- `npm run lint` ✅ · `npm run typecheck` ✅ (all 4 TS workspaces) · `npm test` ✅ (1/1)
+- `npx yaml-lint .github/workflows/ci.yml` ✅
+
 
 **Done**
 - Branch `feat/v4-render-platform` created.
@@ -50,13 +71,22 @@ live at the git root and target that subfolder (see ADR 0001).
   `../src/...` paths → ported in Phase 1 (seed) / rehomed under apps/web later.
 - `apps/web` still imports `@supabase/supabase-js` — removed in Phase 7.
 
-**Next:** finish Gate 0 verification (install, web build, api health, lint,
-typecheck), commit `feat(phase-0): monorepo restructure + tooling`, then Phase 1
-(baseline schema + migration runner + seeds).
+**Next:** Phase 1 — `db/migrate.ts` runner; `0001_baseline.sql` (port all ~46
+tables from `supabase/migrations/001..006`, drop RLS/policies, `profiles`→`users`);
+`0002_v4_platform.sql` (~30 new tables/views); `db/seeds/seed.ts` (idempotent;
+8 plan templates from planTemplates.js, programmes, saas_apps, ICPs, sources);
+add `embedded-postgres` dev dep + a vitest DB harness; checksum-drift + seed
+idempotency tests.
 
 ---
 
-## Phases 1–12 — ⬜ not started
+## Phase 1 — Database baseline + v4 tables + seeds — 🔜 next
+
+Plan locked: read `supabase/migrations/001..006.sql` verbatim (faithful port),
+compose the squashed baseline, then the v4 additions, then seeds. Verify with
+embedded-postgres (migrate clean + re-run no-op + seed idempotency + smoke SQL).
+
+## Phases 2–12 — ⬜ not started
 ```
 1  Database baseline + v4 tables + seeds
 2  API foundation (auth, rbac, files, sse, analytics)
