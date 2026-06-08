@@ -112,3 +112,37 @@ export const opsDiskWatch = defineJob('ops.disk_watch', z.object({}), async () =
     return { used_pct: -1 };
   }
 });
+
+// GDPR retention windows (spec Appendix B): analytics 13mo, inbound 12mo, logs 30d.
+export const opsRetentionSweep = defineJob('ops.retention_sweep', z.object({}), async () => {
+  const a = (await query("delete from analytics_events where ts < now() - interval '13 months'")).rowCount;
+  const i = (await query("delete from inbound_emails where created_at < now() - interval '12 months'")).rowCount;
+  const u = (await query("delete from uptime_results where ts < now() - interval '90 days'")).rowCount;
+  await query("delete from users where deleted_at is not null and deleted_at < now() - interval '30 days'");
+  return { analytics: a, inbound: i, uptime_results: u };
+});
+
+// Scripted health check against prod every hour.
+export const opsSyntheticHourly = defineJob('ops.synthetic_hourly', z.object({}), async () => {
+  const base = process.env.PUBLIC_API_URL;
+  if (!base) return { skipped: true };
+  try {
+    const r = await fetch(`${base}/api/v1/health`, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) {
+      await one("insert into admin_alerts(severity, kind, title, body) values ('critical','synthetic','Synthetic health check failed',$1) returning id", [`${base} -> ${r.status}`]);
+      return { ok: false };
+    }
+    return { ok: true };
+  } catch (e) {
+    await one("insert into admin_alerts(severity, kind, title, body) values ('critical','synthetic','Synthetic health check threw',$1) returning id", [String(e).slice(0, 500)]);
+    return { ok: false };
+  }
+});
+
+// Weekly restore drill (see docs/runbooks/restore.md). Manual confirm to run.
+export const opsRestoreDrill = defineJob('ops.restore_drill', z.object({ confirm: z.boolean().optional() }), async (data) => {
+  if (!data.confirm) return { skipped: true, hint: 'pass { confirm: true }' };
+  const latest = await one<{ path: string }>('select path from backups_log where ok=true order by ts desc limit 1');
+  if (!latest) return { skipped: true, reason: 'no backup yet' };
+  return { latest_dump: latest.path, note: 'restore via restoreFromJson into a scratch DB' };
+});

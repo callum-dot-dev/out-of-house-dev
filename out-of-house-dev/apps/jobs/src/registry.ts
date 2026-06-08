@@ -6,5 +6,7 @@ import './jobs/reports';
 import './jobs/ops';
 import './jobs/email';
 import './jobs/orchestrate';
+import './jobs/serviceLines';
+import './jobs/funnel';
 
 export { ALL_JOBS } from './defineJob';
