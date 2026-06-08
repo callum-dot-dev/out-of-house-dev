@@ -1,11 +1,19 @@
-// apps/jobs — background worker (pg-boss consumers + cron schedules).
-// Phase 0 scaffold only; pg-boss bootstrap, defineJob(), and the Appendix B
-// schedule table arrive in Phase 4.
+// Worker entrypoint: start pg-boss, register every job consumer, apply the
+// Appendix B schedules. pg-boss keeps the process alive.
+import './registry';
+import { startBoss } from './boss';
+import { ALL_JOBS, registerWorker } from './defineJob';
+import { applySchedules, SCHEDULES } from './schedules';
+import { logger } from './lib/log';
 
-function main(): void {
-  console.log('[jobs] scaffold up — pg-boss queues + schedules wired in Phase 4');
-  // Keep the worker process alive (Render workers must not exit).
-  setInterval(() => undefined, 1 << 30);
+async function main(): Promise<void> {
+  await startBoss();
+  for (const def of ALL_JOBS) await registerWorker(def);
+  await applySchedules();
+  logger.info({ jobs: ALL_JOBS.length, schedules: SCHEDULES.length }, 'jobs worker started');
 }
 
-main();
+main().catch((err) => {
+  logger.error(err);
+  process.exit(1);
+});

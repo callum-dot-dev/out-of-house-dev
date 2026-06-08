@@ -1,6 +1,13 @@
 import { defineConfig } from 'vitest/config';
+import { resolve } from 'node:path';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      // Resolve the shared package from source in tests (no build step needed).
+      '@oohdev/shared': resolve(__dirname, 'packages/shared/src/index.ts'),
+    },
+  },
   test: {
     include: [
       'apps/**/*.{test,spec}.ts',

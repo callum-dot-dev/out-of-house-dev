@@ -16,6 +16,7 @@ import { CSRF_COOKIE, CSRF_HEADER } from './lib/cookies';
 import { randomToken } from './lib/crypto';
 import { stopRealtimeBridge } from './lib/realtime';
 import { closePool } from './lib/db';
+import { closeJobsClient } from './lib/jobsClient';
 import authRoutes from './routes/auth';
 import meRoutes from './routes/me';
 import guestRoutes from './routes/guest';
@@ -147,6 +148,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   app.addHook('onClose', async () => {
     await stopRealtimeBridge();
+    await closeJobsClient();
     await closePool();
   });
 

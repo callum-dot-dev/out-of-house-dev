@@ -2,12 +2,22 @@
   "name": "@oohdev/jobs",
   "version": "4.0.0",
   "private": true,
-  "description": "Background worker: pg-boss consumers + all cron schedules (Phase 4).",
+  "description": "Background worker: pg-boss consumers + all cron schedules (Appendix B).",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@oohdev/shared": "*",
+    "pg": "^8.13.1",
+    "pg-boss": "^10.1.5",
+    "pino": "^9.5.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10"
   }
 }

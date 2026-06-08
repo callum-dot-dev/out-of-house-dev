@@ -22,7 +22,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "npm run typecheck --workspaces --if-present && tsc --noEmit -p tsconfig.json",
+    "typecheck": "npm run build -w packages/shared && npm run typecheck --workspaces --if-present && tsc --noEmit -p tsconfig.json",
     "migrate": "tsx db/migrate.ts",
     "seed": "tsx db/seeds/seed.ts",
     "stripe:sync": "tsx scripts/stripe-sync.ts",

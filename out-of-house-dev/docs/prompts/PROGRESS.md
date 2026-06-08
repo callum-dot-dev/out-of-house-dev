@@ -202,7 +202,36 @@ Phases 4/8/10 where their runtime lands.
 (uptime, backup, cost rollup, reconcile), lead/outreach/digest job handlers,
 email queue drain.
 
-## Phases 4–12 — ⬜ not started
+## Phase 4 — Jobs runtime + schedules + ops crons — ✅ DONE (gate green)
+
+**Built (`apps/jobs`)** — pg-boss 10:
+- `boss.ts` (singleton), `defineJob()` (zod payload, pino logs, retry+backoff,
+  **final-failure → admin_alert** via `includeMetadata` retryCount), `registerWorker`,
+  `enqueue`, `runJobHandler` (direct, for manual trigger + tests), `ALL_JOBS` registry.
+- Job handlers (ported, LLM→heuristic + key-gated external calls):
+  leads.discover/enrich/score, outreach.draft/send (suppression + rate-limit +
+  dry-run), inbox.parse (intent → suppression/alert), reports.digest_weekly/
+  monthly_impact/funnel_weekly, ops.uptime_check/backup_nightly/cost_rollup_daily/
+  stripe_reconcile_nightly/disk_watch, email.queue_drain/sequences (16 jobs).
+- `schedules.ts` = Appendix B cron table (Europe/London); `index.ts` bootstrap.
+- **Portable JSON logical backup** (`ops.backup_nightly`) + `restore.ts` (type-aware
+  jsonb/tsvector, replica-role load) — no pg_dump dependency (embedded-postgres
+  ships none); Render PITR is the physical layer.
+- API: `GET /admin/jobs` (pgboss depths/schedules/failures), `POST /admin/jobs/:name/run`
+  (pg-boss client). `/admin/health` now reports queue depth.
+- `@oohdev/shared` consumed via lazy import (no-key path skips it); vitest aliases
+  it to source; root `typecheck` builds shared first.
+
+**Gate evidence** — `apps/jobs` 5/5: all 16 handlers execute under no-key
+degradation · pg-boss enqueue→worker · **retry succeeds on 3rd attempt** ·
+**final failure writes admin_alert** · **backup JSON-dump → migrate fresh DB →
+restore (users=3, plan_templates=8)**. Lint ✅, typecheck ✅. Full suite 25 tests.
+
+**Next:** Phase 5 — orchestrator state machine (scope→quote→plan→build_prompt→
+review→deploy), risk classifier, auto-merge policy, cost caps, eval harness,
+composing prompts via `buildHandoff()`.
+
+## Phases 5–12 — ⬜ not started
 ```
 1  Database baseline + v4 tables + seeds
 2  API foundation (auth, rbac, files, sse, analytics)
