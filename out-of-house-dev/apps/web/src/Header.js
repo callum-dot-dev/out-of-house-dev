@@ -7,7 +7,12 @@ import { COACHING_TRACKS } from './data/programmes';
 import { SAAS_APPS } from './data/saasApps';
 import './App.css';
 
-const SERVICE_NAV = SERVICE_DATA.map((s) => ({
+// Simplified IA (ADR 0005): five top-level items — Build · Learn · Products ·
+// Pricing · Company — plus utility (sign-in / book-a-call). "Home" is dropped
+// (the logo is home); "Why us" is a homepage section reached by scrolling;
+// Developers / Showcase / Changelog / Trust are consolidated under Company.
+
+const BUILD_NAV = SERVICE_DATA.map((s) => ({
   slug: s.slug,
   title: s.title,
   flag: s.flag,
@@ -36,6 +41,64 @@ const PRODUCT_NAV = [
   { href: '/aiseo', title: 'AISEO', flag: 'New', caption: 'Be the brand AI recommends' },
 ];
 
+const COMPANY_NAV = [
+  { href: '/developers', title: 'For developers', flag: null, caption: 'Paid trial work on our bench' },
+  { href: '/showcase', title: 'Showcase', flag: null, caption: 'What we’ve shipped' },
+  { href: '/changelog', title: 'Changelog', flag: null, caption: 'Public build notes' },
+  { href: '/trust', title: 'Trust & security', flag: null, caption: 'How we look after your data' },
+];
+
+// A reusable dropdown so all four menus share one accessible implementation.
+const NavDropdown = ({
+  id, label, eyebrow, items, isOpen, onToggle, dropdownRef, activeMatch, onItemClick, foot,
+}) => (
+  <li className={`nav-services ${isOpen ? 'is-open' : ''}`} ref={dropdownRef}>
+    <button
+      type="button"
+      className={`nav-link-button nav-link-with-caret ${activeMatch ? 'active' : ''}`}
+      aria-expanded={isOpen}
+      aria-haspopup="true"
+      onClick={() => onToggle(id)}
+    >
+      {label}
+      <svg className="nav-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M6 9l6 6 6-6" />
+      </svg>
+    </button>
+
+    <div className="nav-dropdown" role="menu" aria-label={label}>
+      <div className="nav-dropdown-head">
+        <span className="nav-dropdown-eyebrow">{eyebrow}</span>
+      </div>
+      <ul className="nav-dropdown-list">
+        {items.map((item) => (
+          <li key={item.href}>
+            <Link
+              to={item.href}
+              className={`nav-dropdown-item ${item.current ? 'is-current' : ''}`}
+              role="menuitem"
+              onClick={onItemClick}
+            >
+              <span className="nav-dropdown-item-row">
+                <span className="nav-dropdown-item-title">{item.title}</span>
+                {item.flag && (
+                  <span className={`nav-dropdown-flag nav-dropdown-flag-${item.flag.toLowerCase()}`}>
+                    {item.flag}
+                  </span>
+                )}
+              </span>
+              {item.caption && (
+                <span className="nav-dropdown-item-caption">{item.caption}</span>
+              )}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      {foot}
+    </div>
+  </li>
+);
+
 const Header = ({ activeSection }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -43,12 +106,11 @@ const Header = ({ activeSection }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [servicesOpen, setServicesOpen] = useState(false);
-  const [learnOpen, setLearnOpen] = useState(false);
-  const [productsOpen, setProductsOpen] = useState(false);
-  const servicesRef = useRef(null);
+  const [openMenu, setOpenMenu] = useState(null); // 'build' | 'learn' | 'products' | 'company' | null
+  const buildRef = useRef(null);
   const learnRef = useRef(null);
   const productsRef = useRef(null);
+  const companyRef = useRef(null);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)');
@@ -69,56 +131,33 @@ const Header = ({ activeSection }) => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Outside click / Esc closes the open dropdown (desktop only — on mobile
-  // they live inside the drawer, where clicks should not auto-close them).
+  // Outside click / Esc closes the open dropdown (desktop only — on mobile they
+  // live inside the drawer, where clicks should not auto-close them).
   useEffect(() => {
-    const anyOpen = servicesOpen || learnOpen || productsOpen;
-    if (!anyOpen || isMobile) return undefined;
+    if (!openMenu || isMobile) return undefined;
+    const refs = { build: buildRef, learn: learnRef, products: productsRef, company: companyRef };
+    const current = refs[openMenu];
     const onMouseDown = (e) => {
-      if (servicesRef.current && !servicesRef.current.contains(e.target)) setServicesOpen(false);
-      if (learnRef.current && !learnRef.current.contains(e.target)) setLearnOpen(false);
-      if (productsRef.current && !productsRef.current.contains(e.target)) setProductsOpen(false);
+      if (current?.current && !current.current.contains(e.target)) setOpenMenu(null);
     };
-    const onKey = (e) => {
-      if (e.key === 'Escape') {
-        setServicesOpen(false);
-        setLearnOpen(false);
-        setProductsOpen(false);
-      }
-    };
+    const onKey = (e) => { if (e.key === 'Escape') setOpenMenu(null); };
     document.addEventListener('mousedown', onMouseDown);
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('mousedown', onMouseDown);
       document.removeEventListener('keydown', onKey);
     };
-  }, [servicesOpen, learnOpen, productsOpen, isMobile]);
+  }, [openMenu, isMobile]);
 
-  // Collapse all dropdowns whenever the drawer closes
-  useEffect(() => {
-    if (!menuOpen) {
-      setServicesOpen(false);
-      setLearnOpen(false);
-      setProductsOpen(false);
-    }
-  }, [menuOpen]);
+  // Collapse dropdowns whenever the drawer closes.
+  useEffect(() => { if (!menuOpen) setOpenMenu(null); }, [menuOpen]);
 
   const close = useCallback(() => {
     setMenuOpen(false);
-    setServicesOpen(false);
-    setLearnOpen(false);
-    setProductsOpen(false);
+    setOpenMenu(null);
   }, []);
 
-  const toggleDropdown = (which) => {
-    if (which === 'services') {
-      setServicesOpen((v) => !v); setLearnOpen(false); setProductsOpen(false);
-    } else if (which === 'learn') {
-      setLearnOpen((v) => !v); setServicesOpen(false); setProductsOpen(false);
-    } else if (which === 'products') {
-      setProductsOpen((v) => !v); setServicesOpen(false); setLearnOpen(false);
-    }
-  };
+  const toggleDropdown = (which) => setOpenMenu((cur) => (cur === which ? null : which));
 
   const goToSection = useCallback((sectionId) => {
     close();
@@ -132,6 +171,12 @@ const Header = ({ activeSection }) => {
   }, [close, location.pathname, navigate]);
 
   const toggleMenu = () => setMenuOpen((v) => !v);
+
+  const path = location.pathname;
+  const buildItems = BUILD_NAV.map((i) => ({ ...i, href: `/services/${i.slug}`, current: path === `/services/${i.slug}` }));
+  const learnItems = LEARN_NAV.map((i) => ({ ...i, current: path === i.href }));
+  const productItems = PRODUCT_NAV.map((i) => ({ ...i, current: path === i.href }));
+  const companyItems = COMPANY_NAV.map((i) => ({ ...i, current: path === i.href }));
 
   return (
     <header className={`App-header ${scrolled ? 'is-scrolled' : ''}`}>
@@ -149,136 +194,39 @@ const Header = ({ activeSection }) => {
           <span className="bar" /><span className="bar" /><span className="bar" />
         </button>
         <ul className={`nav-links ${menuOpen ? 'open' : ''}`}>
-          <li>
-            <Link
-              to="/"
-              className={activeSection === 'home' && location.pathname === '/' ? 'active' : ''}
-              onClick={close}
-            >
-              Home
-            </Link>
-          </li>
-          <li className={`nav-services ${servicesOpen ? 'is-open' : ''}`} ref={servicesRef}>
-            <button
-              type="button"
-              className={`nav-link-button nav-link-with-caret ${
-                activeSection === 'services'
-                || activeSection === 'capabilities'
-                || location.pathname.startsWith('/services/')
-                  ? 'active'
-                  : ''
-              }`}
-              aria-expanded={servicesOpen}
-              aria-haspopup="true"
-              onClick={() => toggleDropdown('services')}
-            >
-              Services
-              <svg
-                className="nav-caret"
-                width="10"
-                height="10"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
-
-            <div className="nav-dropdown" role="menu" aria-label="Services">
-              <div className="nav-dropdown-head">
-                <span className="nav-dropdown-eyebrow">What we build</span>
-              </div>
-              <ul className="nav-dropdown-list">
-                {SERVICE_NAV.map((item) => (
-                  <li key={item.slug}>
-                    <Link
-                      to={`/services/${item.slug}`}
-                      className={`nav-dropdown-item ${location.pathname === `/services/${item.slug}` ? 'is-current' : ''}`}
-                      role="menuitem"
-                      onClick={close}
-                    >
-                      <span className="nav-dropdown-item-row">
-                        <span className="nav-dropdown-item-title">{item.title}</span>
-                        {item.flag && (
-                          <span className={`nav-dropdown-flag nav-dropdown-flag-${item.flag.toLowerCase()}`}>
-                            {item.flag}
-                          </span>
-                        )}
-                      </span>
-                      {item.caption && (
-                        <span className="nav-dropdown-item-caption">{item.caption}</span>
-                      )}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+          <NavDropdown
+            id="build"
+            label="Build"
+            eyebrow="What we build"
+            items={buildItems}
+            isOpen={openMenu === 'build'}
+            onToggle={toggleDropdown}
+            dropdownRef={buildRef}
+            activeMatch={activeSection === 'services' || activeSection === 'capabilities' || path.startsWith('/services/')}
+            onItemClick={close}
+            foot={(
               <div className="nav-dropdown-foot">
-                <button
-                  type="button"
-                  className="nav-dropdown-foot-link"
-                  role="menuitem"
-                  onClick={() => goToSection('#capabilities')}
-                >
+                <button type="button" className="nav-dropdown-foot-link" role="menuitem" onClick={() => goToSection('#capabilities')}>
                   See all AI capabilities
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M5 12h14M13 5l7 7-7 7" />
                   </svg>
                 </button>
               </div>
-            </div>
-          </li>
+            )}
+          />
 
-          <li className={`nav-services ${learnOpen ? 'is-open' : ''}`} ref={learnRef}>
-            <button
-              type="button"
-              className={`nav-link-button nav-link-with-caret ${
-                location.pathname.startsWith('/coaching') || location.pathname.startsWith('/courses')
-                  ? 'active'
-                  : ''
-              }`}
-              aria-expanded={learnOpen}
-              aria-haspopup="true"
-              onClick={() => toggleDropdown('learn')}
-            >
-              Learn
-              <svg className="nav-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
-
-            <div className="nav-dropdown" role="menu" aria-label="Learn">
-              <div className="nav-dropdown-head">
-                <span className="nav-dropdown-eyebrow">Coaching &amp; courses</span>
-              </div>
-              <ul className="nav-dropdown-list">
-                {LEARN_NAV.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      to={item.href}
-                      className={`nav-dropdown-item ${location.pathname === item.href ? 'is-current' : ''}`}
-                      role="menuitem"
-                      onClick={close}
-                    >
-                      <span className="nav-dropdown-item-row">
-                        <span className="nav-dropdown-item-title">{item.title}</span>
-                        {item.flag && (
-                          <span className={`nav-dropdown-flag nav-dropdown-flag-${item.flag.toLowerCase()}`}>
-                            {item.flag}
-                          </span>
-                        )}
-                      </span>
-                      {item.caption && (
-                        <span className="nav-dropdown-item-caption">{item.caption}</span>
-                      )}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+          <NavDropdown
+            id="learn"
+            label="Learn"
+            eyebrow="Coaching & courses"
+            items={learnItems}
+            isOpen={openMenu === 'learn'}
+            onToggle={toggleDropdown}
+            dropdownRef={learnRef}
+            activeMatch={path.startsWith('/coaching') || path.startsWith('/courses')}
+            onItemClick={close}
+            foot={(
               <div className="nav-dropdown-foot">
                 <Link to="/coaching" className="nav-dropdown-foot-link" role="menuitem" onClick={close}>
                   All coaching tracks
@@ -287,67 +235,21 @@ const Header = ({ activeSection }) => {
                   </svg>
                 </Link>
               </div>
-            </div>
-          </li>
+            )}
+          />
 
-          <li className={`nav-services ${productsOpen ? 'is-open' : ''}`} ref={productsRef}>
-            <button
-              type="button"
-              className={`nav-link-button nav-link-with-caret ${
-                location.pathname.startsWith('/saas') || location.pathname.startsWith('/lead-engine')
-                  ? 'active'
-                  : ''
-              }`}
-              aria-expanded={productsOpen}
-              aria-haspopup="true"
-              onClick={() => toggleDropdown('products')}
-            >
-              Products
-              <svg className="nav-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
+          <NavDropdown
+            id="products"
+            label="Products"
+            eyebrow="SaaS & AIaaS"
+            items={productItems}
+            isOpen={openMenu === 'products'}
+            onToggle={toggleDropdown}
+            dropdownRef={productsRef}
+            activeMatch={path.startsWith('/saas') || path.startsWith('/lead-engine') || path.startsWith('/aiseo')}
+            onItemClick={close}
+          />
 
-            <div className="nav-dropdown" role="menu" aria-label="Products">
-              <div className="nav-dropdown-head">
-                <span className="nav-dropdown-eyebrow">SaaS &amp; AIaaS</span>
-              </div>
-              <ul className="nav-dropdown-list">
-                {PRODUCT_NAV.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      to={item.href}
-                      className={`nav-dropdown-item ${location.pathname === item.href ? 'is-current' : ''}`}
-                      role="menuitem"
-                      onClick={close}
-                    >
-                      <span className="nav-dropdown-item-row">
-                        <span className="nav-dropdown-item-title">{item.title}</span>
-                        {item.flag && (
-                          <span className={`nav-dropdown-flag nav-dropdown-flag-${item.flag.toLowerCase()}`}>
-                            {item.flag}
-                          </span>
-                        )}
-                      </span>
-                      {item.caption && (
-                        <span className="nav-dropdown-item-caption">{item.caption}</span>
-                      )}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </li>
-
-          <li>
-            <button
-              type="button"
-              className={`nav-link-button ${activeSection === 'benefits' ? 'active' : ''}`}
-              onClick={() => goToSection('#benefits')}
-            >
-              Why us
-            </button>
-          </li>
           <li>
             <button
               type="button"
@@ -357,55 +259,46 @@ const Header = ({ activeSection }) => {
               Pricing
             </button>
           </li>
-          <li>
-            <Link
-              to="/developers"
-              className={location.pathname === '/developers' ? 'active' : ''}
-              onClick={close}
-            >
-              Developers
-            </Link>
-          </li>
+
+          <NavDropdown
+            id="company"
+            label="Company"
+            eyebrow="The studio"
+            items={companyItems}
+            isOpen={openMenu === 'company'}
+            onToggle={toggleDropdown}
+            dropdownRef={companyRef}
+            activeMatch={['/developers', '/showcase', '/changelog', '/trust', '/subprocessors'].includes(path)}
+            onItemClick={close}
+          />
+
           {isAuthenticated ? (
             <>
               <li>
                 <Link
                   to="/app"
-                  className={location.pathname.startsWith('/app') ? 'active' : ''}
+                  className={path.startsWith('/app') ? 'active' : ''}
                   onClick={close}
                 >
                   Open app
                 </Link>
               </li>
               <li>
-                <button
-                  type="button"
-                  className="nav-link-button"
-                  onClick={() => { signOut(); close(); }}
-                >
+                <button type="button" className="nav-link-button" onClick={() => { signOut(); close(); }}>
                   Sign out
                 </button>
               </li>
             </>
           ) : (
             <li>
-              <Link
-                to="/login"
-                className={location.pathname === '/login' ? 'active' : ''}
-                onClick={close}
-              >
+              <Link to="/login" className={path === '/login' ? 'active' : ''} onClick={close}>
                 Sign in
               </Link>
             </li>
           )}
           {isMobile && (
             <li>
-              <a
-                href="https://cal.com/out-of-house.dev"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={close}
-              >
+              <a href="https://cal.com/out-of-house.dev" target="_blank" rel="noopener noreferrer" onClick={close}>
                 Book a call
               </a>
             </li>
