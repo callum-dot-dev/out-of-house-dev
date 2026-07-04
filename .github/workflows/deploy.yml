@@ -1,0 +1,56 @@
+name: Deploy (GitHub Pages — transition fallback)
+
+# ── Why this file exists (PHASE_B §B8) ────────────────────────────────────────
+# Primary hosting for out-of-house.dev is Render (see render.yaml auto-deploy +
+# out-of-house-dev/docs/runbooks/hosting-cutover.md). This workflow REPLACES the
+# old root deploy.yml that built the pre-v4 flat CRA with `npm run build` at the
+# repo root — on this monorepo that root build does NOT produce a publishable web
+# bundle (the web app is `npm run build:web` → apps/web/build), so the old
+# workflow would fail the moment the monorepo reaches `main` (audit §2's
+# "time bomb"). It is patched here to build:web + publish apps/web/build.
+#
+# It is dispatch-only ON PURPOSE: on merge to main it will NOT auto-run (so it
+# can't fail, and it can't double-deploy against Render). It stays as a working
+# GitHub Pages ROLLBACK target during the cutover window — run it manually to
+# rebuild gh-pages if you need to roll back before/after the DNS flip. Once DNS
+# points at Render and gh-pages is retired, delete this file (see the runbook).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy-pages:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: out-of-house-dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: out-of-house-dev/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Build web (monorepo — NOT the old root `npm run build`)
+        run: npm run build:web
+        env:
+          CI: false
+
+      - name: Publish to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: out-of-house-dev/apps/web/build
+          cname: out-of-house.dev
