@@ -1,0 +1,147 @@
+{
+  "capturedAt": "2026-07-04 before (local build of current v3 design)",
+  "base": "http://localhost:5177",
+  "captured": [
+    {
+      "name": "home",
+      "route": "/",
+      "errors": 2
+    },
+    {
+      "name": "services-ai-automations",
+      "route": "/services/ai-automations",
+      "errors": 1
+    },
+    {
+      "name": "services-ai-growth",
+      "route": "/services/ai-growth",
+      "errors": 1
+    },
+    {
+      "name": "services-websites",
+      "route": "/services/websites",
+      "errors": 1
+    },
+    {
+      "name": "services-web-apps",
+      "route": "/services/web-apps",
+      "errors": 1
+    },
+    {
+      "name": "services-internal-tools",
+      "route": "/services/internal-tools",
+      "errors": 1
+    },
+    {
+      "name": "services-maintenance",
+      "route": "/services/maintenance",
+      "errors": 1
+    },
+    {
+      "name": "coaching",
+      "route": "/coaching",
+      "errors": 0
+    },
+    {
+      "name": "coaching-business",
+      "route": "/coaching/business",
+      "errors": 1
+    },
+    {
+      "name": "coaching-developers",
+      "route": "/coaching/developers",
+      "errors": 1
+    },
+    {
+      "name": "courses",
+      "route": "/courses",
+      "errors": 0
+    },
+    {
+      "name": "course-ai-fast-start-3w",
+      "route": "/courses/ai-fast-start-3w",
+      "errors": 1
+    },
+    {
+      "name": "course-ai-engineer-12w",
+      "route": "/courses/ai-engineer-12w",
+      "errors": 1
+    },
+    {
+      "name": "saas",
+      "route": "/saas",
+      "errors": 0
+    },
+    {
+      "name": "saas-logovault",
+      "route": "/saas/logovault",
+      "errors": 1
+    },
+    {
+      "name": "lead-engine",
+      "route": "/lead-engine",
+      "errors": 1
+    },
+    {
+      "name": "aiseo",
+      "route": "/aiseo",
+      "errors": 1
+    },
+    {
+      "name": "showcase",
+      "route": "/showcase",
+      "errors": 0
+    },
+    {
+      "name": "changelog",
+      "route": "/changelog",
+      "errors": 2
+    },
+    {
+      "name": "developers",
+      "route": "/developers",
+      "errors": 1
+    },
+    {
+      "name": "trust",
+      "route": "/trust",
+      "errors": 0
+    },
+    {
+      "name": "subprocessors",
+      "route": "/subprocessors",
+      "errors": 1
+    },
+    {
+      "name": "terms-and-conditions",
+      "route": "/terms-and-conditions",
+      "errors": 1
+    },
+    {
+      "name": "privacy-policy",
+      "route": "/privacy-policy",
+      "errors": 1
+    },
+    {
+      "name": "apply",
+      "route": "/apply",
+      "errors": 1
+    },
+    {
+      "name": "login",
+      "route": "/login",
+      "errors": 1
+    },
+    {
+      "name": "password-reset",
+      "route": "/password-reset",
+      "errors": 1
+    },
+    {
+      "name": "home-mobile",
+      "route": "/ (390px)",
+      "errors": 0
+    }
+  ],
+  "failed": []
+}
