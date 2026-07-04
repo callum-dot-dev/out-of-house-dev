@@ -455,7 +455,7 @@ const HomePage = ({ faq, proofPoints, positioning, capabilities, openFaqIndex, s
             </p>
             <div className="hero-rule" aria-hidden="true" />
             <div className="hero-actions">
-              <a href="https://cal.com/out-of-house.dev" target="_blank" rel="noopener noreferrer">
+              <a href="https://cal.eu/out-of-house.dev" target="_blank" rel="noopener noreferrer">
                 <button className="primary-btn hero-cta"><span>Book a discovery call</span></button>
               </a>
               <button
@@ -530,7 +530,7 @@ const HomePage = ({ faq, proofPoints, positioning, capabilities, openFaqIndex, s
               the DIY plateau, and the hallucination tax. Working software, shipped fast, owned by you.
             </p>
             <div className="positioning-resolution-actions">
-              <a href="https://cal.com/out-of-house.dev" target="_blank" rel="noopener noreferrer">
+              <a href="https://cal.eu/out-of-house.dev" target="_blank" rel="noopener noreferrer">
                 <button className="primary-btn"><span>Book a 30-minute call</span></button>
               </a>
               <button
@@ -686,7 +686,7 @@ const HomePage = ({ faq, proofPoints, positioning, capabilities, openFaqIndex, s
             </div>
             <p className="price-point">£500</p>
             <p className="price-suffix">+ £100/month hosting and care</p>
-            <a href="https://cal.com/out-of-house.dev" target="_blank" rel="noopener noreferrer">
+            <a href="https://cal.eu/out-of-house.dev" target="_blank" rel="noopener noreferrer">
               <button><span>Book a call</span></button>
             </a>
             <div className="pricing-details">
@@ -710,7 +710,7 @@ const HomePage = ({ faq, proofPoints, positioning, capabilities, openFaqIndex, s
             </div>
             <p className="price-point">from £750</p>
             <p className="price-suffix">one-off, fixed after a call</p>
-            <a href="https://cal.com/out-of-house.dev" target="_blank" rel="noopener noreferrer">
+            <a href="https://cal.eu/out-of-house.dev" target="_blank" rel="noopener noreferrer">
               <button><span>Scope a project</span></button>
             </a>
             <div className="pricing-details">
@@ -733,7 +733,7 @@ const HomePage = ({ faq, proofPoints, positioning, capabilities, openFaqIndex, s
             </div>
             <p className="price-point">from £1,500</p>
             <p className="price-suffix">/month</p>
-            <a href="https://cal.com/out-of-house.dev" target="_blank" rel="noopener noreferrer">
+            <a href="https://cal.eu/out-of-house.dev" target="_blank" rel="noopener noreferrer">
               <button><span>Start an engagement</span></button>
             </a>
             <div className="pricing-details">
@@ -801,7 +801,7 @@ const HomePage = ({ faq, proofPoints, positioning, capabilities, openFaqIndex, s
             <div className="contact-grid fade-in">
               <div className="contact-title">Contact</div>
               <span className="contact-highlighted">
-                <a href="https://cal.com/out-of-house.dev" target="_blank" rel="noopener noreferrer">
+                <a href="https://cal.eu/out-of-house.dev" target="_blank" rel="noopener noreferrer">
                   <button className="contact-btn">Contact Us</button>
                 </a>
                 <div className="contact-gradient-text">us</div>
@@ -810,7 +810,7 @@ const HomePage = ({ faq, proofPoints, positioning, capabilities, openFaqIndex, s
             </div>
           </div>
           <div className="contact-us-mobile-cta">
-            <a href="https://cal.com/out-of-house.dev" target="_blank" rel="noopener noreferrer">
+            <a href="https://cal.eu/out-of-house.dev" target="_blank" rel="noopener noreferrer">
               <button>Book a Call</button>
             </a>
           </div>
@@ -873,3 +873,4 @@ const HeaderGate = (props) => {
 };
 
 export default App;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
