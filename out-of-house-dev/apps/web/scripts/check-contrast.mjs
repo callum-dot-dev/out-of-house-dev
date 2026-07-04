@@ -65,6 +65,12 @@ const PAIRS = [
   ['--dark-ink', '--dark', 4.5, 'text on dark bands'],
   ['--dark-ink', '--dark-soft', 4.5, 'text on dark-soft'],
   ['--accent-bright', '--dark', 4.5, 'green text on dark'],
+  ['--info-text', '--surface', 4.5, 'info/blue "new" flag text on cards'],
+  ['--info-text', '--bg', 4.5, 'info/blue text on paper'],
+  ['--accent-deep', '--bg', 4.5, 'deep-green text/nums on paper'],
+  ['--accent-deep', '--surface', 4.5, 'deep-green text on cards'],
+  ['--accent-deep', '--tint-mint', 4.5, 'deep-green tag text on mint'],
+  ['--surface', '--accent-deep', 4.5, 'white label on deep-green fill (badges/hover)'],
   // Non-text UI ≥3:1 (focus rings, large-UI/icon accent)
   ['--focus-ring', '--bg', 3, 'focus ring on paper'],
   ['--focus-ring', '--surface', 3, 'focus ring on cards'],

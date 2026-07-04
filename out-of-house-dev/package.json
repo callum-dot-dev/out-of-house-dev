@@ -22,6 +22,7 @@
     "lint": "eslint . && npm run check:contrast",
     "lint:fix": "eslint . --fix",
     "check:contrast": "node apps/web/scripts/check-contrast.mjs",
+    "a11y": "node apps/web/scripts/a11y-scan.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "npm run build -w packages/shared && npm run typecheck --workspaces --if-present && tsc --noEmit -p tsconfig.json",

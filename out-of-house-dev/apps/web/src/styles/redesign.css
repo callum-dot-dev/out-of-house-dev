@@ -136,6 +136,21 @@
 /* Login magic-link helper (company.md). */
 .auth-hint { margin: calc(-1 * var(--sp-2)) 0 0; font-size: var(--fs-small); color: var(--muted); }
 
+/* ============================================================
+   Accessibility contrast fixes (axe WCAG 2.1 AA)
+   ------------------------------------------------------------
+   Systemic pre-existing debt: --accent-deep and --info (#4a72c4, ~4:1) were used
+   as SMALL text on light/tinted surfaces — below AA 4.5. The GREEN cases are
+   fixed at the token level (--accent-deep darkened to #17784f, ≥4.5 as text and
+   as a white-on-green fill). The BLUE "-new" flags still use --info, so these
+   rules (loaded last) move them onto --info-text. */
+.nav-dropdown-flag-new,
+.service-hero-flag-new,
+.service-crosslink-flag-new,
+.coaching-track-flag-new,
+.coaching-course-flag-new,
+.course-card-flag-new { color: var(--info-text); }
+
 /* Gated legal drafts (config/flags.js PUBLISH_NEW_LEGAL). */
 .legal-todo {
   background: var(--warning-soft);

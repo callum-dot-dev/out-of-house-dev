@@ -26,7 +26,10 @@
 
   --accent: #2bbf86;           /* spring green — fills, icons, the logo's house. NOT text on light. */
   --accent-bright: #58cf98;
-  --accent-deep: #1f8a60;      /* ≥3:1 on light — focus rings, large UI, deep icons */
+  --accent-deep: #17784f;      /* AA both ways: ≥4.5:1 as green text on light AND
+                                  white text on it as a fill (was #1f8a60 ≈ 4.1:1,
+                                  which failed as small text — design_tokens §1
+                                  licenses "adjust darker if measurement disagrees"). */
   --accent-soft: rgba(43, 191, 134, 0.10);
   --accent-glow: rgba(43, 191, 134, 0.18);
 
@@ -60,6 +63,7 @@
   --danger-soft: rgba(196, 74, 58, 0.12);
   --info: #4a72c4;
   --info-soft: rgba(74, 114, 196, 0.12);
+  --info-text: #2f5496;       /* darker blue — AA text on light/info-soft tints (#4a72c4 is ~4:1) */
 
   /* --- Typography (design_tokens §2). The existing scale already embodies the
      "heading, not poster" discipline: the hero uses ~5rem (.hero-h1), and the
