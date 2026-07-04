@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-07-04 before (pre-redesign v3, clean capture)",
-  "base": "http://localhost:5185",
+  "capturedAt": "2026-07-04 after (feat/redesign-v4, final)",
+  "base": "http://localhost:5184",
   "captured": [
     {
       "name": "home",
