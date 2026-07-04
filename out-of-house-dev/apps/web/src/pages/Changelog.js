@@ -46,13 +46,15 @@ const Changelog = () => {
         <div className="public-page-inner">
           <Link to="/" className="auth-back">‹ Back to home</Link>
           <div className="eyebrow">Changelog</div>
-          <h1>{project ? `What we shipped for ${project.name}` : 'Shipped, recently.'}</h1>
-          {project?.description && <p className="public-lead">{project.description}</p>}
+          <h1>{project ? `What we shipped for ${project.name}` : 'What shipped.'}</h1>
+          {project?.description
+            ? <p className="public-lead">{project.description}</p>
+            : !project && <p className="public-lead">Public build notes from projects that opted in. Newest first.</p>}
 
           {loading ? (
             <p className="app-muted">Loading…</p>
           ) : entries.length === 0 ? (
-            <p className="app-muted">Nothing public to share yet.</p>
+            <p className="app-muted">Nothing public yet — check the showcase, or ask us directly.</p>
           ) : (
             <ul className="changelog-public">
               {entries.map((e) => (

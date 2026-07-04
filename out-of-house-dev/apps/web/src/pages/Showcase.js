@@ -31,7 +31,7 @@ const ShowcasePage = () => {
           {loading ? (
             <p className="app-muted">Loading…</p>
           ) : projects.length === 0 ? (
-            <p className="app-muted">More public projects coming soon. Want to be the next one? Book a call.</p>
+            <p className="app-muted">Client work goes up here only with written permission, and most of ours is internal tooling their competitors would love to see. Want a reference anyway? Book a call — we&apos;ll show you relevant work privately.</p>
           ) : (
             <div className="showcase-public-grid">
               {projects.map((p) => (

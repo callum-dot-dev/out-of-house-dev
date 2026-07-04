@@ -22,7 +22,7 @@ export const SAAS_APPS = [
       accent: 'every format',
       lead: `Stop scraping Google Images at midnight. LogoVault gives you SVG, PNG, and JPG of any company logo, in black, white, colour, and transparent variants — searchable from a UI, scriptable from an API.`,
       proofPoints: [
-        { kicker: '900k+',    value: 'logos indexed' },
+        // 900k+ count dropped until confirmed (products.md gate; BLOCKERS A8).
         { kicker: 'SVG/PNG/JPG', value: 'every format' },
         { kicker: 'B / W / Colour', value: 'every variant' },
       ],

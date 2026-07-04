@@ -7,6 +7,14 @@
 // Format pulls from `services.js` conventions so the same Hero / Offer /
 // Process / Deliverables card components work across the site.
 
+// Stale-cohort gate (learn.md blocking rule; BLOCKERS A7). The next_cohort
+// dates + seats_taken below are stale demo data — several dates are already
+// past. Until Callum supplies real cohort dates + seat counts, NEVER render a
+// date or a seats bar: pages show COHORT_TBD instead. Flip this to true only
+// once every course record carries a real, future cohort date + seat count.
+export const COHORTS_CONFIRMED = false;
+export const COHORT_TBD = 'dates announced at enrolment — apply and we’ll confirm within one business day';
+
 export const COACHING_TRACKS = [
   {
     slug: 'business',

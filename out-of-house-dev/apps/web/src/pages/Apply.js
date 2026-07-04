@@ -2,6 +2,21 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import Captcha from '../components/Captcha';
+import { getBuildType, SCOPE_LABELS, formatGBP } from '../data/pricing';
+
+// Scope summary handed over from the homepage calculator "Apply with this scope".
+const readQuote = () => {
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const type = p.get('quote_type');
+    const bt = getBuildType(type);
+    if (!bt) return null;
+    const units = Number(p.get('quote_units')) || bt.min;
+    const oneoff = Number(p.get('quote_oneoff')) || 0;
+    const monthly = Number(p.get('quote_monthly')) || 0;
+    return { label: bt.label, scope: SCOPE_LABELS[type](units), oneoff, monthly };
+  } catch { return null; }
+};
 
 const PROJECT_TYPES = [
   { value: 'website',          label: 'Website / landing page' },
@@ -33,6 +48,7 @@ const initial = {
 };
 
 const Apply = () => {
+  const quote = readQuote();
   const [form, setForm] = useState(initial);
   const [captchaToken, setCaptchaToken] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -65,10 +81,9 @@ const Apply = () => {
       <div className="auth-page">
         <div className="auth-card auth-card-wide">
           <div className="eyebrow">Application received</div>
-          <h1 className="auth-title">Thanks, {form.full_name.split(' ')[0]}.</h1>
+          <h1 className="auth-title">Got it.</h1>
           <p className="auth-lead">
-            We've got your details. We'll reach out within one business day to book a discovery call.
-            If we're a fit, we'll create your account so you can log in and follow the build live.
+            A real person replies within one business day.
           </p>
           <div className="auth-actions">
             <Link to="/"><button className="primary-btn"><span>Back to home</span></button></Link>
@@ -83,10 +98,16 @@ const Apply = () => {
       <div className="auth-card auth-card-wide">
         <Link to="/" className="auth-back">‹ Back to home</Link>
         <div className="eyebrow">Apply to work with us</div>
-        <h1 className="auth-title">Tell us about the project.</h1>
+        <h1 className="auth-title">Tell us what you&apos;re building.</h1>
         <p className="auth-lead">
-          A quick form. We review, book a call, and if it's a fit we spin up your client account so you can follow the build inside this site.
+          Five fields, one business day to a reply. If a call is faster, book one instead.
         </p>
+        {quote && (
+          <p className="apply-quote-summary">
+            Your calculator estimate: {quote.label}, {quote.scope} — <strong>{formatGBP(quote.oneoff)}</strong>
+            {quote.monthly > 0 && <> + {formatGBP(quote.monthly)}/mo</>}. We&apos;ll confirm it on the call.
+          </p>
+        )}
 
         <form className="auth-form" onSubmit={submit}>
           <div className="auth-row">
@@ -153,7 +174,7 @@ const Apply = () => {
           {error && <div className="auth-error">{error}</div>}
 
           <button type="submit" className="primary-btn auth-submit" disabled={submitting}>
-            <span>{submitting ? 'Sending…' : 'Submit application'}</span>
+            <span>{submitting ? 'Sending…' : 'Send application'}</span>
           </button>
           <p className="auth-foot">
             Already have an account? <Link to="/login">Sign in</Link>

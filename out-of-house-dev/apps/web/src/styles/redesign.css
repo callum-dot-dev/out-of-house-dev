@@ -116,6 +116,24 @@
 /* Inline "(then £150/page …)" note inside pricing bullets. */
 .price-note { color: var(--muted); font-size: 0.9em; }
 
+/* Developers closing-CTA note (company.md). */
+.dev-cta-note { margin-top: var(--sp-4); color: var(--muted); font-size: var(--fs-small); }
+
+/* Calculator → Apply scope handoff summary (company.md /apply). */
+.apply-quote-summary {
+  margin: 0 0 var(--sp-5);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--tint-mint);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-small);
+  color: var(--ink-soft);
+}
+.apply-quote-summary strong { font-variant-numeric: tabular-nums; color: var(--accent-text); }
+
+/* Login magic-link helper (company.md). */
+.auth-hint { margin: calc(-1 * var(--sp-2)) 0 0; font-size: var(--fs-small); color: var(--muted); }
+
 @media (max-width: 640px) {
   .hero-priceproof { padding: var(--sp-5); }
   .price-anchor { padding: var(--sp-5); }

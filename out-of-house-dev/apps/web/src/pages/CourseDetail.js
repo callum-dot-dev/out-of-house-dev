@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { COURSES, getCourseBySlug } from '../data/programmes';
+import { COURSES, getCourseBySlug, COHORTS_CONFIRMED, COHORT_TBD } from '../data/programmes';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/AuthProvider';
 
@@ -75,12 +75,19 @@ const CourseDetail = () => {
           <div className="course-detail-stat-strip">
             <div><strong>{course.price_label}</strong><span>one-off</span></div>
             <div><strong>{course.duration_weeks}w</strong><span>duration</span></div>
-            <div><strong>{formatDate(course.next_cohort)}</strong><span>next cohort</span></div>
-            <div className={filling ? 'is-filling' : ''}>
-              <strong>{seatsLeft}</strong>
-              <span>{filling ? 'seats left — filling fast' : 'seats left'}</span>
-            </div>
+            {COHORTS_CONFIRMED && (
+              <>
+                <div><strong>{formatDate(course.next_cohort)}</strong><span>next cohort</span></div>
+                <div className={filling ? 'is-filling' : ''}>
+                  <strong>{seatsLeft}</strong>
+                  <span>{filling ? 'seats left — filling fast' : 'seats left'}</span>
+                </div>
+              </>
+            )}
           </div>
+          {!COHORTS_CONFIRMED && (
+            <p className="course-detail-cohort-note">Next cohort: {COHORT_TBD}.</p>
+          )}
 
           <div className="course-detail-actions">
             {user ? (
@@ -139,8 +146,17 @@ const CourseDetail = () => {
 
       <section className="course-detail-cta-band fade-in">
         <div className="course-detail-cta-band-inner">
-          <h2>Cohort starts {formatDate(course.next_cohort)}.</h2>
-          <p>{seatsLeft} seats left. Once they go, the next intake is several weeks out.</p>
+          {COHORTS_CONFIRMED ? (
+            <>
+              <h2>Cohort starts {formatDate(course.next_cohort)}.</h2>
+              <p>{seatsLeft} seats left. Once they go, the next intake is several weeks out.</p>
+            </>
+          ) : (
+            <>
+              <h2>Next cohort: dates announced at enrolment.</h2>
+              <p>Apply and we’ll confirm within one business day.</p>
+            </>
+          )}
           <div className="course-detail-cta-band-actions">
             {user ? (
               <button type="button" className="primary-btn" onClick={startCheckout} disabled={enrolling}>

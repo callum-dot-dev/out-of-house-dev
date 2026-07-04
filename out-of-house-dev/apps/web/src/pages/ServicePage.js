@@ -31,6 +31,7 @@ const ServicePage = () => {
   return (
     <div className="service-page">
       <ServiceHero service={service} />
+      <PriceAnchor slug={service.slug} />
       <ServiceOffer service={service} />
       <ServiceProcess service={service} />
       <ServiceDeliverables service={service} />
@@ -195,6 +196,133 @@ const ServiceFooter = () => (
     </div>
   </footer>
 );
+
+// Shared price-anchor block (services-build.md / services-growth-care.md) —
+// transparent pricing directly under each service hero, verbatim from the
+// content package. "Price your X" presets the homepage calculator via ?build=.
+const CAL = 'https://cal.com/out-of-house.dev';
+const PRICE_ANCHORS = {
+  'ai-automations': {
+    body: (
+      <>
+        <strong>From £750</strong> fixed, per scoped automation · typical multi-workflow builds
+        £1,550–£4,350 · complex, multi-system scopes quoted to ~£20k · optional care &amp; monitoring
+        £150/month (model usage at cost).
+      </>
+    ),
+    actions: [
+      { label: 'Price your automation', kind: 'calc', build: 'automation', variant: 'primary' },
+      { label: 'Book a scoping call', kind: 'cal', variant: 'secondary' },
+    ],
+  },
+  websites: {
+    body: (
+      <>
+        <strong>£500</strong> for a starter site — up to 5 pages, live same day · +£150/page beyond 5 ·{' '}
+        <strong>£100/month</strong> hosting and care (updates, backups, uptime) · cancel anytime, the
+        site stays yours.
+      </>
+    ),
+    actions: [
+      { label: 'Price your site', kind: 'calc', build: 'website', variant: 'primary' },
+      { label: 'Brief us today', kind: 'cal', variant: 'secondary' },
+    ],
+  },
+  'web-apps': {
+    body: (
+      <>
+        <strong>From £4,000</strong> for an MVP · typical 5-feature build with auth and an AI feature
+        ≈ £7,900 · care &amp; monitoring £300/month · larger products quoted fixed, within 24 hours of
+        a call.
+      </>
+    ),
+    actions: [
+      { label: 'Price your build', kind: 'calc', build: 'webapp', variant: 'primary' },
+      { label: 'Scope a product', kind: 'cal', variant: 'secondary' },
+    ],
+  },
+  'internal-tools': {
+    body: (
+      <>
+        <strong>From £3,500</strong> fixed · typical 4-module tool with accounts ≈ £6,800 · care &amp;
+        monitoring £400/month · systems beyond ~10 modules quoted to ~£50k.
+      </>
+    ),
+    actions: [
+      { label: 'Price your tool', kind: 'calc', build: 'custom', variant: 'primary' },
+      { label: 'Audit your workflow', kind: 'cal', variant: 'secondary' },
+    ],
+  },
+  'ai-growth': {
+    body: (
+      <>
+        Two ways in. <strong>Productised:</strong> the managed <Link to="/lead-engine">Lead Engine</Link>{' '}
+        — tiers from <strong>£500 setup + £250/month</strong>, running within a week.{' '}
+        <strong>Bespoke:</strong> a custom growth build on your exact stack and data — scoped on a call,
+        fixed quote within 24 hours.
+      </>
+    ),
+    note: (
+      <>
+        If the tiers fit, take the tiers — the bespoke route is for teams with unusual data sources,
+        compliance constraints, or an existing sales stack we need to build around.
+      </>
+    ),
+    actions: [
+      { label: 'See Lead Engine tiers', kind: 'link', to: '/lead-engine', variant: 'primary' },
+      { label: 'Book a growth call', kind: 'cal', variant: 'secondary' },
+    ],
+  },
+  maintenance: {
+    body: (
+      <>
+        <strong>Care from £100/month</strong> — we keep it running: hosting, updates, backups,
+        monitoring, small fixes. <strong>Retainers from £1,500/month</strong> — we keep it shipping:
+        features, iteration, 2–3 day cycles. First month of any retainer: money back if it&apos;s not
+        working.
+      </>
+    ),
+    actions: [
+      { label: 'See pricing', kind: 'link', to: '/#pricing', variant: 'primary' },
+      { label: 'Book a call', kind: 'cal', variant: 'secondary' },
+    ],
+  },
+};
+
+const AnchorAction = ({ action }) => {
+  const cls = `${action.variant === 'primary' ? 'primary-btn' : 'secondary-btn'}`;
+  if (action.kind === 'cal') {
+    return (
+      <a href={CAL} target="_blank" rel="noopener noreferrer">
+        <button type="button" className={cls}><span>{action.label}</span></button>
+      </a>
+    );
+  }
+  const to = action.kind === 'calc' ? `/?build=${action.build}#calculator` : action.to;
+  return (
+    <Link to={to}>
+      <button type="button" className={cls}><span>{action.label}</span></button>
+    </Link>
+  );
+};
+
+const PriceAnchor = ({ slug }) => {
+  const anchor = PRICE_ANCHORS[slug];
+  if (!anchor) return null;
+  return (
+    <section className="service-price-anchor fade-in" aria-label="Pricing">
+      <div className="service-hero-inner">
+        <div className="price-anchor">
+          <p className="price-anchor-body">{anchor.body}</p>
+          {anchor.note && <p className="price-anchor-note">{anchor.note}</p>}
+          <div className="price-anchor-actions">
+            {anchor.actions.map((a) => <AnchorAction key={a.label} action={a} />)}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
 
 const renderAccented = (title, accent) => {
   if (!accent) return title;

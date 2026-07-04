@@ -87,6 +87,7 @@ const Developers = () => {
         <Link to="/apply?utm_source=devs_cta">
           <button className="primary-btn"><span>Apply now</span></button>
         </Link>
+        <p className="dev-cta-note">We pay for trial tasks because your time is worth money before we&apos;ve decided anything.</p>
       </section>
 
       <footer className="terms-conditions">

@@ -66,7 +66,7 @@ export const LEADGEN_PAGE = {
     { kicker: 'Engine sources',  value: '6 public + 4 commercial' },
     { kicker: 'Daily leads',     value: '50–500 depending on ICP' },
     { kicker: 'Drafts / day',    value: 'up to 200 personalised' },
-    { kicker: 'Cost / meeting',  value: '~£15 (vs. ~£150 SDR cost)' },
+    { kicker: 'Cost / meeting',  value: 'a fraction of SDR cost' },
   ],
   pricing: [
     {

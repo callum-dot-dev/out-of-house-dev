@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { COURSES } from '../data/programmes';
+import { COURSES, COHORTS_CONFIRMED, COHORT_TBD } from '../data/programmes';
 
 const FILTERS = [
   { value: 'all',        label: 'All' },
@@ -84,11 +84,15 @@ const Courses = () => {
               <div className="course-card-stat-row">
                 <div className="course-card-stat"><strong>{c.price_label}</strong><span>one-off</span></div>
                 <div className="course-card-stat"><strong>{c.duration_weeks}w</strong><span>duration</span></div>
-                <div className="course-card-stat"><strong>{c.seats - c.seats_taken}</strong><span>seats left</span></div>
+                {COHORTS_CONFIRMED && (
+                  <div className="course-card-stat"><strong>{c.seats - c.seats_taken}</strong><span>seats left</span></div>
+                )}
                 <div className="course-card-stat"><strong>{c.certificate ? 'Yes' : '—'}</strong><span>cert.</span></div>
               </div>
               <div className="course-card-meta">
-                Next cohort starts <strong>{formatDate(c.next_cohort)}</strong>
+                {COHORTS_CONFIRMED
+                  ? <>Next cohort starts <strong>{formatDate(c.next_cohort)}</strong></>
+                  : <>Next cohort: {COHORT_TBD}.</>}
               </div>
               <ul className="course-card-outcomes">
                 {c.outcomes.slice(0, 3).map((o) => (

@@ -104,7 +104,7 @@ const { results } = await res.json();
             in black, white, colour, and transparent variants — searchable from a UI, scriptable from an API.
           </p>
           <div className="logovault-proof">
-            <div><strong>900k+</strong><span>logos indexed</span></div>
+            {/* 900k+ "logos indexed" stat dropped until confirmed (products.md gate; BLOCKERS A8). */}
             <div><strong>SVG / PNG / JPG</strong><span>every format</span></div>
             <div><strong>B / W / Colour</strong><span>every variant</span></div>
             <div><strong>Free</strong><span>50 lookups/day</span></div>

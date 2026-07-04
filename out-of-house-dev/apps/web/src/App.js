@@ -370,6 +370,17 @@ const HomePage = ({ faq, proofPoints, positioning, capabilities, openFaqIndex, s
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Deep-link to a section via URL hash (e.g. a service price-anchor linking to
+  // /?build=automation#calculator). Scrolls after the top-scroll settles.
+  useEffect(() => {
+    if (!location.hash) return undefined;
+    const t = setTimeout(() => {
+      const el = document.querySelector(location.hash);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 140);
+    return () => clearTimeout(t);
+  }, [location.hash]);
+
   // Cross-page scroll-to-section: Header stashes the target before navigating.
   useEffect(() => {
     let target = null;

@@ -175,9 +175,9 @@ export const SERVICES = [
       eyebrow: 'Product engineering',
       title: 'MVPs in weeks. Real products, not demos.',
       accent: 'Real products, not demos',
-      lead: `Full web application and SaaS builds: auth, billing, multi-tenant, AI features baked in where they matter. Ship in weeks instead of quarters, at a quality level that holds up to real users — because senior engineers build it.`,
+      lead: `Full web application and SaaS builds: auth, billing, multi-tenant, AI features baked in where they matter. MVPs from £4,000, shipped in weeks instead of quarters, at a quality level that holds up to real users. Need something rougher first? Same-day prototypes ride our website and automation price points (from £500) — ask on the call.`,
       proofPoints: [
-        { kicker: 'MVPs',     value: 'in 2–4 weeks' },
+        { kicker: 'MVPs',     value: 'from £4,000' },
         { kicker: 'Senior',   value: 'eng only' },
         { kicker: 'Yours',    value: 'on day one' },
       ],
@@ -304,7 +304,7 @@ export const SERVICES = [
       eyebrow: 'How it works',
       title: 'Pick a tier. Start this week. Pause anytime.',
       steps: [
-        { num: '01', label: 'Tier',    title: 'Choose a monthly scope', body: 'Lightweight, standard, or heavy. Hours, response time, and team size scale with the tier.' },
+        { num: '01', label: 'Tier',    title: 'Choose a monthly scope', body: 'Care (from £100/month, by product type) keeps a finished build healthy. Retainers add continuous delivery: Light £1,500 — one active workstream, weekly ship cycle. Standard £2,500 — 2–3 day cycles across two workstreams. Heavy £4,000 — multiple workstreams plus on-call. Pause or switch tier any month.' },
         { num: '02', label: 'Slack',   title: 'Direct channel',         body: 'A shared Slack channel with the engineers doing the work. No account manager in the middle.' },
         { num: '03', label: 'Cycles',  title: '2–3 day shipping cycles', body: 'Working slices ship continuously. You review, redirect, prioritise as you go.' },
         { num: '04', label: 'Optional', title: 'Pause or cancel',        body: 'Quiet month? Pause the engagement. Need more? Scale the tier. No lock-in.' },

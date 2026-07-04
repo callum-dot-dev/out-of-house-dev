@@ -17,10 +17,18 @@ const loadInitial = () => {
   } catch { return null; }
 };
 
+const readBuildParam = () => {
+  try { return new URLSearchParams(window.location.search).get('build'); } catch { return null; }
+};
+
 const PricingCalculator = () => {
   const persisted = loadInitial();
-  const [type, setType] = useState(persisted?.type || 'website');
-  const [units, setUnits] = useState(persisted?.units || 1);
+  // A ?build=<type> param (from a service page price-anchor) presets the type.
+  const preset = getBuildType(readBuildParam())?.id;
+  const [type, setType] = useState(preset || persisted?.type || 'website');
+  const [units, setUnits] = useState(
+    preset ? (getBuildType(preset)?.min || 1) : (persisted?.units || 1),
+  );
   const [addons, setAddons] = useState(persisted?.addons || { care: true });
 
   const buildType = getBuildType(type) || BUILD_TYPES[0];

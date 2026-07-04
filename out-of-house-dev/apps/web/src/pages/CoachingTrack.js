@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { COACHING_TRACKS, COURSES, getCoachingTrack } from '../data/programmes';
+import { COACHING_TRACKS, COURSES, getCoachingTrack, COHORTS_CONFIRMED } from '../data/programmes';
 
 const CoachingTrack = () => {
   const { track: trackSlug } = useParams();
@@ -133,9 +133,15 @@ const CoachingTrack = () => {
                 <div className="coaching-course-meta">
                   <strong>{c.price_label}</strong>
                   <span>·</span>
-                  <span>Next cohort {formatDate(c.next_cohort)}</span>
-                  <span>·</span>
-                  <span>{c.seats - c.seats_taken} seats left</span>
+                  {COHORTS_CONFIRMED ? (
+                    <>
+                      <span>Next cohort {formatDate(c.next_cohort)}</span>
+                      <span>·</span>
+                      <span>{c.seats - c.seats_taken} seats left</span>
+                    </>
+                  ) : (
+                    <span>Cohort dates confirmed on enrolment</span>
+                  )}
                 </div>
                 <Link to={`/courses/${c.slug}`} className="coaching-course-link">
                   Syllabus &amp; enrolment

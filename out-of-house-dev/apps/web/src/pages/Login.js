@@ -91,6 +91,9 @@ const Login = () => {
               <Link to="/password-reset" className="auth-inline-link">Forgot it?</Link>
             </label>
           )}
+          {mode === 'magic' && (
+            <p className="auth-hint">We&apos;ll email you a sign-in link — no password needed.</p>
+          )}
 
           {error && <div className="auth-error">{error}</div>}
           {info && <div className="auth-info">{info}</div>}
