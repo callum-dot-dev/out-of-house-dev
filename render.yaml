@@ -9,7 +9,7 @@
 
 databases:
   - name: ooh-db
-    plan: basic-1gb # adjust on sign-up; PITR on paid plans
+    plan: basic-256mb # lean start; bump to basic-1gb+ when usage/PITR needs it
     postgresMajorVersion: "16"
 
 services:
@@ -67,7 +67,7 @@ services:
     disk:
       name: ooh-data
       mountPath: /var/data
-      sizeGB: 10
+      sizeGB: 1 # grow later if uploads/backups need it (disks can grow, not shrink)
     envVars:
       - key: NODE_ENV
         value: production
@@ -116,7 +116,7 @@ services:
     disk:
       name: ooh-jobs-data
       mountPath: /var/data
-      sizeGB: 5
+      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
@@ -136,24 +136,9 @@ services:
       - { key: STRIPE_SECRET_KEY, sync: false }
       - { key: SLACK_WEBHOOK_ALERTS, sync: false }
 
-  # ---------- Builder worker (Docker: node + git + chromium) ----------
-  - type: worker
-    name: ooh-builder
-    runtime: docker
-    rootDir: out-of-house-dev
-    dockerfilePath: apps/builder/Dockerfile
-    plan: standard
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: DATABASE_URL
-        fromDatabase: { name: ooh-db, property: connectionString }
-      - key: BUILDER_CONCURRENCY
-        value: "2"
-      - key: BUILDER_DRY_RUN
-        value: "false"
-      - { key: ANTHROPIC_API_KEY, sync: false }
-      - { key: GITHUB_TOKEN, sync: false }
-      - { key: GITHUB_ORG, sync: false }
-      - { key: RENDER_API_KEY, sync: false }
-      - { key: RENDER_OWNER_ID, sync: false }
+  # ---------- Builder worker (Docker) — DEFERRED to keep hosting lean ----------
+  # The automated Claude-Code build pipeline (~$25/mo Docker `standard` worker)
+  # is NOT deployed. The site and the client-facing app don't need it; builder.*
+  # jobs simply queue in pg-boss until this worker exists. Re-add this service
+  # (see git history / apps/builder) when you start running automated client
+  # builds, and set GITHUB_TOKEN / RENDER_API_KEY / RENDER_OWNER_ID then.
