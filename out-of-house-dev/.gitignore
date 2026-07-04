@@ -24,6 +24,9 @@ test-results/
 # runtime data (Render persistent disk mirror, db dumps, dry-run emails)
 /var/data/
 data/
+# apps/web/src/data is SOURCE (services, pricing, …), not runtime data — keep it tracked
+!apps/web/src/data/
+!apps/web/src/data/**
 .data/
 backups/
 *.eml

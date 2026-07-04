@@ -16,6 +16,7 @@
     "build:web": "npm run build -w apps/web",
     "build:all": "npm run build && npm run build:web",
     "test": "vitest run",
+    "test:web": "cross-env CI=true npm test -w apps/web -- --watchAll=false --passWithNoTests",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "lint": "eslint . && npm run check:contrast",

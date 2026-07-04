@@ -38,8 +38,11 @@ jobs:
       - name: Build backend (shared, api, jobs, builder)
         run: npm run build
 
-      - name: Unit tests
+      - name: Unit tests (backend)
         run: npm test
+
+      - name: Unit tests (web — pricing calculator)
+        run: npm run test:web
 
       - name: Build frontend (CRA)
         run: npm run build:web

@@ -48,7 +48,24 @@ issue and is safe to ship). Unblocked by: Callum approving the cutover runbook
 
 ## D. Stripe care-plan SKUs (from pricing_review §3D)
 
-_(Filled in during B5 — see entry below once the price book is checked.)_
+🟡 The Care ladder (pricing_review §1b) introduces three care tiers priced per
+build type. Checked the server-side price book (`apps/api/src/lib/pricing.ts`)
+and `scripts/stripe-sync.ts`:
+
+- **Present:** `OOH-CARE-SITE` (£100/mo, website care).
+- **ABSENT (new — must be added before these can be billed):**
+  - `OOH-CARE-AUTO` — automation care, **£150/mo**
+  - `OOH-CARE-APP` — web-app care, **£300/mo**
+  - `OOH-CARE-CUSTOM` — custom-software care, **£400/mo**
+
+Per §3D I have **not invented price IDs or touched billing logic**. The
+calculator surfaces these care prices as *estimates* only (marketing → apply /
+book-a-call), so nothing here is charged yet — the estimate is honest. Unblocked
+by: adding the three catalogue rows to `apps/api/src/lib/pricing.ts`
+(mode `monthly`, product_type `retainer`) and running `npm run stripe:sync` so
+Stripe products/prices + `stripe_price_map` are created. Purely additive to the
+price book; no existing SKU changes. (The calculator's `CARE_MONTHLY` in
+`apps/web/src/data/pricing.js` already encodes the four amounts, ready to map.)
 
 ## E. Environment blockers hit during this run
 
