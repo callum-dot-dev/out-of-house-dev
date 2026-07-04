@@ -77,6 +77,11 @@ const ROUTES = [
 async function revealAll(page) {
   await page.evaluate(async () => {
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    // Defeat `content-visibility: auto` (a real-user perf optimisation) so a
+    // headless fullPage shot paints every section, not just the viewport.
+    const cv = document.createElement('style');
+    cv.textContent = '*{content-visibility:visible !important;contain-intrinsic-size:auto !important;}';
+    document.head.appendChild(cv);
     const step = Math.round(window.innerHeight * 0.8);
     let y = 0;
     const max = () => document.body.scrollHeight;

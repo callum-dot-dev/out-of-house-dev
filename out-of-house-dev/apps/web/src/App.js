@@ -10,9 +10,9 @@ import { ToastProvider } from './lib/toast';
 import ErrorBoundary from './lib/ErrorBoundary';
 import CookieBanner from './components/CookieBanner';
 import { SkeletonPage } from './components/Skeleton';
-import { SERVICES as SERVICE_DATA } from './data/services';
 import './App.css';
 import './styles/primitives.css'; // six-state contract + redesign primitives (after App.css)
+import './styles/redesign.css';   // B4 section components (hero price-proof, router, price anchor)
 
 const Apply              = lazy(() => import('./pages/Apply'));
 const Login              = lazy(() => import('./pages/Login'));
@@ -53,12 +53,16 @@ const Board         = lazy(() => import('./pages/app/dev/Board'));
 const PlanLibrary   = lazy(() => import('./pages/app/dev/PlanLibrary'));
 const PlanTemplate  = lazy(() => import('./pages/app/dev/PlanTemplate'));
 
-const SERVICES = SERVICE_DATA.map((s) => ({
-  slug: s.slug,
-  title: s.title,
-  flag: s.flag,
-  description: s.accordion,
-}));
+// home.md §04: the services router — six cards, one click to the right page.
+// Full descriptions live on the service pages; the router's job is routing.
+const HOME_ROUTER = [
+  { slug: 'ai-automations', title: 'AI automations', flag: 'Flagship', line: 'Custom AI workflows on the tools you already run — inbox triage, document processing, copilots.', price: 'from £750' },
+  { slug: 'websites', title: 'Websites & landing pages', flag: null, line: 'Marketing sites that go live the same day you brief us.', price: 'from £500 + £100/mo care' },
+  { slug: 'web-apps', title: 'Web apps & SaaS', flag: null, line: 'MVPs and full products in weeks, not quarters.', price: 'from £4,000' },
+  { slug: 'internal-tools', title: 'Custom internal software', flag: null, line: 'Replace the spreadsheets and the almost-right SaaS subscriptions.', price: 'from £3,500' },
+  { slug: 'ai-growth', title: 'AI growth & lead engine', flag: null, line: 'Pipeline that runs itself: discovery, outreach, content.', price: 'tiers from £500 + £250/mo' },
+  { slug: 'maintenance', title: 'Ongoing care & retainers', flag: null, line: 'We keep it running — or keep it shipping.', price: 'care from £100/mo · retainers from £1,500/mo' },
+];
 
 const FAQ = [
   {
@@ -71,7 +75,7 @@ const FAQ = [
   },
   {
     question: 'Can you actually generate leads, or just route them?',
-    answer: `Both. Our AI growth engine identifies your ideal-fit accounts from public data (LinkedIn, news, hiring signals, tech stack), drafts personalised outreach in your voice, and runs AI-driven social and content campaigns tuned to what your audience actually engages with. The result is a small team's worth of SDR output without the headcount — booked meetings on your calendar instead of more lists for someone to chase.`,
+    answer: `Both. Our AI growth engine identifies your ideal-fit accounts from public data (LinkedIn, news, hiring signals, tech stack), drafts personalised outreach in your voice, and runs AI-driven social and content campaigns tuned to what your audience actually engages with. The result is a small team's worth of SDR output without the headcount — booked meetings on your calendar, at a fraction of the usual cost per meeting.`,
   },
   {
     question: 'How do you make sure an AI feature is actually reliable?',
@@ -102,24 +106,20 @@ const PROOF_POINTS = [
   { kicker: 'Money back',       phrase: 'first month of any retainer' },
 ];
 
+// home.md §03: three compact foil cards — title + one sentence each (the old
+// four-bullet pain lists are cut for density).
 const POSITIONING_PATHS = [
   {
-    tag: 'AI alone',
-    title: 'AI without a human is unreliable.',
-    body: `It hallucinates, it makes confident mistakes, it has no judgement about your business. AI is brilliant at the typing. Someone still has to know what to build, why, and when to throw the output away.`,
-    pains: ['No accountability', 'No business context', 'Needs technical input', 'Output without judgement'],
+    title: 'AI alone',
+    body: 'Brilliant at the typing; no judgement about your business, no accountability when it’s confidently wrong.',
   },
   {
-    tag: 'In-house',
-    title: 'Hiring in-house is slow and expensive.',
-    body: `Six-month hiring cycles. £80k+ salaries. NI, pension, holiday, sick days, training, equipment, line-management time. By the time your first developer ships their first feature, we'd have shipped your tenth.`,
-    pains: ['£80k+ per senior hire', 'Months of hiring cycle', 'HR, NI, pension, equipment', 'One person, one bottleneck'],
+    title: 'Hiring in-house',
+    body: '£80k+ a year and a six-month cycle before the first feature ships.',
   },
   {
-    tag: 'DIY',
-    title: 'Doing it yourself rarely gets far.',
-    body: `Without a technical background, you can spin up a Wix site or wire two Zapiers. The moment the problem is bespoke, the project stalls. Most founders we talk to have a half-finished build they cannot get past 70%.`,
-    pains: ['Steep technical learning curve', 'Time you don\'t have', 'No second opinion on architecture', 'Stalls at "almost done"'],
+    title: 'DIY',
+    body: 'Fine until the problem is bespoke; most founders we meet are stuck at 70% done.',
   },
 ];
 
@@ -175,7 +175,6 @@ const CAPABILITIES = [
 const App = () => {
   const [activeSection, setActiveSection] = useState('home');
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
-  const [openServiceIndex, setOpenServiceIndex] = useState(0);
 
   // Cursor-aware spotlight on cards. Sets --mx/--my so the radial-gradient
   // ::after follows the pointer. rAF-throttled, only fires when over a card.
@@ -203,7 +202,6 @@ const App = () => {
     return () => document.removeEventListener('pointermove', onMove);
   }, []);
 
-  const toggleService = (index) => setOpenServiceIndex(openServiceIndex === index ? null : index);
 
   return (
     <AuthProvider>
@@ -217,15 +215,12 @@ const App = () => {
                 <Routes>
                   <Route path="/" element={(
                     <HomePage
-                      services={SERVICES}
                       faq={FAQ}
                       proofPoints={PROOF_POINTS}
                       positioning={POSITIONING_PATHS}
                       capabilities={CAPABILITIES}
                       openFaqIndex={openFaqIndex}
                       setOpenFaqIndex={setOpenFaqIndex}
-                      openServiceIndex={openServiceIndex}
-                      toggleService={toggleService}
                       setActiveSection={setActiveSection}
                     />
                   )} />
@@ -297,17 +292,16 @@ const ScrollToTop = () => {
 };
 
 const HERO_WORDS = [
-  { text: 'AI', accent: false },
-  { text: 'automations', accent: false },
+  { text: 'Software', accent: false },
   { text: 'and', accent: false },
-  { text: 'software,', accent: false, break: true },
-  { text: 'shipped', accent: false },
-  { text: 'at', accent: false },
-  { text: 'a', accent: false },
-  { text: 'pace', accent: false, break: true },
-  { text: 'others', accent: true },
-  { text: 'can’t', accent: true },
-  { text: 'match.', accent: true },
+  { text: 'AI', accent: false },
+  { text: 'automations,', accent: false, break: true },
+  { text: 'priced', accent: false },
+  { text: 'by', accent: false, break: true },
+  { text: 'exactly', accent: true },
+  { text: 'what', accent: true },
+  { text: 'you', accent: true },
+  { text: 'need.', accent: true },
 ];
 
 const HERO_STATUS_MESSAGES = [
@@ -317,10 +311,14 @@ const HERO_STATUS_MESSAGES = [
   'Reviewing a senior eng PR',
 ];
 
-const HERO_WORKSHOP_ITEMS = [
-  { tag: 'SHIPPING', label: 'Internal CRM v2',        meta: 'Manchester · today' },
-  { tag: 'SCOPED',   label: 'AI inbox triage agent',  meta: 'London · this morning' },
-  { tag: 'LIVE',     label: 'Coffee roaster website', meta: 'Bristol · yesterday' },
+// Hero price-proof strip (home.md §01) — replaces the old hardcoded "in the
+// workshop" demo panel. Four starting prices + one honest caption: the whole
+// "priced by exactly what you need" claim, proved in the hero.
+const HERO_PRICE_PROOF = [
+  { label: 'Websites',        price: 'from £500' },
+  { label: 'AI automations',  price: 'from £750' },
+  { label: 'Web apps',        price: 'from £4,000' },
+  { label: 'Custom software', price: 'from £3,500' },
 ];
 
 const HeroHeadline = () => (
@@ -351,55 +349,24 @@ const HeroStatus = () => {
   );
 };
 
-const HeroWorkshop = () => {
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setTick((n) => n + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
-  const stamp = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-  return (
-    <aside className="hero-workshop" aria-label="What we are working on this week">
-      <header className="hero-workshop-head">
-        <div className="hero-workshop-lights" aria-hidden="true">
-          <span /><span /><span />
-        </div>
-        <span className="hero-workshop-title">in the workshop</span>
-        <span className="hero-workshop-time">
-          <span className={`hero-workshop-dot ${tick % 2 === 0 ? 'is-on' : ''}`} aria-hidden="true" />
-          {stamp}
-        </span>
-      </header>
-      <ul className="hero-workshop-list">
-        {HERO_WORKSHOP_ITEMS.map((item, i) => (
-          <li key={item.label} className="hero-workshop-row" style={{ '--i': i }}>
-            <span className={`hero-workshop-tag hero-workshop-tag-${item.tag.toLowerCase()}`}>{item.tag}</span>
-            <div className="hero-workshop-row-body">
-              <strong>{item.label}</strong>
-              <span className="hero-workshop-row-meta">{item.meta}</span>
-            </div>
-          </li>
-        ))}
-      </ul>
-      <footer className="hero-workshop-foot">
-        <span className="hero-workshop-foot-stat">
-          <strong>4</strong>
-          <span>shipping this week</span>
-        </span>
-        <span className="hero-workshop-foot-stat">
-          <strong>18d</strong>
-          <span>avg. build</span>
-        </span>
-        <span className="hero-workshop-foot-stat">
-          <strong>100%</strong>
-          <span>senior eng</span>
-        </span>
-      </footer>
-    </aside>
-  );
-};
+const HeroPriceProof = () => (
+  <aside className="hero-priceproof" aria-label="Starting prices by service">
+    <ul className="hero-priceproof-chips">
+      {HERO_PRICE_PROOF.map((c) => (
+        <li key={c.label} className="hero-priceproof-chip">
+          <span className="hero-priceproof-label">{c.label}</span>
+          <span className="hero-priceproof-price price-figure">{c.price}</span>
+        </li>
+      ))}
+    </ul>
+    <p className="hero-priceproof-caption">
+      No bundles, no tiers you don&apos;t need. Pages, workflows, features — you pay for the ones you
+      actually use.
+    </p>
+  </aside>
+);
 
-const HomePage = ({ services, faq, proofPoints, positioning, capabilities, openFaqIndex, setOpenFaqIndex, openServiceIndex, toggleService, setActiveSection }) => {
+const HomePage = ({ faq, proofPoints, positioning, capabilities, openFaqIndex, setOpenFaqIndex, setActiveSection }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -472,7 +439,8 @@ const HomePage = ({ services, faq, proofPoints, positioning, capabilities, openF
               <HeroHeadline />
             </h1>
             <p className="hero-lead">
-              Senior engineers, AI-native tooling, fixed-price delivery. Every project starts with a real call.
+              Senior engineers, AI-native delivery, fixed prices — scoped on a real call, quoted within
+              24 hours, and often live within days.
             </p>
             <div className="hero-rule" aria-hidden="true" />
             <div className="hero-actions">
@@ -482,17 +450,17 @@ const HomePage = ({ services, faq, proofPoints, positioning, capabilities, openF
               <button
                 type="button"
                 className="hero-text-link"
-                onClick={(e) => { e.preventDefault(); goToSection('#services'); }}
+                onClick={(e) => { e.preventDefault(); goToSection('#calculator'); }}
               >
-                <span>Explore services</span>
+                <span>Price your build in 20 seconds</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M5 12h14M13 5l7 7-7 7" />
+                  <path d="M12 5v14M19 12l-7 7-7-7" />
                 </svg>
               </button>
             </div>
           </div>
 
-          <HeroWorkshop />
+          <HeroPriceProof />
         </div>
       </section>
 
@@ -509,35 +477,20 @@ const HomePage = ({ services, faq, proofPoints, positioning, capabilities, openF
 
       <section id="positioning" className="positioning-section fade-in">
         <div className="positioning-head">
-          <div className="eyebrow">The trilemma</div>
+          <div className="eyebrow">The three-way fork</div>
           <h2 className="section-title">
-            AI is brilliant. <span className="accent">It still needs a human</span> to get you the outcome you actually want.
+            Every founder hits the same fork. <span className="accent">We&apos;re the fourth option.</span>
           </h2>
-          <p className="positioning-lead">
-            Every founder eventually faces the same three-way fork. Each path has a real cost.
-          </p>
-          <div className="positioning-tease">
-            <span className="positioning-tease-mark" aria-hidden="true">↓</span>
-            <span className="positioning-tease-text">
-              We're the <span className="positioning-tease-accent">fourth option</span>.
-            </span>
-          </div>
         </div>
 
         <div className="positioning-grid">
           {positioning.map((p, i) => (
-            <article key={p.tag} className="positioning-card" style={{ '--stagger-i': i }}>
+            <article key={p.title} className="positioning-card" style={{ '--stagger-i': i }}>
               <div className="positioning-card-meta">
                 <span className="positioning-card-num">{String(i + 1).padStart(2, '0')}</span>
-                <span className="positioning-tag">{p.tag}</span>
               </div>
               <h3>{p.title}</h3>
               <p>{p.body}</p>
-              <ul>
-                {p.pains.map((pain) => (
-                  <li key={pain}><span className="positioning-x" aria-hidden="true">×</span> {pain}</li>
-                ))}
-              </ul>
             </article>
           ))}
         </div>
@@ -562,9 +515,8 @@ const HomePage = ({ services, faq, proofPoints, positioning, capabilities, openF
               The answer to your <span className="accent">in-house</span> problems.
             </h3>
             <p>
-              We're senior engineers who use AI as a multiplier, not a replacement. You skip the hiring cycle,
-              skip the DIY plateau, skip the AI-hallucination tax. You get working software, shipped fast,
-              owned by you. No HR. No commitment. No drama.
+              Senior engineers who use AI as a multiplier, not a replacement. You skip the hiring cycle,
+              the DIY plateau, and the hallucination tax. Working software, shipped fast, owned by you.
             </p>
             <div className="positioning-resolution-actions">
               <a href="https://cal.com/out-of-house.dev" target="_blank" rel="noopener noreferrer">
@@ -602,38 +554,28 @@ const HomePage = ({ services, faq, proofPoints, positioning, capabilities, openF
       <section id="services" className="services-section fade-in">
         <div className="eyebrow">Services</div>
         <h2 className="section-title">
-          From AI automations to full product builds, <span className="accent">delivered fast</span>.
+          Six ways in. <span className="accent">One senior team.</span>
         </h2>
-        <div className="services-list">
-          {services.map((service, index) => (
-            <div
-              key={service.title}
-              className={`service-item ${openServiceIndex === index ? 'open' : ''}`}
-              onClick={() => toggleService(index)}
+        <div className="home-router">
+          {HOME_ROUTER.map((card) => (
+            <Link
+              key={card.slug}
+              to={`/services/${card.slug}`}
+              className="ui-card ui-card--interactive home-router-card"
             >
-              <div className="service-title-container">
-                <h3>
-                  {service.flag && <span className="service-flag">{service.flag}</span>}
-                  {service.title}
-                </h3>
-                <span className="toggle-sign" aria-hidden="true">{openServiceIndex === index ? '−' : '+'}</span>
+              <div className="home-router-card-head">
+                <span className="home-router-title">{card.title}</span>
+                {card.flag && <span className="home-router-flag">{card.flag}</span>}
               </div>
-              <div className="service-body">
-                <p dangerouslySetInnerHTML={{ __html: service.description }} />
-                {service.slug && (
-                  <Link
-                    to={`/services/${service.slug}`}
-                    className="service-detail-link"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Read the full breakdown
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M5 12h14M13 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                )}
-              </div>
-            </div>
+              <p className="home-router-line">{card.line}</p>
+              <div className="home-router-price">{card.price}</div>
+              <span className="home-router-cta">
+                See the full breakdown
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+              </span>
+            </Link>
           ))}
         </div>
       </section>
@@ -705,7 +647,7 @@ const HomePage = ({ services, faq, proofPoints, positioning, capabilities, openF
             <li>Senior engineers only. Every line written or reviewed by one.</li>
             <li>Real calls before code. Onboarding inside 24 hours.</li>
             <li>Plug into your stack: Slack, Notion, HubSpot, GitHub, your APIs.</li>
-            <li>Transparent fixed pricing. No hourly surprises.</li>
+            <li>Fixed prices, published starting points, no hourly surprises.</li>
             <li>Pause or cancel any monthly engagement, any month.</li>
             <li>Direct access to the engineer doing the work, not an account manager.</li>
           </ul>
@@ -738,12 +680,12 @@ const HomePage = ({ services, faq, proofPoints, positioning, capabilities, openF
             </a>
             <div className="pricing-details">
               <ul>
-                <li>Up to 5 pages, mobile-perfect</li>
+                <li>Up to 5 pages, mobile-perfect <span className="price-note">(then £150/page — same maths as the calculator)</span></li>
                 <li>SEO, analytics, contact form</li>
-                <li>Hosted by us on IONOS, never worry about it</li>
+                <li>Hosted by us on IONOS — you never think about it</li>
                 <li>Same-day or next-day go-live</li>
                 <li>Monthly care: updates, fixes, backups</li>
-                <li>Cancel hosting anytime, you keep the site</li>
+                <li>Cancel hosting anytime; you keep the site</li>
               </ul>
             </div>
           </div>
@@ -753,18 +695,17 @@ const HomePage = ({ services, faq, proofPoints, positioning, capabilities, openF
             <h3>Custom build</h3>
             <div className="pricing-tagline">
               <p>AI automation, MVP, web app, or internal tool.</p>
-              <p>Scoped on a call, fixed price.</p>
+              <p>Scoped on a call, fixed price within 24 hours.</p>
             </div>
             <p className="price-point">from £750</p>
-            <p className="price-suffix">one-off. Final quote within 24h of call.</p>
+            <p className="price-suffix">one-off, fixed after a call</p>
             <a href="https://cal.com/out-of-house.dev" target="_blank" rel="noopener noreferrer">
               <button><span>Scope a project</span></button>
             </a>
             <div className="pricing-details">
               <ul>
-                <li>Scoped and quoted within 24 hours</li>
+                <li>AI automations from £750 · web apps from £4,000 · internal software from £3,500</li>
                 <li>Often delivered same-week</li>
-                <li>AI automation, prototype, internal tool, or MVP</li>
                 <li>Integration with your tools and APIs</li>
                 <li>You own the code and infrastructure</li>
                 <li>Acceptance criteria signed off before completion</li>
@@ -776,23 +717,21 @@ const HomePage = ({ services, faq, proofPoints, positioning, capabilities, openF
           <div className="pricing-card">
             <h3>Monthly engagement</h3>
             <div className="pricing-tagline">
-              <p>A senior team on tap for ongoing work.</p>
-              <p>Pause anytime, no lock-in.</p>
+              <p>A senior team on tap.</p>
+              <p>Light £1,500 · Standard £2,500 · Heavy £4,000 — pause anytime.</p>
             </div>
             <p className="price-point">from £1,500</p>
-            <p className="price-suffix">/month, scaled to your scope</p>
+            <p className="price-suffix">/month</p>
             <a href="https://cal.com/out-of-house.dev" target="_blank" rel="noopener noreferrer">
-              <button><span>Start engagement</span></button>
+              <button><span>Start an engagement</span></button>
             </a>
             <div className="pricing-details">
               <ul>
                 <li>Dedicated senior engineer + delivery lead</li>
-                <li>Unlimited requests within scope</li>
-                <li>Continuous shipping, typically 2 to 3 day cycles</li>
+                <li>Continuous shipping, typically 2–3 day cycles</li>
                 <li>Direct Slack access to the team</li>
                 <li>Features, automations, maintenance, iteration</li>
-                <li>Pause or cancel anytime</li>
-                <li>First-month money-back guarantee</li>
+                <li>Pause or cancel anytime; first-month money-back guarantee</li>
               </ul>
             </div>
           </div>
@@ -893,6 +832,7 @@ const HomePage = ({ services, faq, proofPoints, positioning, capabilities, openF
           <Link to="/terms-and-conditions"><p className="terms-conditions-link">Terms</p></Link>
           <Link to="/privacy-policy"><p className="terms-conditions-link">Privacy</p></Link>
           <Link to="/subprocessors"><p className="terms-conditions-link">Sub-processors</p></Link>
+          <Link to="/trust"><p className="terms-conditions-link">Trust &amp; security</p></Link>
           <p>&#123;out-of-house.dev&#125;. All rights reserved. © 2026</p>
         </div>
       </footer>

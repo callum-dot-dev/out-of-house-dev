@@ -1,0 +1,122 @@
+/* ============================================================
+   Redesign section components (B4) — homepage + service pages
+   Loaded after primitives.css. New surfaces the content package
+   introduces: the hero price-proof strip, the services router,
+   and the shared service price-anchor block.
+   ============================================================ */
+
+/* --- Hero price-proof strip (home.md §01 — replaces the workshop panel) ---
+   The "money & proof" moment: mint tint (design_tokens §1), four starting
+   prices, one honest caption. */
+.hero-priceproof {
+  align-self: center;
+  width: 100%;
+  background: var(--tint-mint);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-6);
+  box-shadow: var(--shadow-soft);
+}
+.hero-priceproof-chips {
+  list-style: none;
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.hero-priceproof-chip {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-4);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+.hero-priceproof-chip:last-child { border-bottom: none; }
+.hero-priceproof-label { font-weight: 500; color: var(--ink); }
+.hero-priceproof-price { font-size: 1.05rem; white-space: nowrap; }
+.hero-priceproof-caption {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+/* --- Services router (home.md §04 — replaces the accordion) --- */
+.home-router {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: var(--sp-4);
+  margin-top: var(--space-stack);
+}
+.home-router-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-height: 100%;
+}
+.home-router-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  justify-content: space-between;
+}
+.home-router-title { font-size: var(--fs-h3); font-weight: 600; line-height: 1.2; }
+.home-router-flag {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+  background: var(--accent-soft);
+  border-radius: var(--radius-pill);
+  padding: 3px 10px;
+}
+.home-router-line { color: var(--muted); line-height: 1.5; flex: 1; }
+.home-router-price {
+  font-size: var(--fs-small);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.home-router-cta {
+  margin-top: var(--sp-2);
+  color: var(--accent-text);
+  font-weight: 600;
+  font-size: var(--fs-small);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.home-router-card:hover .home-router-cta { gap: 10px; }
+
+/* --- Shared service price-anchor block (services-*.md) --- */
+.price-anchor {
+  margin: var(--space-stack) 0;
+  padding: var(--sp-6);
+  background: var(--tint-mint);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.price-anchor-body {
+  margin: 0 0 var(--sp-5);
+  font-size: var(--fs-lead);
+  line-height: 1.6;
+  color: var(--ink);
+}
+.price-anchor-body strong { color: var(--accent-text); font-variant-numeric: tabular-nums; }
+.price-anchor-note {
+  margin: 0 0 var(--sp-5);
+  font-size: var(--fs-small);
+  color: var(--muted);
+  line-height: 1.55;
+}
+.price-anchor-actions { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+
+/* Inline "(then £150/page …)" note inside pricing bullets. */
+.price-note { color: var(--muted); font-size: 0.9em; }
+
+@media (max-width: 640px) {
+  .hero-priceproof { padding: var(--sp-5); }
+  .price-anchor { padding: var(--sp-5); }
+}
