@@ -79,9 +79,12 @@ export function reviewMarkdown(request: RequestRow, risk: string, verdict: 'pass
   return `# Review — ${request.title}\n\nHeuristic reviewer: no blocking issues detected.\n\nrisk: ${risk}\nstatus: ${verdict}\n`;
 }
 
-// buildHandoff from the canonical prompt pack (CommonJS). Path is workspace-root
-// relative so it resolves from the worker's cwd at runtime + the repo root in tests.
-const planTemplatesPath = join(process.cwd(), 'apps', 'web', 'src', 'data', 'planTemplates.js');
+// buildHandoff from the canonical prompt pack (CommonJS). Resolve relative to
+// THIS FILE, not process.cwd(): `npm run start -w apps/jobs` sets cwd to
+// apps/jobs, which crashed prod on Render (MODULE_NOT_FOUND looking for
+// apps/jobs/apps/web/…). Both src/orchestrator (tests) and dist/orchestrator
+// (runtime) sit four levels below the workspace root, so one path works everywhere.
+const planTemplatesPath = join(__dirname, '..', '..', '..', '..', 'apps', 'web', 'src', 'data', 'planTemplates.js');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { buildHandoff } = require(planTemplatesPath) as {
   buildHandoff: (type: string, style: string | undefined, context: Record<string, unknown>) => string | null;
