@@ -1,0 +1,178 @@
+/* ============================================================
+   Primitives — the six-state contract (design_tokens §5)
+   ------------------------------------------------------------
+   Loaded AFTER App.css (imported in App.js) so the system-wide
+   disabled/loading/focus rules win on specificity ties. The v3
+   primitives already ship Default / Hover / Focus-visible (accent-
+   deep ring, ≥3:1) / Active (press). This layer adds the two
+   missing states — DISABLED and LOADING — as a site-wide contract,
+   a focus-visible safety net for any element the tuned rules miss,
+   and the reusable redesign primitives B4 composes.
+   ============================================================ */
+
+/* --- Focus-visible safety net (design_tokens §7: mandatory everywhere) ----
+   Baseline ring for any interactive element not already handled by a tuned
+   per-component rule. accent-deep (=--focus-ring) is ≥3:1 on light. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible,
+[role='button']:focus-visible,
+[role='link']:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+/* Rings inside dark bands / the authed shell chrome use the bright variant. */
+.dark-band :focus-visible,
+.app-shell :focus-visible,
+[data-surface='dark'] :focus-visible {
+  outline-color: var(--focus-ring-dark);
+}
+
+/* --- Disabled (design_tokens §5: 45% opacity, not-allowed, no motion) ------ */
+button:disabled,
+button[disabled],
+[aria-disabled='true'],
+.primary-btn:disabled,
+.secondary-btn:disabled,
+.contact-btn:disabled,
+.ghost-btn:disabled,
+.calc-option:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+.field:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+/* A disabled control must not react to hover/active. */
+button:disabled:hover,
+[aria-disabled='true']:hover,
+.primary-btn:disabled:hover,
+.secondary-btn:disabled:hover,
+.contact-btn:disabled:hover,
+.ghost-btn:disabled:hover,
+button:disabled:active,
+[aria-disabled='true']:active,
+.primary-btn:disabled:active,
+.secondary-btn:disabled:active {
+  transform: none;
+  box-shadow: none;
+}
+.primary-btn:disabled:hover { background-color: var(--ink); }
+.secondary-btn:disabled:hover { background: transparent; border-color: var(--border-strong); }
+
+/* --- Loading (design_tokens §5: keep width, swap label for spinner) --------
+   Toggle `.is-loading` on a button; its label children stay in layout
+   (visibility:hidden → width preserved) and a centred spinner replaces them.
+   currentColor gives the spinner the button's text colour for free. */
+@keyframes ooh-spin { to { transform: rotate(360deg); } }
+.is-loading {
+  position: relative;
+  pointer-events: none;
+}
+.is-loading > * { visibility: hidden; }
+.is-loading::after { display: none; } /* hide the v3 arrow glyph while loading */
+.is-loading::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1.1em;
+  height: 1.1em;
+  margin: -0.55em 0 0 -0.55em;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  visibility: visible;
+  animation: ooh-spin 0.7s linear infinite;
+}
+/* Standalone spinner primitive (empty-states, inline loading). */
+.spinner {
+  display: inline-block;
+  width: 1.1em;
+  height: 1.1em;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: ooh-spin 0.7s linear infinite;
+  vertical-align: -0.15em;
+}
+@media (prefers-reduced-motion: reduce) {
+  .is-loading::before,
+  .spinner { animation-duration: 1.4s; }
+}
+
+/* ============================================================
+   Reusable redesign primitives (composed by B3/B4)
+   ============================================================ */
+
+/* Interactive card — one hover/active contract for the new router cards,
+   price-anchor, foil cards, and audience triptych (design_tokens §5). */
+.ui-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-5);
+  transition:
+    border-color var(--dur-quick) var(--ease-out),
+    transform var(--dur-quick) var(--ease-out),
+    box-shadow var(--dur-default) var(--ease-out);
+}
+.ui-card--interactive { cursor: pointer; }
+.ui-card--interactive:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card);
+}
+.ui-card--interactive:active {
+  transform: translateY(0);
+  background: var(--accent-soft);
+}
+a.ui-card { color: inherit; text-decoration: none; display: block; }
+
+/* Pastel section-identity surfaces (design_tokens §1 — surfaces only). */
+.surface-mint { background: var(--tint-mint); }
+.surface-sand { background: var(--tint-sand); }
+.surface-sky { background: var(--tint-sky); }
+
+/* Price figure / chip — mono + tabular numerals (design_tokens §2). Used by
+   the hero price-proof strip, service price anchors and the calculator. */
+.price-figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+.price-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-small);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.price-chip .price-figure { font-size: 1.05em; }
+
+/* Guard note — the calculator/service "bigger builds are quoted" line
+   (pricing_review §1d). Quiet, mint, not alarming. */
+.guard-note {
+  border-left: 3px solid var(--accent);
+  background: var(--tint-mint);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-small);
+  line-height: 1.55;
+}
+
+/* Eyebrow accent variant (design_tokens §2: --accent-text tracking). */
+.eyebrow.eyebrow--accent { color: var(--accent-text); }

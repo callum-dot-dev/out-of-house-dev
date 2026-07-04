@@ -12,6 +12,7 @@ import CookieBanner from './components/CookieBanner';
 import { SkeletonPage } from './components/Skeleton';
 import { SERVICES as SERVICE_DATA } from './data/services';
 import './App.css';
+import './styles/primitives.css'; // six-state contract + redesign primitives (after App.css)
 
 const Apply              = lazy(() => import('./pages/Apply'));
 const Login              = lazy(() => import('./pages/Login'));
