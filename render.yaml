@@ -58,7 +58,7 @@ services:
     runtime: node
     rootDir: out-of-house-dev
     plan: starter
-    buildCommand: npm install && npm run build -w packages/shared -w apps/api
+    buildCommand: npm install --include=dev && npm run build -w packages/shared -w apps/api
     startCommand: npm run start -w apps/api
     preDeployCommand: npm run migrate
     healthCheckPath: /api/v1/health
@@ -111,7 +111,7 @@ services:
     runtime: node
     rootDir: out-of-house-dev
     plan: starter
-    buildCommand: npm install && npm run build -w packages/shared -w apps/jobs
+    buildCommand: npm install --include=dev && npm run build -w packages/shared -w apps/jobs
     startCommand: npm run start -w apps/jobs
     disk:
       name: ooh-jobs-data
