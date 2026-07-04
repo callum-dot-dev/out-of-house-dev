@@ -2,8 +2,10 @@
 # NOTE: the platform lives in the out-of-house-dev/ subfolder of this repo
 # (see out-of-house-dev/docs/adr/0001-render-migration.md), so every service
 # sets rootDir: out-of-house-dev (the npm workspace root).
-previews:
-  generation: automatic
+#
+# Preview environments require a paid Render workspace, so they are NOT enabled
+# here (Hobby workspaces reject `previews: generation: automatic`). Re-add a
+# `previews:` block once on a Professional workspace if PR previews are wanted.
 
 databases:
   - name: ooh-db
