@@ -81,6 +81,13 @@ price book; no existing SKU changes. (The calculator's `CARE_MONTHLY` in
   set (same command, different `OUT_DIR`). Unblocked by: running the script from
   a networked machine against the live URL if a pixel-exact live baseline is ever
   needed (not required for the redesign diff).
+- 🟡 **Git remote unreachable → push + PR deferred to Callum.** `git ls-remote`
+  to `github.com/callum-dot-dev/out-of-house-dev` times out (same no-egress
+  sandbox). The monorepo has never been pushed, so `dev` doesn't exist remotely.
+  The branch is green and fully committed locally. **Unblocked by:** running the
+  three commands in `docs/prompts/PR_feat-redesign-v4.md` from a networked machine
+  (create `dev` from `feat/v4-render-platform`, push `feat/redesign-v4`, open the
+  PR with that file as the body).
 - 🟡 **Authed `/app/*` shells not screenshotted in B0.** Capturing them needs the
   full api+jobs+Postgres stack running with seeded auth cookies — impractical to
   stand up purely for a static "before" baseline, and the authed app is

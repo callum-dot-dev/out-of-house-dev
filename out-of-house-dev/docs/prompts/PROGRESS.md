@@ -378,3 +378,77 @@ removed. Backend (api + jobs + orchestrator + builder) tested; frontend on the A
 11 Render blueprint + go-live tooling
 12 Full-system verification + handover
 ```
+
+---
+
+# Phase B — Brand & frontend redesign — ✅ DONE (branch `feat/redesign-v4`)
+
+Executed `docs/prompts/PHASE_B_PROMPT.md` end to end, implementing the Phase A
+design + content package. All gates green; branch ready for the PR into `dev`
+(the push itself is gated — see "Deferred" below).
+
+## Shipped (B0–B9)
+
+- **B0** — Branched `feat/redesign-v4`; verified build:web/typecheck/lint green
+  first; before-screenshots of all 28 public routes (`docs/audit/screenshots/`)
+  via a reusable Playwright capture script. Live site unreachable from the
+  sandbox → captured a local build of the pre-redesign source (BLOCKERS §E).
+- **B1** — `styles/tokens.css` token layer (design_tokens §1–4) + `--accent-text`,
+  pastel tints, `--focus-ring`, micro-spacing, font tokens. Automated WCAG
+  contrast gate (`check:contrast`, 23 pairs) wired into `npm run lint` + CI.
+  ADR 0003 (plain-CSS layered, no framework), ADR 0004 (palette/contrast/font —
+  system stack now, Poppins queued).
+- **B2** — `styles/primitives.css`: completed the six-state contract site-wide
+  (added DISABLED + LOADING; focus-visible safety net) + reusable redesign
+  primitives (`.ui-card`, tints, price chip, guard note). Primary button already
+  ink-filled; all request/project status badge variants already present.
+- **B3** — IA cut to **five** top-level nav items (Build · Learn · Products ·
+  Pricing · Company); `Header.js` refactored to one accessible NavDropdown; every
+  audit §3 route preserved (no path changes → no redirects). ADR 0005.
+- **B4** — Content implemented verbatim: homepage rebuilt (price-proof hero
+  strip, "fourth option" foil cards, services router, updated pricing cards, FAQ
+  substitution, footer Trust link); 6 service pages get a shared price-anchor
+  block + web-apps hero / maintenance tier changes; learn hub/courses framing;
+  **blocking stale-cohort gate** (`COHORTS_CONFIRMED=false` — no past dates / fake
+  seats); LogoVault 900k + lead-engine SDR-stat gates; company/auth microcopy;
+  authed-app status labels/descriptions + empty states (§0.D-safe, `statusCopy.js`).
+- **B5** — Calculator constants → `data/pricing.js`; pricing_review §1 logic
+  (website incl. 5 pages, £4k webapp floor, care ladder, visibility rules); **all
+  8 §2 acceptance values reproduced exactly** as unit tests (`test:web`, 18 tests,
+  in CI). Stripe care SKUs checked → 3 absent, logged (BLOCKERS §D), not invented.
+- **B6** — Four legal texts drafted verbatim behind `PUBLISH_NEW_LEGAL` (default
+  false; current content keeps serving). Trust hosting-fallback line shipped now;
+  unverified status link held.
+- **B7** — The three sanctioned motion patterns verified present + reduced-motion
+  safe; fixed one layout-property (gap) hover on the router CTA → transform.
+- **B8** — `render.yaml` `ooh-web` gains security headers + HSTS; `deploy.yml`
+  patched to build:web (dispatch-only, defuses the flat-CRA "time bomb", stays a
+  gh-pages rollback); `docs/runbooks/hosting-cutover.md`; ADR 0006. No DNS/main/
+  gh-pages touched.
+- **B9** — Fresh-eyes content audit (subagent): **no discrepancies** (prices,
+  gates, verbatim copy all correct). Console: only `ERR_CONNECTION_REFUSED` to the
+  API in offline capture (zero JS/render errors). axe WCAG-AA scan: fixed the
+  systemic `--accent-deep`/`--info` small-text contrast debt (darkened
+  `--accent-deep` to #17784f; added `--info-text`); **0 serious violations** on
+  the sampled routes bar the intentional HorizontalSteps dimmed-preview cards.
+  Final gate: build:web ✅ · typecheck ✅ · lint+contrast ✅ · backend tests 41/41
+  ✅ · calculator tests 18/18 ✅. Like-for-like before/after screenshots.
+
+## Decisions / ASSUMED
+
+- ADRs 0003 (styling), 0004 (palette/contrast/font), 0005 (IA), 0006 (hosting).
+- ASSUMED: retainer tier scopes (pricing_review §1b) shipped verbatim; Poppins
+  self-host queued (no font assets in a no-network build); `--accent-deep`
+  darkened for AA (design_tokens §1 licenses it).
+- Deferred (non-blocking, ADOPT and already correct): AISEO page, lead-engine
+  pipeline stages, /saas index, coaching tracks, /verify — inherit the new system.
+
+## Deferred / gated (needs Callum)
+
+- **Push + PR:** the git remote is **unreachable from the build sandbox** (no
+  network egress — same as the live site). The monorepo has never been pushed, so
+  `dev` does not exist remotely. The branch is green and committed locally; the PR
+  body + exact push/PR commands are in `docs/prompts/PR_feat-redesign-v4.md`.
+  Callum runs those to create `dev` and open the PR. (BLOCKERS §F.)
+- All items in `docs/prompts/BLOCKERS.md` (legal facts + solicitor, Render
+  cutover, care SKUs, cohort dates, LogoVault count) — each has a shipped fallback.
