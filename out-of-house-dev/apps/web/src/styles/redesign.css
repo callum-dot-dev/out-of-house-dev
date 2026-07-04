@@ -88,7 +88,9 @@
   align-items: center;
   gap: 6px;
 }
-.home-router-card:hover .home-router-cta { gap: 10px; }
+/* Transform-only micro-feedback (design_tokens §4 — no layout-property animation). */
+.home-router-cta svg { transition: transform var(--dur-quick) var(--ease-out); }
+.home-router-card:hover .home-router-cta svg { transform: translateX(3px); }
 
 /* --- Shared service price-anchor block (services-*.md) --- */
 .price-anchor {
