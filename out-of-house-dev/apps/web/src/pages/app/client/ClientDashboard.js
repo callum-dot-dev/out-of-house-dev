@@ -83,8 +83,8 @@ const ClientDashboard = () => {
         </>
       ) : projects.length === 0 ? (
         <div className="app-card app-empty-card">
-          <h3>No projects yet</h3>
-          <p>Once we kick off your first project, it'll show up here. If you haven't already, book a discovery call.</p>
+          <h3>Nothing here yet.</h3>
+          <p>Book a discovery call and this page gets interesting.</p>
           <Link to="/app/book"><button className="primary-btn"><span>Book a call</span></button></Link>
         </div>
       ) : (

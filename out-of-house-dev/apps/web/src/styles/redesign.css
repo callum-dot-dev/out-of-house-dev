@@ -134,6 +134,15 @@
 /* Login magic-link helper (company.md). */
 .auth-hint { margin: calc(-1 * var(--sp-2)) 0 0; font-size: var(--fs-small); color: var(--muted); }
 
+/* Authed-app request status description (app-status.md). */
+.request-status-desc {
+  margin: var(--sp-3) 0 0;
+  max-width: 60ch;
+  color: var(--muted);
+  font-size: var(--app-fs-small);
+  line-height: 1.5;
+}
+
 @media (max-width: 640px) {
   .hero-priceproof { padding: var(--sp-5); }
   .price-anchor { padding: var(--sp-5); }

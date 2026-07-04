@@ -158,7 +158,7 @@ const Notifications = () => {
                 <path d="M13.7 21a2 2 0 01-3.4 0" />
               </svg>
             </div>
-            <h3>You're caught up.</h3>
+            <h3>All caught up.</h3>
             <p>When something happens on your projects, it'll show up here. We'll also email you unless you turn that off in settings.</p>
           </div>
         ) : (

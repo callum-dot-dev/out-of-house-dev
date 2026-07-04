@@ -129,7 +129,7 @@ const Documents = () => {
         <div className="app-card app-empty-card">
           <h3>{docs.length === 0 ? 'No documents yet' : 'Nothing matches that filter'}</h3>
           <p>{docs.length === 0
-            ? 'When designs, specs, or notes land they will show up here.'
+            ? 'Contracts, scopes, and handover docs will appear here as they’re issued.'
             : 'Adjust the stage or project filter above.'}</p>
         </div>
       ) : (

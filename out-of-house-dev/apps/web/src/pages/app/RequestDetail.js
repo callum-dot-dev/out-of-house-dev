@@ -5,6 +5,7 @@ import { api } from '../../lib/api';
 import { useRealtimeTable } from '../../lib/realtime';
 import { toast } from '../../lib/toast';
 import { renderMentions } from '../../lib/mentions';
+import { requestStatusLabel, requestStatusDescription } from '../../lib/statusCopy';
 import { SkeletonPage } from '../../components/Skeleton';
 import CommentComposer from '../../components/CommentComposer';
 import { AttachmentList } from '../../components/AttachmentDropzone';
@@ -144,11 +145,14 @@ const RequestDetail = () => {
           <div className="eyebrow">Feature request</div>
           <h1 className="app-h1">{request.title}</h1>
           <div className="request-meta">
-            <span className={`badge badge-status badge-${request.status}`}>{request.status}</span>
+            <span className={`badge badge-status badge-${request.status}`}>{requestStatusLabel(request.status)}</span>
             <span className={`badge badge-priority badge-priority-${request.priority}`}>{request.priority}</span>
             <span className="app-muted">Created {new Date(request.created_at).toLocaleString()}</span>
             {request.shipped_at && <span className="app-muted">Shipped {new Date(request.shipped_at).toLocaleDateString()}</span>}
           </div>
+          {requestStatusDescription(request.status) && (
+            <p className="request-status-desc">{requestStatusDescription(request.status)}</p>
+          )}
         </div>
         {isDeveloper && (
           <div className="app-page-head-actions">
