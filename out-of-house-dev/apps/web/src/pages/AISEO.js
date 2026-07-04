@@ -113,7 +113,7 @@ const AISEOPage = () => {
               ))}
             </div>
             <div className="aiseo-audit-cta">
-              <a href="https://cal.com/out-of-house.dev/aiseo" target="_blank" rel="noopener noreferrer">
+              <a href="https://cal.eu/out-of-house.dev/aiseo" target="_blank" rel="noopener noreferrer">
                 <button className="primary-btn"><span>Book a call to fix these</span></button>
               </a>
               <button type="button" className="secondary-btn" onClick={() => setAuditState({ status: 'idle' })}>
@@ -173,7 +173,7 @@ const AISEOPage = () => {
               <h3>{p.tier}</h3>
               <div className="leadgen-pricing-price"><strong>{p.price_label}</strong><span>{p.price_suffix}</span></div>
               <ul>{p.lines.map((l) => <li key={l}>{l}</li>)}</ul>
-              <a href="https://cal.com/out-of-house.dev/aiseo" target="_blank" rel="noopener noreferrer">
+              <a href="https://cal.eu/out-of-house.dev/aiseo" target="_blank" rel="noopener noreferrer">
                 <button className={p.featured ? 'primary-btn' : 'secondary-btn'}><span>{p.cta}</span></button>
               </a>
             </article>

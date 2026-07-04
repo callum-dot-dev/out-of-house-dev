@@ -99,7 +99,7 @@ const CourseDetail = () => {
                 <button className="primary-btn"><span>Sign in to enrol</span></button>
               </Link>
             )}
-            <a href="https://cal.com/out-of-house.dev/coaching" target="_blank" rel="noopener noreferrer">
+            <a href="https://cal.eu/out-of-house.dev/coaching" target="_blank" rel="noopener noreferrer">
               <button className="secondary-btn"><span>Talk to us first</span></button>
             </a>
           </div>
@@ -167,7 +167,7 @@ const CourseDetail = () => {
                 <button className="primary-btn"><span>Sign in to enrol</span></button>
               </Link>
             )}
-            <a href="https://cal.com/out-of-house.dev/coaching" target="_blank" rel="noopener noreferrer">
+            <a href="https://cal.eu/out-of-house.dev/coaching" target="_blank" rel="noopener noreferrer">
               <button className="secondary-btn"><span>Or book a 1:1 first</span></button>
             </a>
           </div>

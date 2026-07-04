@@ -61,7 +61,7 @@ const ServiceHero = ({ service }) => (
       <p className="service-hero-lead">{service.hero.lead}</p>
 
       <div className="service-hero-actions">
-        <a href="https://cal.com/out-of-house.dev" target="_blank" rel="noopener noreferrer">
+        <a href="https://cal.eu/out-of-house.dev" target="_blank" rel="noopener noreferrer">
           <button className="primary-btn"><span>{service.cta.primary}</span></button>
         </a>
         <Link to="/#pricing">
@@ -147,7 +147,7 @@ const ServiceCta = ({ service }) => (
       <h2>Ready to scope it?</h2>
       <p>30-minute call. Real engineer on the line. Fixed-price scope within 24 hours.</p>
       <div className="service-cta-actions">
-        <a href="https://cal.com/out-of-house.dev" target="_blank" rel="noopener noreferrer">
+        <a href="https://cal.eu/out-of-house.dev" target="_blank" rel="noopener noreferrer">
           <button className="primary-btn"><span>{service.cta.primary}</span></button>
         </a>
         <Link to="/">
@@ -200,7 +200,7 @@ const ServiceFooter = () => (
 // Shared price-anchor block (services-build.md / services-growth-care.md) —
 // transparent pricing directly under each service hero, verbatim from the
 // content package. "Price your X" presets the homepage calculator via ?build=.
-const CAL = 'https://cal.com/out-of-house.dev';
+const CAL = 'https://cal.eu/out-of-house.dev';
 const PRICE_ANCHORS = {
   'ai-automations': {
     body: (

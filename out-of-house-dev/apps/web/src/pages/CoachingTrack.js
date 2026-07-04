@@ -43,7 +43,7 @@ const CoachingTrack = () => {
           </h1>
           <p className="service-hero-lead">{track.hero.lead}</p>
           <div className="service-hero-actions">
-            <a href="https://cal.com/out-of-house.dev/coaching" target="_blank" rel="noopener noreferrer">
+            <a href="https://cal.eu/out-of-house.dev/coaching" target="_blank" rel="noopener noreferrer">
               <button className="primary-btn"><span>{track.cta.primary}</span></button>
             </a>
             <Link to={trackSlug === 'developers' ? '/courses?track=developers' : '/courses?track=business'}>
@@ -160,7 +160,7 @@ const CoachingTrack = () => {
           <h2>Ready to start?</h2>
           <p>Book a 1:1 session in your local timezone, or apply for the next cohort.</p>
           <div className="service-cta-actions">
-            <a href="https://cal.com/out-of-house.dev/coaching" target="_blank" rel="noopener noreferrer">
+            <a href="https://cal.eu/out-of-house.dev/coaching" target="_blank" rel="noopener noreferrer">
               <button className="primary-btn"><span>Book a 1:1 session</span></button>
             </a>
             <Link to={trackSlug === 'developers' ? '/courses?track=developers' : '/courses?track=business'}>

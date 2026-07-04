@@ -39,7 +39,7 @@ const LeadGen = () => {
           </h1>
           <p className="service-hero-lead">{data.hero.lead}</p>
           <div className="service-hero-actions">
-            <a href="https://cal.com/out-of-house.dev/lead-engine" target="_blank" rel="noopener noreferrer">
+            <a href="https://cal.eu/out-of-house.dev/lead-engine" target="_blank" rel="noopener noreferrer">
               <button className="primary-btn"><span>{data.cta.primary}</span></button>
             </a>
             <button type="button" className="secondary-btn" onClick={() => document.getElementById('leadgen-arch')?.scrollIntoView({ behavior: 'smooth' })}>
@@ -115,7 +115,7 @@ const LeadGen = () => {
                 <span>{p.price_suffix}</span>
               </div>
               <ul>{p.lines.map((l) => <li key={l}>{l}</li>)}</ul>
-              <a href="https://cal.com/out-of-house.dev/lead-engine" target="_blank" rel="noopener noreferrer">
+              <a href="https://cal.eu/out-of-house.dev/lead-engine" target="_blank" rel="noopener noreferrer">
                 <button className={p.featured ? 'primary-btn' : 'secondary-btn'}><span>Start with {p.tier}</span></button>
               </a>
             </article>
@@ -127,7 +127,7 @@ const LeadGen = () => {
         <div className="leadgen-cta-inner">
           <h2>30 minute demo. Live pipeline. Your ICP.</h2>
           <p>We bring our engine, you bring your closed-won list. We show what it would have surfaced last month.</p>
-          <a href="https://cal.com/out-of-house.dev/lead-engine" target="_blank" rel="noopener noreferrer">
+          <a href="https://cal.eu/out-of-house.dev/lead-engine" target="_blank" rel="noopener noreferrer">
             <button className="primary-btn"><span>Book a live demo</span></button>
           </a>
         </div>
