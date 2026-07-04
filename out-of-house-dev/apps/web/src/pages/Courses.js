@@ -44,13 +44,15 @@ const Courses = () => {
   return (
     <div className="courses-page">
       <section className="courses-hero fade-in">
-        <div className="hero-eyebrow"><span className="hero-dot" /> Courses</div>
+        <div className="hero-eyebrow"><span className="hero-dot" /> Cohort courses</div>
         <h1 className="hero-h1">
-          Cohort-based courses,<br />
-          <span className="accent">3, 6, or 12 weeks</span>. With certification.
+          Small cohorts, real projects,<br />
+          <span className="accent">verifiable certificates.</span>
         </h1>
         <p className="hero-lead courses-hero-lead">
-          Pick a track. Pay once. Join a cohort. Build something real. Top performers earn a publicly verifiable certificate — and developers get an interview for our bench.
+          3, 6, and 12-week courses for developers (£395 / £795 / £1,495) and business teams
+          (£1,500 / £3,500 / £6,500). Live sessions, async review, and a capstone you ship for real.
+          Developer certificates are publicly verifiable at out-of-house.dev/verify.
         </p>
         <div className="courses-filter" role="tablist" aria-label="Filter courses">
           {FILTERS.map((f) => (

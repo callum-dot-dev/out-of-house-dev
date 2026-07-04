@@ -23,11 +23,13 @@ const Coaching = () => {
       <section className="coaching-index-hero fade-in">
         <div className="hero-eyebrow"><span className="hero-dot" /> Coaching</div>
         <h1 className="hero-h1">
-          1:1 coaching with senior engineers,<br />
-          <span className="accent">£{COACHING_PRICING_HOURLY_GBP}/hour</span> — or a structured course.
+          Learn to build it yourselves —<br />
+          <span className="accent">with a senior beside you.</span>
         </h1>
         <p className="hero-lead coaching-index-lead">
-          Two audiences. One philosophy: hands-on, project-led, with a senior who has actually shipped this stuff. Pick the track that matches you.
+          Projects are us building <em>for</em> you. Coaching is us building <em>with</em> you — so the
+          capability stays in your team when we leave. 1:1 at £{COACHING_PRICING_HOURLY_GBP}/hour, or
+          fixed-price 3, 6, and 12-week programmes.
         </p>
         <div className="coaching-index-actions">
           <Link to="/coaching/developers"><button className="primary-btn"><span>I'm a developer</span></button></Link>
