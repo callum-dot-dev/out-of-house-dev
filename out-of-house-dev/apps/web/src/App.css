@@ -1,96 +1,8 @@
 /* ============================================================
-   Tokens
+   Tokens moved to src/styles/tokens.css (design_tokens §1–4),
+   loaded first via src/index.js. Kept out of this file so the
+   token layer is a single source of truth (ADR 0003).
    ============================================================ */
-:root {
-  /* Color — neutrals tilted warm-olive; emerald carries identity */
-  --bg: #fbfaf8;
-  --bg-soft: #f4f3ef;
-  --surface: #ffffff;
-  --ink: #11140f;
-  --ink-soft: #292a25;
-  --muted: #6b6b66;
-  --border: rgba(20, 20, 15, 0.10);
-  --border-strong: rgba(20, 20, 15, 0.18);
-
-  --accent: #2bbf86;
-  --accent-bright: #58cf98;
-  --accent-deep: #1f8a60;
-  --accent-soft: rgba(43, 191, 134, 0.10);
-  --accent-glow: rgba(43, 191, 134, 0.18);
-
-  --dark: #121413;
-  --dark-soft: #1d201d;
-  --dark-ink: #f4f3ef;
-
-  /* Semantic roles */
-  --success: var(--accent-deep);
-  --success-soft: rgba(31, 138, 96, 0.12);
-  --warning: #c98a32;
-  --warning-soft: rgba(201, 138, 50, 0.12);
-  --danger: #c44a3a;
-  --danger-soft: rgba(196, 74, 58, 0.12);
-  --info: #4a72c4;
-  --info-soft: rgba(74, 114, 196, 0.12);
-
-  /* Fluid type for brand surfaces */
-  --fs-eyebrow: 0.8rem;
-  --fs-body:    1rem;
-  --fs-lead:    clamp(1.05rem, 1.6vw, 1.25rem);
-  --fs-h4:      clamp(1.1rem, 1.6vw, 1.35rem);
-  --fs-h3:      clamp(1.4rem, 2.2vw, 1.85rem);
-  --fs-h2:      clamp(1.95rem, 4.4vw, 3.4rem);
-  --fs-h1:      clamp(2.5rem, 7vw, 5.6rem);
-  --fs-display: clamp(4rem, 14vw, 14rem);
-
-  /* Fixed scale for product (app) surfaces */
-  --app-fs-h1: 1.875rem;
-  --app-fs-h2: 1.25rem;
-  --app-fs-h3: 1.0625rem;
-  --app-fs-body: 0.9375rem;
-  --app-fs-small: 0.8125rem;
-
-  /* Spacing */
-  --space-section: clamp(72px, 9vw, 140px);
-  --space-stack:   clamp(28px, 4vw, 56px);
-  --container-x:   clamp(20px, 5vw, 56px);
-  --container:     1180px;
-
-  --radius-sm: 8px;
-  --radius:    14px;
-  --radius-lg: 22px;
-  --radius-pill: 999px;
-
-  /* Motion */
-  --dur-instant:    80ms;
-  --dur-quick:      140ms;
-  --dur-default:    220ms;
-  --dur-slow:       320ms;
-  --dur-deliberate: 600ms;
-  --ease-out:       cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-in-out:    cubic-bezier(0.77, 0, 0.175, 1);
-  --ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-drawer:    cubic-bezier(0.32, 0.72, 0, 1);
-
-  /* Elevation */
-  --shadow-soft: 0 6px 18px rgba(20, 20, 15, 0.06);
-  --shadow-card: 0 10px 30px rgba(20, 20, 15, 0.08);
-  --shadow-glow: 0 12px 28px -10px rgba(20, 20, 15, 0.18);
-
-  /* Z-index scale */
-  --z-base:           0;
-  --z-dropdown:      10;
-  --z-sticky:       100;
-  --z-header:      1000;
-  --z-cookie:      8000;
-  --z-modal-back:  9000;
-  --z-modal:       9100;
-  --z-toast:       9500;
-  --z-tooltip:     9700;
-
-  /* Skeleton shimmer */
-  --skel-base: rgba(20, 20, 15, 0.06);
-  --skel-hi:   rgba(43, 191, 134, 0.07);
-}
 
 /* ============================================================
    Reset & base
@@ -101,7 +13,7 @@ html, body {
   min-height: 100%;
   background-color: var(--bg);
   color: var(--ink);
-  font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
   font-feature-settings: "ss01", "ss03", "cv01", "tnum";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

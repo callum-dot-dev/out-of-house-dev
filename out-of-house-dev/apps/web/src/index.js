@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import './styles/tokens.css'; // design tokens first — everything else consumes them
 import './index.css';
 import './styles/v3.css';
 import App from './App';
