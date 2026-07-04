@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { PUBLISH_NEW_LEGAL } from '../config/flags';
+import { SubprocessorsNew } from './legal/drafts';
 
 const SUBPROCESSORS = [
   { name: 'Render', purpose: 'Hosting for the app, API, workers, Postgres database and file storage', location: 'EU (Frankfurt)', url: 'https://render.com' },
@@ -17,6 +19,7 @@ const SUBPROCESSORS = [
 
 const Subprocessors = () => {
   useEffect(() => { window.scrollTo(0, 0); }, []);
+  if (PUBLISH_NEW_LEGAL) return <SubprocessorsNew />;
   return (
     <div className="App">
       <section className="public-page">

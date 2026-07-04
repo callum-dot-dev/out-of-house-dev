@@ -33,7 +33,8 @@ before publish — full scope in `legal_review_needed.md` §1 (Consumer Contract
 Regs cooling-off, liability cap enforceability, SaaS/LogoVault trademark
 language, AI-processing controller/processor roles, sub-processor DPAs,
 Companies Act display requirements). **Handled in-branch (B6):** all four new
-texts ship behind a single `LEGAL_CONTENT` flag defaulting to the current live
+texts ship behind a single `PUBLISH_NEW_LEGAL` flag (`apps/web/src/config/flags.js`;
+drafts in `apps/web/src/pages/legal/drafts.js`) defaulting to the current live
 content, so the flip is one commit once solicitor + facts are in.
 
 ## C. Render cutover publish-gate

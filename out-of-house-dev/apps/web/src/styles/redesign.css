@@ -134,6 +134,26 @@
 /* Login magic-link helper (company.md). */
 .auth-hint { margin: calc(-1 * var(--sp-2)) 0 0; font-size: var(--fs-small); color: var(--muted); }
 
+/* Gated legal drafts (config/flags.js PUBLISH_NEW_LEGAL). */
+.legal-todo {
+  background: var(--warning-soft);
+  color: var(--warning);
+  border-radius: var(--radius-sm);
+  padding: 0 6px;
+  font-size: 0.9em;
+}
+.legal-table-wrap { overflow-x: auto; margin: var(--sp-5) 0; }
+.legal-table { border-collapse: collapse; width: 100%; min-width: 520px; }
+.legal-table th,
+.legal-table td {
+  text-align: left;
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.legal-table th { font-weight: 600; color: var(--ink); }
+.legal-table td { color: var(--ink-soft); }
+
 /* Authed-app request status description (app-status.md). */
 .request-status-desc {
   margin: var(--sp-3) 0 0;

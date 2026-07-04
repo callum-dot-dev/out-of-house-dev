@@ -1,8 +1,11 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { PUBLISH_NEW_LEGAL } from '../config/flags';
+import { TrustNew } from './legal/drafts';
 
 const Trust = () => {
   useEffect(() => { window.scrollTo(0, 0); }, []);
+  if (PUBLISH_NEW_LEGAL) return <TrustNew />;
   return (
     <div className="App">
       <section className="public-page">
@@ -18,9 +21,11 @@ const Trust = () => {
 
           <h2>Hosting and architecture</h2>
           <ul>
-            <li>Production app, API, workers and database hosted on Render in EU regions, with API-layer authorization scoping every resource.</li>
-            <li>Marketing site served as a Render static site with HTTPS-only and HSTS preloaded.</li>
-            <li>Backups: nightly logical dumps plus Render Postgres point-in-time recovery on production.</li>
+            {/* Fallback line (legal-trust.md): the previous copy over-claimed Render hosting
+                before the cutover. Ships now regardless of PUBLISH_NEW_LEGAL. */}
+            <li>Client platform services run on Render in EU regions, with API-layer authorisation scoping every resource; the marketing site is currently served via GitHub Pages during our hosting transition.</li>
+            <li>The marketing site is served over HTTPS with HSTS.</li>
+            <li>Backups: nightly logical dumps plus point-in-time recovery on the production database.</li>
           </ul>
 
           <h2>Encryption</h2>
@@ -55,7 +60,7 @@ const Trust = () => {
             <li><Link to="/subprocessors">Sub-processor list</Link></li>
             <li><Link to="/privacy-policy">Privacy policy</Link></li>
             <li><Link to="/terms-and-conditions">Terms and conditions</Link></li>
-            <li><a href="https://status.out-of-house.dev" target="_blank" rel="noopener noreferrer">Status page</a></li>
+            {/* Status-page link held until status.out-of-house.dev is confirmed (BLOCKERS A6). */}
           </ul>
         </div>
       </section>

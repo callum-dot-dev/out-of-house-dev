@@ -1,9 +1,12 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './App.css';
+import { PUBLISH_NEW_LEGAL } from './config/flags';
+import { TermsNew } from './pages/legal/drafts';
 
 const TermsAndConditions = () => {
   useEffect(() => { window.scrollTo(0, 0); }, []);
+  if (PUBLISH_NEW_LEGAL) return <TermsNew />;
   return (
     <div className="App">
       <section className="public-page">

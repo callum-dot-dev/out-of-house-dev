@@ -1,9 +1,12 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './App.css';
+import { PUBLISH_NEW_LEGAL } from './config/flags';
+import { PrivacyNew } from './pages/legal/drafts';
 
 const PrivacyPolicy = () => {
   useEffect(() => { window.scrollTo(0, 0); }, []);
+  if (PUBLISH_NEW_LEGAL) return <PrivacyNew />;
   return (
     <div className="App">
       <section className="public-page">
