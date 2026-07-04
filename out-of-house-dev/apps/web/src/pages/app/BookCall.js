@@ -17,7 +17,7 @@ const BookCall = () => {
 
       <div className="app-card cal-card">
         <InlineWidget
-          url="https://cal.com/out-of-house.dev"
+          url="https://cal.eu/out-of-house.dev"
           prefill={{
             name: profile?.full_name || '',
             email: profile?.email || '',
